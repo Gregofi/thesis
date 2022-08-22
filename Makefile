@@ -4,5 +4,5 @@ clean:
 	rm out -rd
 
 compile:
-	mkdir -rp out/text
+	mkdir -p out/text
 	latexmk -xelatex -bibtex -output-directory=out
