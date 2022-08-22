@@ -8,5 +8,6 @@ RUN apt update -y && apt upgrade -y && \
 RUN apt install -y texlive-bibtex-extra biber \
                    texlive-xetex \
                    texlive-lang-czechslovak \
-                   git
-
+                   latexmk \
+                   git \
+                   make
