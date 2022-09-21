@@ -18,7 +18,7 @@
 %% This work has the LPPL maintenance status `maintained'.
 %%
 %% The current maintainer of this work is Ondrej Guth.
-%% Contact ondrej.guth@fit.cvut.cz for bug reports.
+%% Contact ondrej.guth@fit.cvut.cz for bug reports
 %% Alternatively, submit bug reports into the tracker at
 %% https://gitlab.fit.cvut.cz/theses-templates/FITthesis-LaTeX/issues
 %%
