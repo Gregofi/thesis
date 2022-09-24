@@ -6,6 +6,7 @@ Debuggers can attach to existing process or spawn a new one. They often have fun
 One of the most important debugger features. This can be put in specific places (heavily depending on situation and debugger) and the program will stop executing when it will arrive at the breakpoint. Often programming tools like IDE will allow to place breakpoint at some place in the source code. Most graphical and command line debuggers allow to place breakpoint on a line. \todo{Some even allow to place breakpoints inside expressions, like DrRacket or IntelliJ (Scala)}. There are multiple ways to achieve breakpoint functionality.
 
 \subsection{Software breakpoint}
-The executable runs directly on the processor under supervision of the operating system. There are special instructions which causes software interrupts. On the x86 platform, one of these instructions is the INT3 instruction \cite{xmlgen}. This instruction causes the processor to issue an interrupt \todo{https://elixir.bootlin.com/linux/v4.3/source/arch/x86/kernel/traps.c#L484}.
+The executable runs directly on the processor under supervision of the operating system. There are special instructions which causes software interrupts. On the x86 platform, one of these instructions is the INT3 instruction \cite{xmlgen}. This instruction causes the processor to issue an interrupt.
+% elixir.bootlin.com/linux/v4.3/source/arch/x86/kernel/traps.c#L484
 
 
