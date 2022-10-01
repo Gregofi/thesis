@@ -1,12 +1,62 @@
-\chapter{Debugging native programs}
+\chapter{Debugging}
 Often times, it happens that a written program has different behaviour than we expected. This can manifest in all sorts of ways, from different output to crashing. There are many ways of finding the mistake, one of them is using a debugger to debug the program \cite{software-debugging-testing-verification}.
-Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. For this, breakpoints are used.
+Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. Implementation of debuggers can vary based on target machine, operating system or if the program is native or expected to be run by an interpreter.
 
-\section{Breakpoint}
-One of the most important debugger features. This can be put in specific places (heavily depending on situation and debugger) and the program will stop executing when it will arrive at the breakpoint. Often programming tools like IDE will allow to place breakpoint at some place in the source code. Most graphical and command line debuggers allow to place breakpoint on a line. \todo{Some even allow to place breakpoints inside expressions, like DrRacket or IntelliJ (Scala)}. There are multiple ways to achieve breakpoint functionality.
+\section{Breakpoint}\label{breakpoint}
+Breakpoints are one of the most important debugger features. They can be set on lines corresponding to a line in the source code and when the program will arive at that location, it will pause. The debugger can then inspect various traits of the running program. Some debuggers may even allow to place breakpoints into expressions\footnote{This is especially important for languages like LISP, where function can just be one big expression.}. Breakpoints may also have conditions which are checked when the program arrives at given line. If the condition holds then the program is paused. 
 
-\subsection{Software breakpoint}
-The executable runs directly on the processor under supervision of the operating system. There are special instructions which causes software interrupts. On the x86 platform, one of these instructions is the INT3 instruction \cite{xmlgen}. This instruction causes the processor to issue an interrupt.
-% elixir.bootlin.com/linux/v4.3/source/arch/x86/kernel/traps.c#L484
+\section{Stepping}
+Debuggers also allows to "make a step" in the code. It executes one line and pauses on the next one. This means that we can run the program line by lineand see the behaviour of the program.
+There are often multiple categories of steps:
 
+\begin{itemize}
+    \item Step in - Executes one line. If the line was call to function, it pauses on the first line of the called function.
+    \item Step over - Executes one line. If the line was call to function, it executes the whole body of the function and pauses on the line after the call instruction.
+    \item Step out - Runs the program until it returns from current function, and pauses on that line.
+\end{itemize}
 
+\section{Debugging native programs}
+For now, we pretended that debuggers can magicaly work with lines of source code. However, for programs to be run they first need to be compiled to native code - series of binary instructions (there are also interpreted programs, which are touched upon later). Debugger then interacts with this native code. It, by itself, has no idea that line $x$ correspond to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug informating is DWARF format \cite{dwarf}, it will be thoroughly described in \todo{TODO} section.  
+
+There are however some debuggers which only works on the machine code level. They do not perform any mapping to the source code. And the debuggers that do have to work on the machine code level all the same. They just need to map source to binary, but breakpoints, stepping or inspecting memory (variables) is done at the machine code level. Next section will explore how all of this is implemented.
+
+Implementation itself can greatly differ based on operating system or target machine. Following sections aims to describe the most often used OS and targets.
+
+\subsection{Breakpoints}
+Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \lstinline{INT3}, opcode \lstinline{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
+
+Consider following code
+\begin{lstlisting}
+0x0 xor    eax,eax        33 c0
+0x2 mov    esp,ebp        8b e5
+0x4 pop    ebp            5d
+\end{lstlisting}
+
+For creating breakpoint on address \lstinline{0x02}, the debugger needs to replace code on that location with the \lstinline{0xCC}. The result would look like this 
+
+\begin{lstlisting}
+    0x0 xor    eax,eax        33 c0
+    0x2 int3                  cc e5
+    0x4 pop    ebp            5d
+\end{lstlisting}.
+
+The processor executes the \lstinline{xor}, then the \lstinline{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \lstinline{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which is \lstinline{0xe5}! The debugger needs to deal with this. But first, lets see how different operating system allows debugging via their api.
+
+\subsubsection{ptrace}
+Linux offers special system call which is very handy for debugging. It is called \lstinline{ptrace} \cite{ptrace} - process trace. It has following signature: \lstinline{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \lstinline{PTRACE_COMMAND}, which specifies the behaviour of the function (for example \lstinline{PTRACE_SINGLESTEP} for single step), pid of some process and some other parameters, depending on the \lstinline{PTRACE_COMMAND}. 
+
+It allows to observe and control the execution of another process, which will most often be the debuggee. When the debugee is traced, it will stop each time a signal is delivered\footnote{\lstinline{SIGKILL} is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \lstinline{waitpid}. This system call return value will indicate the reason debuggee stopped. \lstinline{ptrace(PTRACE_TRACEME, ...)} called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee. The debugger can then issue other commands to the child. There are also \lstinline{PTRACE_ATTACH} and \lstinline{PTRACE_SEIZE}, which can be used for attaching to existing process.
+
+\lstinline{ptrace} has many commands, here are some of the most important:
+\begin{itemize}
+    \item \lstinline{PTRACE_PEEKTEXT, PTRACE_PEEKDATA} - Read tracee's memory,
+    \item \lstinline{PTRACE_POKETEXT, PTRACE_POKEDATA} - Write into tracee's memory,
+    \item \lstinline{PTRACE_GETREGS} - Read tracee's register values,
+    \item \lstinline{PTRACE_SETREGSET} - Modify tracee's register values,
+    \item \lstinline{PTRACE_GETSIGINFO} - Retrieve information about the signal that caused tracee to stop,
+    \item \lstinline{PTRACE_CONT} - Restart the stopped tracee process,
+    \item \lstinline{PTRACE_SINGLESTEP} - Restart the stopped tracee but stop it after executing one instruction.
+\end{itemize}
+
+\subsubsection{Windows}
+Windows does not have ptrace, instead the Win32 API has handful of other system calls which helps debugging \todo{Ocitovat Kokesovo prednasky}. It has function \lstinline{CreateProcess}, which can be passed a special argument\footnote{to one out of the 10 parameters this function has.} \lstinline{DEBUG_ONLY_THIS_PROCESS}.
