@@ -2,11 +2,22 @@
 Often times, it happens that a written program has different behaviour than we expected. This can manifest in all sorts of ways, from different output to crashing. There are many ways of finding the mistake, one of them is using a debugger to debug the program \cite{software-debugging-testing-verification}.
 Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. Implementation of debuggers can vary based on target machine, operating system or if the program is native or expected to be run by an interpreter.
 
+There are multiple debugger types \todo{Ocitovat Kokesovo prednasky}.
+\begin{itemize}
+    \item An user-mode debugger - Can debug applications in user mode.
+    \item A kernel debugger - Can debug the kernel and the kernel drivers.
+    \item A source-level debugger - Can set breakpoints in application according to its source code.
+    \item An assembly-level debugger - Works with the assembly language
+
+This thesis will mainly focus on source-level debugging and assembly level debugging. We will see that those two are closely intertwined. First of, a brief overview of source-level and assembly-level debugger features will follow.
+
 \section{Breakpoint}\label{breakpoint}
-Breakpoints are one of the most important debugger features. They can be set on lines corresponding to a line in the source code and when the program will arive at that location, it will pause. The debugger can then inspect various traits of the running program. Some debuggers may even allow to place breakpoints into expressions\footnote{This is especially important for languages like LISP, where function can just be one big expression.}. Breakpoints may also have conditions which are checked when the program arrives at given line. If the condition holds then the program is paused. 
+Breakpoints are one of the most important debugger features. Source-level debugger can set them on some location in the source code and when the program arrives at that location, it will pause. The debugger can then inspect various traits of the running program. The location is most often line, but can even be inside expressions\footnote{This is especially important for functional languages, where function can just be one big expression.}. Hovewer we will consider breakpoints that only stops on a line. Assembly-level debuggers can stop when instruction on some address is being executed, so effectively on a line of the assembly program.
+
+Breakpoints may also have conditions which are checked when the program arrives at given line. If the condition holds then the program is paused. This can be useful for example to stop at the end of the loop.
 
 \section{Stepping}
-Debuggers also allows to "make a step" in the code. It executes one line and pauses on the next one. This means that we can run the program line by lineand see the behaviour of the program.
+Debuggers also allows to "make a step" in the code. It executes one line and pauses on the next one. This means that we can run the program line by line and inspect the behaviour of the program.
 There are often multiple categories of steps:
 
 \begin{itemize}
@@ -16,11 +27,9 @@ There are often multiple categories of steps:
 \end{itemize}
 
 \section{Debugging native programs}
-For now, we pretended that debuggers can magicaly work with lines of source code. However, for programs to be run they first need to be compiled to native code - series of binary instructions (there are also interpreted programs, which are touched upon later). Debugger then interacts with this native code. It, by itself, has no idea that line $x$ correspond to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug informating is DWARF format \cite{dwarf}, it will be thoroughly described in \todo{TODO} section.  
+For now, we pretended that source-level debuggers can magicaly work with lines of source code. However, for programs to be run they first need to be compiled to native code - series of binary instructions (there are also interpreted programs, which we will touch upon later). Debugger then interacts with this native code. It, by itself, has no idea that line $x$ correspond to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug informating is DWARF format \cite{dwarf}, it will be thoroughly described in \todo{TODO} section.  
 
-There are however some debuggers which only works on the machine code level. They do not perform any mapping to the source code. And the debuggers that do have to work on the machine code level all the same. They just need to map source to binary, but breakpoints, stepping or inspecting memory (variables) is done at the machine code level. Next section will explore how all of this is implemented.
-
-Implementation itself can greatly differ based on operating system or target machine. Following sections aims to describe the most often used OS and targets.
+As we mentioned, there are some debuggers which only works on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section we will explore how assembly-level debuggers are implemented. Implementation itself can greatly differ based on operating system or target machine. Following sections aims to describe the most often used OS and targets.
 
 \subsection{Breakpoints}
 Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \lstinline{INT3}, opcode \lstinline{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
