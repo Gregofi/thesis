@@ -8,6 +8,7 @@ There are multiple debugger types \todo{Ocitovat Kokesovo prednasky}.
     \item A kernel debugger - Can debug the kernel and the kernel drivers.
     \item A source-level debugger - Can set breakpoints in application according to its source code.
     \item An assembly-level debugger - Works with the assembly language
+\end{itemize}
 
 This thesis will mainly focus on source-level debugging and assembly level debugging. We will see that those two are closely intertwined. First of, a brief overview of source-level and assembly-level debugger features will follow.
 
@@ -49,9 +50,9 @@ For creating breakpoint on address \lstinline{0x02}, the debugger needs to repla
     0x4 pop    ebp            5d
 \end{lstlisting}.
 
-The processor executes the \lstinline{xor}, then the \lstinline{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \lstinline{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which is \lstinline{0xe5}! The debugger needs to deal with this. But first, lets see how different operating system allows debugging via their api.
+The processor executes the \lstinline{xor}, then the \lstinline{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \lstinline{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which begins with \lstinline{0xe5}. If the replaced instruction is one byte in size, it would skip the replaced instruction and execute the rest of the program. If it was bigger, it would essentially interpret the body of that instruction as new instruction. This would most likely cause a crash. The debugger needs to deal with this. But first, lets see how different operating system allows debugging via their api.
 
-\subsubsection{ptrace}
+\subsection{ptrace}
 Linux offers special system call which is very handy for debugging. It is called \lstinline{ptrace} \cite{ptrace} - process trace. It has following signature: \lstinline{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \lstinline{PTRACE_COMMAND}, which specifies the behaviour of the function (for example \lstinline{PTRACE_SINGLESTEP} for single step), pid of some process and some other parameters, depending on the \lstinline{PTRACE_COMMAND}. 
 
 It allows to observe and control the execution of another process, which will most often be the debuggee. When the debugee is traced, it will stop each time a signal is delivered\footnote{\lstinline{SIGKILL} is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \lstinline{waitpid}. This system call return value will indicate the reason debuggee stopped. \lstinline{ptrace(PTRACE_TRACEME, ...)} called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee. The debugger can then issue other commands to the child. There are also \lstinline{PTRACE_ATTACH} and \lstinline{PTRACE_SEIZE}, which can be used for attaching to existing process.
@@ -67,5 +68,51 @@ It allows to observe and control the execution of another process, which will mo
     \item \lstinline{PTRACE_SINGLESTEP} - Restart the stopped tracee but stop it after executing one instruction.
 \end{itemize}
 
-\subsubsection{Windows}
-Windows does not have ptrace, instead the Win32 API has handful of other system calls which helps debugging \todo{Ocitovat Kokesovo prednasky}. It has function \lstinline{CreateProcess}, which can be passed a special argument\footnote{to one out of the 10 parameters this function has.} \lstinline{DEBUG_ONLY_THIS_PROCESS}.
+\todo{Describe how they are used in real code}
+
+\subsection{Windows}
+Windows also has built in support for debugging at the Win32API layer \cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds on \textit{debug events} and two \textit{debug functions} and it allows to write into the virtual address space of another process, which is needed for debugging. Win32 API offers following functions which all help with debugging:
+
+\begin{itemize}
+    \item \lstinline{CreateProcess} - Start a target process under control of a debugger
+    \item \lstinline{OpenProcess} - Attach to an existing process
+    \item \lstinline{DebugActiveProcessStop} - Stop debugging the process without terminating it
+    \item \lstinline{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process. This passes control of the process to the debugger, if there is one.
+    \item \lstinline{WaitForDebugEvent} - Waits for new debug events
+    \item \lstinline{ContinueDebugEvent} - Continue the debuggee execution after processing debug event
+    \item \lstinline{ReadProcessMemory} and \lstinline{WriteProcessMemory} - Read and modify debuggee virtual address space.
+\end{itemize}
+
+The general structure of Windows debugger can be seen in figure \ref{fig:win32debugger}.
+
+\begin{figure}
+    \centering
+    \scalebox{0.8}{
+    \begin{tikzpicture}
+        \draw (-7,0) -- (-7,-11) (0,0) -- (0,-11) (7,0) -- (7,-11);
+        \node at (-7,.3) {Debugee};
+        \node at (0,.3) {Win32 API};
+        \node at (7,.3) {Debugger};
+        \draw[<-] (0,-1) -- node[midway,above] {\texttt{CreateProcess}} (7,-1);
+        \draw[<-] (-7,-2) -- node[midway,above] {Create} (0,-2);
+        \draw[->] (0,-3) -- node[midway,above] {\texttt{CreateProcess} returns} (7,-3);
+        \draw[<-] (0,-5) -- node[midway,above] {\texttt{ContinueDebugProcess}} (7,-5);
+        \draw[<-] (0,-6) -- node[midway,above] {\texttt{WaitForDebugEvent}} (7,-6);
+        \draw[dashed,->] (-7,-6.5) -- node[midway,above] {Exception} (0,-6.5);
+        \draw[->] (0,-7) -- node[midway,above] {\texttt{WaitForDebugEvent} returns \texttt{true}} (7,-7);
+        \draw[dashed, <-] (-7, -8) -- node[above left] {Debugger actions} (7, -8);
+        \draw[<-] (0,-9) -- node[midway,above] {\texttt{ContinueDebugProcess}} (7,-9);
+        \draw[<-] (0,-10) -- node[midway,above] {\texttt{WaitForDebugEvent}} (7,-10);
+        \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
+    \end{tikzpicture}
+    }
+    \caption{A caption}
+    \label{fig:win32debugger}
+\end{figure}
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+\subsubsection*{Debug Events}
+
