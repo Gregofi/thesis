@@ -10,39 +10,43 @@ There are multiple debugger types \todo{Ocitovat Kokesovo prednasky}.
     \item An assembly-level debugger - Works with the assembly language
 \end{itemize}
 
-This thesis will mainly focus on source-level debugging and assembly level debugging. We will see that those two are closely intertwined. First of, a brief overview of source-level and assembly-level debugger features will follow.
+This thesis will mainly focus on source-level debugging and assembly level debugging. We will see that those two are closely intertwined. First, we will present the most important and common debugger features.
 
-\section{Breakpoint}\label{breakpoint}
+\section{Fundamental debugger features}
+\subsection{Breakpoint}\label{breakpoint}
 Breakpoints are one of the most important debugger features. Source-level debugger can set them on some location in the source code and when the program arrives at that location, it will pause. The debugger can then inspect various traits of the running program. The location is most often line, but can even be inside expressions\footnote{This is especially important for functional languages, where function can just be one big expression.}. Hovewer we will consider breakpoints that only stops on a line. Assembly-level debuggers can stop when instruction on some address is being executed, so effectively on a line of the assembly program.
 
-Breakpoints may also have conditions which are checked when the program arrives at given line. If the condition holds then the program is paused. This can be useful for example to stop at the end of the loop.
+Breakpoints may also have conditions that are checked when the program arrives at a given line. If the condition holds then the program is paused. This can be useful for example to stop at the end of the loop.
 
-\section{Stepping}
-Debuggers also allows to "make a step" in the code. It executes one line and pauses on the next one. This means that we can run the program line by line and inspect the behaviour of the program.
+\subsection{Stepping}
+Debuggers also allow us to "make a step" in the code. It executes one line and pauses on the next one. This means that we can run the program line by line and inspect the behavior of the program.
 There are often multiple categories of steps:
 
 \begin{itemize}
-    \item Step in - Executes one line. If the line was call to function, it pauses on the first line of the called function.
-    \item Step over - Executes one line. If the line was call to function, it executes the whole body of the function and pauses on the line after the call instruction.
+    \item Step in - Executes one line. If the line was a call to a function, it pauses on the first line of the called function.
+    \item Step over - Executes one line. If the line was a call to a function, it executes the whole body of the function and pauses on the line after the call instruction.
     \item Step out - Runs the program until it returns from current function, and pauses on that line.
 \end{itemize}
 
-\section{Debugging native programs}
-For now, we pretended that source-level debuggers can magicaly work with lines of source code. However, for programs to be run they first need to be compiled to native code - series of binary instructions (there are also interpreted programs, which we will touch upon later). Debugger then interacts with this native code. It, by itself, has no idea that line $x$ correspond to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug informating is DWARF format \cite{dwarf}, it will be thoroughly described in \todo{TODO} section.  
+\subsection{Inspecting and changing memory}
+\todo{TODO}
 
-As we mentioned, there are some debuggers which only works on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section we will explore how assembly-level debuggers are implemented. Implementation itself can greatly differ based on operating system or target machine. Following sections aims to describe the most often used OS and targets.
+\section{Debugging native programs}
+For now, we pretended that source-level debuggers can magically work with lines of source code. However, for programs to be run they first need to be compiled to native code - a series of binary instructions (there are also interpreted programs, which we will touch upon later). The debugger then interacts with this native code. It, by itself, has no idea that line $x$ corresponds to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug information is DWARF format \cite{dwarf}, which will be thoroughly described in \todo{TODO} section. 
+
+As we mentioned, some debuggers only work on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section, we will explore how assembly-level debuggers are implemented. The implementation itself can greatly differ based on the operating system or target machine. The following section aims to describe the most often used OS and targets.
 
 \subsection{Breakpoints}
 Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \lstinline{INT3}, opcode \lstinline{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
 
-Consider following code
+Consider the following code
 \begin{lstlisting}
 0x0 xor    eax,eax        33 c0
 0x2 mov    esp,ebp        8b e5
 0x4 pop    ebp            5d
 \end{lstlisting}
 
-For creating breakpoint on address \lstinline{0x02}, the debugger needs to replace code on that location with the \lstinline{0xCC}. The result would look like this 
+For creating a breakpoint on address \lstinline{0x02}, the debugger needs to replace the code on that location with the \lstinline{0xCC}. The result would look like this
 
 \begin{lstlisting}
     0x0 xor    eax,eax        33 c0
@@ -71,19 +75,24 @@ It allows to observe and control the execution of another process, which will mo
 \todo{Describe how they are used in real code}
 
 \subsection{Windows}
-Windows also has built in support for debugging at the Win32API layer \cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds on \textit{debug events} and two \textit{debug functions} and it allows to write into the virtual address space of another process, which is needed for debugging. Win32 API offers following functions which all help with debugging:
+Windows also has built-in support for debugging at the Win32API layer \cite{windows-msdn-debugging-api, windows-press-debugging-api}.
+It builds on \textit{debug events} and \textit{debug functions}. Summary of some of the functions that Win32 API offers which all help with debugging:
 
 \begin{itemize}
-    \item \lstinline{CreateProcess} - Start a target process under control of a debugger
+    \item \lstinline{CreateProcess} - Start a target process under the control of a debugger
     \item \lstinline{OpenProcess} - Attach to an existing process
     \item \lstinline{DebugActiveProcessStop} - Stop debugging the process without terminating it
-    \item \lstinline{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process. This passes control of the process to the debugger, if there is one.
+    \item \lstinline{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process. 
+                                          This passes control of the process to the debugger if there is one.
     \item \lstinline{WaitForDebugEvent} - Waits for new debug events
     \item \lstinline{ContinueDebugEvent} - Continue the debuggee execution after processing debug event
     \item \lstinline{ReadProcessMemory} and \lstinline{WriteProcessMemory} - Read and modify debuggee virtual address space.
 \end{itemize}
 
 The general structure of Windows debugger can be seen in figure \ref{fig:win32debugger}.
+The debugger waits for debug events via function \texttt{WaitForDebugEvent}.
+This function has a timeout parameter, so the debugger can also do other things while it's waiting.
+These events are put in a queue, so the debugger will not miss any.
 
 \begin{figure}
     \centering
@@ -106,9 +115,36 @@ The general structure of Windows debugger can be seen in figure \ref{fig:win32de
         \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
     \end{tikzpicture}
     }
-    \caption{A caption}
+    \caption{A sequence diagram for debugger using Windows api.}
     \label{fig:win32debugger}
 \end{figure}
+
+The debug events are not only breakpoints. These include all exceptions, thread creation, loading and
+unloading of DLL, and sending an output string via a special function. The main point of interest is the exceptions.
+By these, we do not mean the standard C++ exceptions but rather Microsoft \textit{Structured Exception Handling}.
+
+\subsubsection*{Intermezzo: Structured Exception Handling}
+This feature is specific to Windows only. For example, if division by zero was performed in a program on Linux,
+a signal would be sent to the process. Windows don't have signals, instead, it uses Structured Exception Handling \cite{windows-msdn-seh}. 
+From now on, we will be using the abbreviation 'SEH'.
+An exception is an event that requires execution of code outside the normal flow of control. There are software exceptions,
+like throwing an exception explicitly or by OS, and hardware exceptions, like the division by zero we mentioned.
+Instruction with opcode \lstinline{0xCC}, which is used for breakpoints, will also raise an exception. SEH unifies both of these things into one.
+
+When an exception is triggered, control is transferred to the system. It saves the state of the thread and some other information.
+This information can be used to continue executing from the point when the exception was thrown when it is resolved. It also
+contains information about which type of exception was thrown, if execution can continue after handling the exception, address where the
+exception occured and some others\footnote{See MSDN documentation \cite{windows-msdn-seh} for full detailed list}.
+The system then searches for an exception handler which will handle the exception in this order:
+
+\begin{enumerate}
+    \item If the process is debugged the debugger is notified.
+    \item If it is not or the debugger does not handle the exception, the frame-based exception handler is to be found\footnote{The handlers are not very important to us, see MSDN documentation if you're interested \cite{windows-msdn-seh}.}
+    \item If no frame-based handler can be found, or no handler handles the exception, but the process is being debugged then the debugger gets notified once again.
+    \item The system provides default handling, which is to terminate the program via \lstinline{ExitProcess} most of the time.
+\end{enumerate}
+
+Here we see that every exception that occurs in the debuggee causes the debugger to be notified. Breakpoints are also caused by an exception, as was briefly mentioned before. There are two possible notifications to the debugger. The first is known as \textit{first-chance} notification \cite{windows-msdn-dbg-exc-handling}. The debugger has to inspect the information about the exception and see if it was a breakpoint or single-step. The user can then work with the process before any exception handlers were executed. When the program is continued via \lstinline{ContinueDebugEvent}\footnote{This function has a special parameter, which is used to tell that the exception was or was not handled.}, the debugger is notified once again if no appropriate exception handler was found for the exception. This is known as \textit{last-chance} notification because if the debugger does not handle the exception the debuggee will be terminated.
 
 \begin{lstlisting}
 
