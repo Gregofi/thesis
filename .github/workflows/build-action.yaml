@@ -1,0 +1,26 @@
+name: build
+
+on: [push]
+
+jobs:
+  build-pdf:
+    name: Build PDF
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: texlive texlive-xetex texlive-bibtex-extra biber texlive-lang-czechslovak latexmk
+          version: 1.0
+
+      - name: Build
+        run: |
+          cd ${{ github.workspace }}
+          make
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pdf
+          path: ${{ github.workspace }}/out/ctufit-thesis.pdf
+
