@@ -54,7 +54,10 @@ For creating a breakpoint on address \lstinline{0x02}, the debugger needs to rep
     0x4 pop    ebp            5d
 \end{lstlisting}.
 
-The processor executes the \lstinline{xor}, then the \lstinline{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \lstinline{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which begins with \lstinline{0xe5}. If the replaced instruction is one byte in size, it would skip the replaced instruction and execute the rest of the program. If it was bigger, it would essentially interpret the body of that instruction as new instruction. This would most likely cause a crash. The debugger needs to deal with this. But first, lets see how different operating system allows debugging via their api.
+The processor executes the \lstinline{xor}, then the \lstinline{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \lstinline{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which begins with \lstinline{0xe5}. If the replaced instruction is one byte in size, it would skip the replaced instruction and execute the rest of the program. If it was bigger, it would essentially interpret the body of that instruction as new instruction. This would most likely cause a crash. The debugger needs to deal with this. 
+
+\subsection{Trap flags}
+The x86 architecture contains special \textit{Trap flag}. When it is set, the processor issues interrupt \texttt{INT1} every time an instruction is executed. \todo{Doplnit nebo smazat: Viz konzultace}.
 
 \subsection{ptrace}
 Linux offers special system call which is very handy for debugging. It is called \lstinline{ptrace} \cite{ptrace} - process trace. It has following signature: \lstinline{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \lstinline{PTRACE_COMMAND}, which specifies the behaviour of the function (for example \lstinline{PTRACE_SINGLESTEP} for single step), pid of some process and some other parameters, depending on the \lstinline{PTRACE_COMMAND}. 
@@ -132,10 +135,10 @@ like throwing an exception explicitly or by OS, and hardware exceptions, like th
 Instruction with opcode \lstinline{0xCC}, which is used for breakpoints, will also raise an exception. SEH unifies both of these things into one.
 
 When an exception is triggered, control is transferred to the system. It saves the state of the thread and some other information.
-This information can be used to continue executing from the point when the exception was thrown when it is resolved. It also
+This information can be used to continue execution from the point where the exception was thrown when it is resolved. It also
 contains information about which type of exception was thrown, if execution can continue after handling the exception, address where the
 exception occured and some others\footnote{See MSDN documentation \cite{windows-msdn-seh} for full detailed list}.
-The system then searches for an exception handler which will handle the exception in this order:
+The system then searches for an exception handler which will handle the exception. The search is performed in this order:
 
 \begin{enumerate}
     \item If the process is debugged the debugger is notified.
@@ -144,11 +147,13 @@ The system then searches for an exception handler which will handle the exceptio
     \item The system provides default handling, which is to terminate the program via \lstinline{ExitProcess} most of the time.
 \end{enumerate}
 
-Here we see that every exception that occurs in the debuggee causes the debugger to be notified. Breakpoints are also caused by an exception, as was briefly mentioned before. There are two possible notifications to the debugger. The first is known as \textit{first-chance} notification \cite{windows-msdn-dbg-exc-handling}. The debugger has to inspect the information about the exception and see if it was a breakpoint or single-step. The user can then work with the process before any exception handlers were executed. When the program is continued via \lstinline{ContinueDebugEvent}\footnote{This function has a special parameter, which is used to tell that the exception was or was not handled.}, the debugger is notified once again if no appropriate exception handler was found for the exception. This is known as \textit{last-chance} notification because if the debugger does not handle the exception the debuggee will be terminated.
+Here we see that every exception that occurs in the debuggee causes the debugger to be notified. Breakpoints are also caused by an exception, as was briefly mentioned before. There are two possible notifications to the debugger. The first is known as \textit{first-chance} notification \cite{windows-msdn-dbg-exc-handling}. The debugger can (and should) inspect the information about the exception and see if it was a breakpoint or single-step. These only occurs if the process is debugged (it wouldn't happen otherwise) and the debugger should handle them. If it is something else it can ignore the exceptions. When the program is continued via \lstinline{ContinueDebugEvent}\footnote{This function has a special parameter, which is used to tell that the exception was or was not handled.}, the debugger is notified once again if no appropriate exception handler was found for the exception. This is known as \textit{last-chance} notification because if the debugger does not handle the exception the debuggee will be terminated. It gives the user a chance to debug why is his process terminating.
 
+Here are some exceptions that tie into debugging:
 \begin{lstlisting}
-
+    \item \texttt{STATUS_BREAKPOINT} - Raised when a hardware-defined breakpoint was encountered. This includes the mentioned instruction.
+    \item \texttt{STATUS_SINGLE_STEP} - Raised when a single step was completed, ie. when instruction was executed and the trap flag is set.
 \end{lstlisting}
 
 \subsubsection*{Debug Events}
-
+\todo{https://learn.microsoft.com/en-us/windows/win32/debug/debugging-events}
