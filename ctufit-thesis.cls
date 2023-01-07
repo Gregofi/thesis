@@ -483,19 +483,3 @@
 
 \newenvironment{chapterabstract}{\hfill\begin{minipage}{\dimexpr\textwidth-0.5cm}\itshape}{\end{minipage}\vskip 0.5cm\par\@afterindentfalse\@afterheading}
 
-\AtBeginDocument{%
-	\@ifpackageloaded{listings}{%
-		\DeclareRobustCommand{\lstlistingname}{\thectufitlistinglabel}%
-		\DeclareRobustCommand{\lstlistlistingname}{\thectufitlollabel}%
-		\lstset{basicstyle=\small\ttfamily,keywordstyle=\bfseries,%
-				backgroundcolor=\color{backgroundgray},%
-				frame=single,framerule=0pt,xleftmargin=\fboxsep,xrightmargin=\fboxsep}%
-	}{}%
-	\@ifpackageloaded{minted}{%
-		\DeclareRobustCommand{\listingscaption}{\thectufitlistinglabel}%
-		\DeclareRobustCommand{\listoflistingscaption}{\thectufitlollabel}%
-		\usemintedstyle{bw}%
-		\setminted{bgcolor=backgroundgray}%
-		\setmintedinline{bgcolor={}}
-	}{}%
-}

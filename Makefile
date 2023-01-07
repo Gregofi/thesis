@@ -5,4 +5,4 @@ clean:
 
 compile:
 	mkdir -p out/text
-	latexmk -xelatex -bibtex -output-directory=out
+	latexmk -xelatex -bibtex -output-directory=out -shell-escape -pdf

@@ -2,7 +2,12 @@
 Often times, it happens that a written program has different behaviour than we expected. This can manifest in all sorts of ways, from different output to crashing. There are many ways of finding the mistake, one of them is using a debugger to debug the program \cite{software-debugging-testing-verification}.
 Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. Implementation of debuggers can vary based on target machine, operating system or if the program is native or expected to be run by an interpreter.
 
-There are multiple debugger types \todo{Ocitovat Kokesovo prednasky}.
+\begin{minted}{python}
+1 + 2
+3 + 5
+\end{minted}
+
+There are multiple debugger types \todo{Ocitovat tu microsoft press store thingie popr. kokesovo prednasky}.
 \begin{itemize}
     \item An user-mode debugger - Can debug applications in user mode.
     \item A kernel debugger - Can debug the kernel and the kernel drivers.
@@ -46,7 +51,7 @@ Consider the following code
 0x4 pop    ebp            5d
 \end{lstlisting}
 
-For creating a breakpoint on address \lstinline{0x02}, the debugger needs to replace the code on that location with the \lstinline{0xCC}. The result would look like this
+To create a breakpoint on address \lstinline{0x02}, the debugger needs to replace the code on that location with the \lstinline{0xCC}. The result would look like this
 
 \begin{lstlisting}
     0x0 xor    eax,eax        33 c0
