@@ -179,10 +179,9 @@ Here are some exceptions that tie into debugging:
 \subsubsection*{Tying it all together}
 Now we have all necessary building block to build a simple proof of concept Windows debugger. On figure \ref{fig:windows-debugger-mainloop}, you can see a basic idea of a main loop of the debugger. It waits for debug events and branches depending of the type of event. It needs not only handle exceptions, but other events also. For example if the debugee creates a thread that is something the debugger should be aware of. Modern debuggers trace all threads of the program.
 
-However, exceptions are the most interesting for us. There, breakpoint and single step handling is done, as can be seen in the figure. On both of these, the debugger should handle the exception itself, so this is the \textit{first chance} notifications. There is also an \mintiline{DBG_CONTROL_C}, which happens on CTRL + C keyboard press. This should terminate the program. The debugger will pass the first chance and catch the last chance exception, so user has a final chance to look at the program state before it exits.
+\todo{Pridat dalsi figure kde je jak se hanndlujou tyhle blbosti} However, exceptions are the most interesting for us. There, breakpoint and single step handling should be done. On both of these, the debugger should handle the exception itself, so this is the \textit{first chance} notifications. There is also an \mintinline{DBG_CONTROL_C}, which happens on CTRL + C keyboard press. This should terminate the program. The debugger will pass the first chance and catch the last chance exception, so user has a final chance to look at the program state before it exits.
 
 \begin{figure}
-    \label{fig:windows-debugger-mainloop}
     \begin{minted}{c}
 void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 {
@@ -201,6 +200,8 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
                       dwContinueStatus);
    }
 }
-    \end{minted}
+\end{minted}
+\caption{Windows debugger main loop}
+\label{fig:windows-debugger-mainloop}
 \end{figure}
 
