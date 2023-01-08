@@ -34,7 +34,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % FILL IN THIS INFORMATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\ctufittitle{Název příkladné závěrečné práce} % replace with the title of your thesis
+\ctufittitle{Tiny86 Debugger} % replace with the title of your thesis
 \ctufitauthorfull{Bc. Filip Gregor} % replace with your full name (first name(s) and then family name(s) / surname(s)) including academic degrees
 \ctufitauthorsurnames{Gregor} % replace with your surname(s) / family name(s)
 \ctufitauthorgivennames{Filip} % replace with your first name(s) / given name(s)
@@ -93,10 +93,11 @@
 \usepackage[style=iso-numeric]{biblatex}
 \addbibresource{text/bib-database.bib}
 \usepackage{listings} % typesetting of sources
-% \usepackage{minted} % typesetting of sources
+\usepackage[fontsize=11pt]{fontsize}
 \usepackage{xcolor}
 \newcommand\todo[1]{\textcolor{red}{#1}}
 \usetikzlibrary{calc,positioning,arrows}
+
 %theorems, definitions, etc.
 \theoremstyle{plain}
 \newtheorem{theorem}{Věta}
@@ -116,6 +117,8 @@
 %%%%%%%%%%%%%%%%%%%%%%
 % DEMO CONTENTS SETTINGS END
 %%%%%%%%%%%%%%%%%%%%%%
+\usetikzlibrary{arrows.meta}
+\tikzset{>={Latex[width=3mm,length=3mm]}}
 
 \begin{document}
 \frontmatter\frontmatterinit % do not remove these two commands

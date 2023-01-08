@@ -2,11 +2,6 @@
 Often times, it happens that a written program has different behaviour than we expected. This can manifest in all sorts of ways, from different output to crashing. There are many ways of finding the mistake, one of them is using a debugger to debug the program \cite{software-debugging-testing-verification}.
 Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. Implementation of debuggers can vary based on target machine, operating system or if the program is native or expected to be run by an interpreter.
 
-\begin{minted}{python}
-1 + 2
-3 + 5
-\end{minted}
-
 There are multiple debugger types \todo{Ocitovat tu microsoft press store thingie popr. kokesovo prednasky}.
 \begin{itemize}
     \item An user-mode debugger - Can debug applications in user mode.
@@ -42,42 +37,39 @@ For now, we pretended that source-level debuggers can magically work with lines 
 As we mentioned, some debuggers only work on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section, we will explore how assembly-level debuggers are implemented. The implementation itself can greatly differ based on the operating system or target machine. The following section aims to describe the most often used OS and targets.
 
 \subsection{Breakpoints}
-Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \lstinline{INT3}, opcode \lstinline{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
+Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \mintinline{c}{INT3}, opcode \mintinline{c}{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
 
-Consider the following code
-\begin{lstlisting}
+Consider the following code \todo{Typeset these guys correctly}
+\begin{minted}{asm}
 0x0 xor    eax,eax        33 c0
 0x2 mov    esp,ebp        8b e5
 0x4 pop    ebp            5d
-\end{lstlisting}
-
-To create a breakpoint on address \lstinline{0x02}, the debugger needs to replace the code on that location with the \lstinline{0xCC}. The result would look like this
-
-\begin{lstlisting}
-    0x0 xor    eax,eax        33 c0
-    0x2 int3                  cc e5
-    0x4 pop    ebp            5d
-\end{lstlisting}.
-
-The processor executes the \lstinline{xor}, then the \lstinline{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \lstinline{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which begins with \lstinline{0xe5}. If the replaced instruction is one byte in size, it would skip the replaced instruction and execute the rest of the program. If it was bigger, it would essentially interpret the body of that instruction as new instruction. This would most likely cause a crash. The debugger needs to deal with this. 
+\end{minted}
+To create a breakpoint on address \mintinline{c}{0x02}, the debugger needs to replace the code on that location with the \mintinline{c}{0xCC}. The result would look like this:
+\begin{minted}{asm}
+0x0 xor    eax,eax        33 c0
+0x2 int3                  cc e5
+0x4 pop    ebp            5d
+\end{minted}
+The processor executes the \mintinline{c}{xor}, then the \mintinline{c}{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \mintinline{c}{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which begins with \mintinline{c}{0xe5}. If the replaced instruction is one byte in size, it would skip the replaced instruction and execute the rest of the program. If it was bigger, it would essentially interpret the body of that instruction as new instruction. This would most likely cause a crash. The debugger needs to deal with this. 
 
 \subsection{Trap flags}
-The x86 architecture contains special \textit{Trap flag}. When it is set, the processor issues interrupt \texttt{INT1} every time an instruction is executed. \todo{Doplnit nebo smazat: Viz konzultace}.
+The x86 architecture contains special \textit{Trap flag}. When it is set, the processor issues interrupt \mintinline{c}{INT1} every time an instruction is executed. \todo{Doplnit nebo smazat: Viz konzultace}.
 
 \subsection{ptrace}
-Linux offers special system call which is very handy for debugging. It is called \lstinline{ptrace} \cite{ptrace} - process trace. It has following signature: \lstinline{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \lstinline{PTRACE_COMMAND}, which specifies the behaviour of the function (for example \lstinline{PTRACE_SINGLESTEP} for single step), pid of some process and some other parameters, depending on the \lstinline{PTRACE_COMMAND}. 
+Linux offers special system call which is very handy for debugging. It is called \mintinline{c}{ptrace} \cite{ptrace} - process trace. It has following signature: \mintinline{c}{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \mintinline{c}{PTRACE_COMMAND}, which specifies the behaviour of the function (for example \mintinline{c}{PTRACE_SINGLESTEP} for single step), pid of some process and some other parameters, depending on the \mintinline{c}{PTRACE_COMMAND}. 
 
-It allows to observe and control the execution of another process, which will most often be the debuggee. When the debugee is traced, it will stop each time a signal is delivered\footnote{\lstinline{SIGKILL} is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \lstinline{waitpid}. This system call return value will indicate the reason debuggee stopped. \lstinline{ptrace(PTRACE_TRACEME, ...)} called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee. The debugger can then issue other commands to the child. There are also \lstinline{PTRACE_ATTACH} and \lstinline{PTRACE_SEIZE}, which can be used for attaching to existing process.
+It allows to observe and control the execution of another process, which will most often be the debuggee. When the debugee is traced, it will stop each time a signal is delivered\footnote{\mintinline{c}{SIGKILL} is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \mintinline{c}{waitpid}. This system call return value will indicate the reason debuggee stopped. \mintinline{c}{ptrace(PTRACE_TRACEME, ...)} called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee. The debugger can then issue other commands to the child. There are also \mintinline{c}{PTRACE_ATTACH} and \mintinline{c}{PTRACE_SEIZE}, which can be used for attaching to existing process.
 
-\lstinline{ptrace} has many commands, here are some of the most important:
+\mintinline{c}{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
-    \item \lstinline{PTRACE_PEEKTEXT, PTRACE_PEEKDATA} - Read tracee's memory,
-    \item \lstinline{PTRACE_POKETEXT, PTRACE_POKEDATA} - Write into tracee's memory,
-    \item \lstinline{PTRACE_GETREGS} - Read tracee's register values,
-    \item \lstinline{PTRACE_SETREGSET} - Modify tracee's register values,
-    \item \lstinline{PTRACE_GETSIGINFO} - Retrieve information about the signal that caused tracee to stop,
-    \item \lstinline{PTRACE_CONT} - Restart the stopped tracee process,
-    \item \lstinline{PTRACE_SINGLESTEP} - Restart the stopped tracee but stop it after executing one instruction.
+    \item \mintinline{c}{PTRACE_PEEKTEXT, PTRACE_PEEKDATA} - Read tracee's memory,
+    \item \mintinline{c}{PTRACE_POKETEXT, PTRACE_POKEDATA} - Write into tracee's memory,
+    \item \mintinline{c}{PTRACE_GETREGS} - Read tracee's register values,
+    \item \mintinline{c}{PTRACE_SETREGSET} - Modify tracee's register values,
+    \item \mintinline{c}{PTRACE_GETSIGINFO} - Retrieve information about the signal that caused tracee to stop,
+    \item \mintinline{c}{PTRACE_CONT} - Restart the stopped tracee process,
+    \item \mintinline{c}{PTRACE_SINGLESTEP} - Restart the stopped tracee but stop it after executing one instruction.
 \end{itemize}
 
 \todo{Describe how they are used in real code}
@@ -87,18 +79,18 @@ Windows also has built-in support for debugging at the Win32API layer \cite{wind
 It builds on \textit{debug events} and \textit{debug functions}. Summary of some of the functions that Win32 API offers which all help with debugging:
 
 \begin{itemize}
-    \item \lstinline{CreateProcess} - Start a target process under the control of a debugger
-    \item \lstinline{OpenProcess} - Attach to an existing process
-    \item \lstinline{DebugActiveProcessStop} - Stop debugging the process without terminating it
-    \item \lstinline{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process. 
+    \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an active process.
+    \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process. 
                                           This passes control of the process to the debugger if there is one.
-    \item \lstinline{WaitForDebugEvent} - Waits for new debug events
-    \item \lstinline{ContinueDebugEvent} - Continue the debuggee execution after processing debug event
-    \item \lstinline{ReadProcessMemory} and \lstinline{WriteProcessMemory} - Read and modify debuggee virtual address space.
+    \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events.
+    \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution after processing debug event.
+    \item \mintinline{c}{OutputDebugString} - Sends a string to the debugger for display.
+    \item \mintinline{c}{ReadProcessMemory} and \mintinline{c}{WriteProcessMemory} - Read and modify process virtual address space.
+    \item \mintinline{c}{FlushInstructionCache} - Flushes instruction cache of the process.
 \end{itemize}
 
 The general structure of Windows debugger can be seen in figure \ref{fig:win32debugger}.
-The debugger waits for debug events via function \texttt{WaitForDebugEvent}.
+The debugger waits for debug events via function \mintinline{c}{WaitForDebugEvent}.
 This function has a timeout parameter, so the debugger can also do other things while it's waiting.
 These events are put in a queue, so the debugger will not miss any.
 
@@ -110,16 +102,16 @@ These events are put in a queue, so the debugger will not miss any.
         \node at (-7,.3) {Debugee};
         \node at (0,.3) {Win32 API};
         \node at (7,.3) {Debugger};
-        \draw[<-] (0,-1) -- node[midway,above] {\texttt{CreateProcess}} (7,-1);
+        \draw[<-] (0,-1) -- node[midway,above] {\mintinline{c}{CreateProcess}} (7,-1);
         \draw[<-] (-7,-2) -- node[midway,above] {Create} (0,-2);
-        \draw[->] (0,-3) -- node[midway,above] {\texttt{CreateProcess} returns} (7,-3);
-        \draw[<-] (0,-5) -- node[midway,above] {\texttt{ContinueDebugProcess}} (7,-5);
-        \draw[<-] (0,-6) -- node[midway,above] {\texttt{WaitForDebugEvent}} (7,-6);
+        \draw[->] (0,-3) -- node[midway,above] {\mintinline{c}{CreateProcess} returns} (7,-3);
+        \draw[<-] (0,-5) -- node[midway,above] {\mintinline{c}{ContinueDebugProcess}} (7,-5);
+        \draw[<-] (0,-6) -- node[midway,above] {\mintinline{c}{WaitForDebugEvent}} (7,-6);
         \draw[dashed,->] (-7,-6.5) -- node[midway,above] {Exception} (0,-6.5);
-        \draw[->] (0,-7) -- node[midway,above] {\texttt{WaitForDebugEvent} returns \texttt{true}} (7,-7);
+        \draw[->] (0,-7) -- node[midway,above] {\mintinline{c}{WaitForDebugEvent} returns \texttt{true}} (7,-7);
         \draw[dashed, <-] (-7, -8) -- node[above left] {Debugger actions} (7, -8);
-        \draw[<-] (0,-9) -- node[midway,above] {\texttt{ContinueDebugProcess}} (7,-9);
-        \draw[<-] (0,-10) -- node[midway,above] {\texttt{WaitForDebugEvent}} (7,-10);
+        \draw[<-] (0,-9) -- node[midway,above] {\mintinline{c}{ContinueDebugProcess}} (7,-9);
+        \draw[<-] (0,-10) -- node[midway,above] {\mintinline{c}{WaitForDebugEvent}} (7,-10);
         \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
     \end{tikzpicture}
     }
@@ -127,9 +119,33 @@ These events are put in a queue, so the debugger will not miss any.
     \label{fig:win32debugger}
 \end{figure}
 
-The debug events are not only breakpoints. These include all exceptions, thread creation, loading and
-unloading of DLL, and sending an output string via a special function. The main point of interest is the exceptions.
+The debug events are thoroughly described in subsection \ref{section:Debug Events}. The main point of interest is the exceptions.
 By these, we do not mean the standard C++ exceptions but rather Microsoft \textit{Structured Exception Handling}.
+
+\subsubsection*{Debug Events}\label{section:Debug Events}
+Debugging events are various incidents in the debuggee that causes the system to notify the debugger \cite{windows-msdn-debug-events}. These are stored in special \mintinline{c}{DEBUG_EVENT} structure, which is received in \texttt{WaitForDebugEvent} call from debugger. This structure contains various information about the event, the internals can be seen on figure \ref{fig:DebugEvent}. These events include loading and unloading a DLL, creating and exiting a process, sending debug strings via the \mintinline{c}{OutputDebugString} and so on. It also includes exceptions, those are probably the most important for us. 
+\begin{figure}
+\begin{minted}{c}
+typedef struct _DEBUG_EVENT {
+  DWORD dwDebugEventCode;
+  DWORD dwProcessId;
+  DWORD dwThreadId;
+  union {
+    EXCEPTION_DEBUG_INFO      Exception;
+    CREATE_THREAD_DEBUG_INFO  CreateThread;
+    CREATE_PROCESS_DEBUG_INFO CreateProcessInfo;
+    EXIT_THREAD_DEBUG_INFO    ExitThread;
+    EXIT_PROCESS_DEBUG_INFO   ExitProcess;
+    LOAD_DLL_DEBUG_INFO       LoadDll;
+    UNLOAD_DLL_DEBUG_INFO     UnloadDll;
+    OUTPUT_DEBUG_STRING_INFO  DebugString;
+    RIP_INFO                  RipInfo;
+  } u;
+} DEBUG_EVENT, *LPDEBUG_EVENT;
+\end{minted}
+\caption{Structure which contains info about debug event.}
+\label{fig:DebugEvent}
+\end{figure}
 
 \subsubsection*{Intermezzo: Structured Exception Handling}
 This feature is specific to Windows only. For example, if division by zero was performed in a program on Linux,
@@ -137,7 +153,7 @@ a signal would be sent to the process. Windows don't have signals, instead, it u
 From now on, we will be using the abbreviation 'SEH'.
 An exception is an event that requires execution of code outside the normal flow of control. There are software exceptions,
 like throwing an exception explicitly or by OS, and hardware exceptions, like the division by zero we mentioned.
-Instruction with opcode \lstinline{0xCC}, which is used for breakpoints, will also raise an exception. SEH unifies both of these things into one.
+Instruction with opcode \mintinline{c}{0xCC}, which is used for breakpoints, will also raise an exception. SEH unifies both of these things into one.
 
 When an exception is triggered, control is transferred to the system. It saves the state of the thread and some other information.
 This information can be used to continue execution from the point where the exception was thrown when it is resolved. It also
@@ -149,16 +165,42 @@ The system then searches for an exception handler which will handle the exceptio
     \item If the process is debugged the debugger is notified.
     \item If it is not or the debugger does not handle the exception, the frame-based exception handler is to be found\footnote{The handlers are not very important to us, see MSDN documentation if you're interested \cite{windows-msdn-seh}.}
     \item If no frame-based handler can be found, or no handler handles the exception, but the process is being debugged then the debugger gets notified once again.
-    \item The system provides default handling, which is to terminate the program via \lstinline{ExitProcess} most of the time.
+    \item The system provides default handling, which is to terminate the program via \mintinline{c}{ExitProcess} most of the time.
 \end{enumerate}
 
-Here we see that every exception that occurs in the debuggee causes the debugger to be notified. Breakpoints are also caused by an exception, as was briefly mentioned before. There are two possible notifications to the debugger. The first is known as \textit{first-chance} notification \cite{windows-msdn-dbg-exc-handling}. The debugger can (and should) inspect the information about the exception and see if it was a breakpoint or single-step. These only occurs if the process is debugged (it wouldn't happen otherwise) and the debugger should handle them. If it is something else it can ignore the exceptions. When the program is continued via \lstinline{ContinueDebugEvent}\footnote{This function has a special parameter, which is used to tell that the exception was or was not handled.}, the debugger is notified once again if no appropriate exception handler was found for the exception. This is known as \textit{last-chance} notification because if the debugger does not handle the exception the debuggee will be terminated. It gives the user a chance to debug why is his process terminating.
+Here we see that every exception that occurs in the debuggee causes the debugger to be notified. Breakpoints are also caused by an exception, as was briefly mentioned before. There are two possible notifications to the debugger. The first is known as \textit{first-chance} notification \cite{windows-msdn-dbg-exc-handling}. The debugger can (and should) inspect the information about the exception and see if it was a breakpoint or single-step. These only occurs if the process is debugged (it wouldn't happen otherwise) and the debugger should handle them. If it is something else it can ignore the exceptions. When the program is continued via \mintinline{c}{ContinueDebugEvent}\footnote{This function has a special parameter, which is used to tell that the exception was or was not handled.}, the debugger is notified once again if no appropriate exception handler was found for the exception. This is known as \textit{last-chance} notification because if the debugger does not handle the exception the debuggee will be terminated. It gives the user a chance to debug why is his process terminating.
 
 Here are some exceptions that tie into debugging:
-\begin{lstlisting}
-    \item \texttt{STATUS_BREAKPOINT} - Raised when a hardware-defined breakpoint was encountered. This includes the mentioned instruction.
-    \item \texttt{STATUS_SINGLE_STEP} - Raised when a single step was completed, ie. when instruction was executed and the trap flag is set.
-\end{lstlisting}
+\begin{itemize}
+    \item \mintinline{c}{STATUS_BREAKPOINT} - Raised when a hardware-defined breakpoint was encountered. This includes the mentioned \mintinline{c}{INT3} instruction.
+    \item \mintinline{c}{STATUS_SINGLE_STEP} - Raised when a single step was completed, ie. when instruction was executed and the trap flag is set.
+\end{itemize}
 
-\subsubsection*{Debug Events}
-\todo{https://learn.microsoft.com/en-us/windows/win32/debug/debugging-events}
+\subsubsection*{Tying it all together}
+Now we have all necessary building block to build a simple proof of concept Windows debugger. On figure \ref{fig:windows-debugger-mainloop}, you can see a basic idea of a main loop of the debugger. It waits for debug events and branches depending of the type of event. It needs not only handle exceptions, but other events also. For example if the debugee creates a thread that is something the debugger should be aware of. Modern debuggers trace all threads of the program.
+
+However, exceptions are the most interesting for us. There, breakpoint and single step handling is done, as can be seen in the figure. On both of these, the debugger should handle the exception itself, so this is the \textit{first chance} notifications. There is also an \mintiline{DBG_CONTROL_C}, which happens on CTRL + C keyboard press. This should terminate the program. The debugger will pass the first chance and catch the last chance exception, so user has a final chance to look at the program state before it exits.
+
+\begin{figure}
+    \label{fig:windows-debugger-mainloop}
+    \begin{minted}{c}
+void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
+{
+   DWORD dwContinueStatus = DBG_CONTINUE; // exception continuation 
+   for(;;) 
+   { 
+      WaitForDebugEvent(DebugEv, INFINITE); 
+      switch (DebugEv->dwDebugEventCode) 
+      { 
+         case EXCEPTION_DEBUG_EVENT: 
+            // Handle exception debug events
+         // Other debug events
+      } 
+   ContinueDebugEvent(DebugEv->dwProcessId, 
+                      DebugEv->dwThreadId, 
+                      dwContinueStatus);
+   }
+}
+    \end{minted}
+\end{figure}
+
