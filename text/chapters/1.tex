@@ -1,4 +1,11 @@
 \chapter{Debugging}
+
+\begin{quote}
+  Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.\begin{flushright}
+    \tiny{Brian W. Kernighan}
+  \end{flushright}
+\end{quote}
+
 Often times, it happens that a written program has different behaviour than we expected. This can manifest in all sorts of ways, from different output to crashing. There are many ways of finding the mistake, one of them is using a debugger to debug the program \cite{software-debugging-testing-verification}.
 Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. Implementation of debuggers can vary based on target machine, operating system or if the program is native or expected to be run by an interpreter.
 
@@ -115,7 +122,7 @@ These events are put in a queue, so the debugger will not miss any.
         \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
     \end{tikzpicture}
     }
-    \caption{A sequence diagram for debugger using Windows api.}
+    \caption{A sequence diagram for debugger using Windows api. Inspired by \todo{NI-REV 6. lecture}}
     \label{fig:win32debugger}
 \end{figure}
 
