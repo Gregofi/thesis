@@ -1,12 +1,46 @@
 \chapter{Introduction}
 Todays world is practically run by a computers. They are everywhere, from our wrists to our cars.
 All of these computers car run some sort of programs. These programs define what the computer does.
-Programs are executed by a processor, an integral part of every computer. Processors have several instructions, which can be executed, and can also read and write to either memory or a registers. However, processors can only understand machine code. For example, very simple machine code instruction is \mintinline{0100 0001}. This instruction increases value by one of register ECX. Real programs are made of thousands and thousands such instructions. Making sense of these programs for human is very, very difficult. But, if we know that certain pattern corresponds to certain instruction, we could at the very least make it readable for humans.
+Programs are executed by a processor, an integral part of every computer. Processors have several instructions,
+which can be executed, and can also read and write to either memory or registers. However, processors can only
+understand machine code. For example, very simple machine code instruction is \mintinline{0100 0001} (in x86 architecture).
+This instruction increases the value which is in register ECX by one. Real programs are made of thousands and thousands of
+such instructions. Making sense of these programs for human is very, very difficult. To read a program a programmer would
+have to have a mapping from machine code to instruction in his head at least for the most used instructions. Even if the
+programmer knew such mappings, sequences of binary would be very hard to read. 
 
-\section{Assembler}
+\section{Assembly language}
+Assembly language is almost a direct mapping from instruction and operand names to machine code. For example the code \mintinline{INC ECX}
+is the previously mentioned increment by one instruction. This is way more readable for programmer than \mintinline{0100 0001}.
+Understanding instructions by themselves is simpler. But programs are still difficult to read. Consider following example:
+\begin{lstlisting}
+PROC:
+    PUSH    EBP
+    MOV     EBP, ESP
+    CMP     [EBP + 8], 0
+    JLE     LN2            ; Jump if the EPC + 8 value is smaller than 0
+    MOV     EAX, 1
+    JMP     LN1
+LN2:
+    XOR     EAX, EAX
+LN1:
+    POP     EBP
+    RET
+\end{lstlisting}
+This code checks if value which is in memory at offset \mintinline{[EBP + 8]} is positive, and stores $1$ to register \mintinline{EAX} if it is, or zero
+if not. Understanding the instructions one by one is doable. But understanding what this program does as a whole is not apparent at first glance. 
 
+Programs are executed from top to bottom, instruction by instruction. But certain instructions can change this control flow.. For example the instruction \mintinline{JMP dest}
+jumps to a label (\mintinline{LN1} in the example) and the execution continues from there. This allows the program to repeat or skip some part of the code.
+Notice the JLE instruction. This instruction performs mentioned jump but only if certain other condition holds true.
+These instructions can make it harder for programmer to follow the control flow \todo{GOTO statements considered harmful}.
+Programs can also contain comments, as is apparent in the example. These bits only serve to make the code easier to understand.
+They are left out when the translation to machine code is done.
 
 \section{High level programming languages}
+
+
+
 \section{Debugging}
 \section{Compilers}
 
