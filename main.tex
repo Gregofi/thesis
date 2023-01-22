@@ -1,0 +1,106 @@
+% arara: xelatex
+% arara: xelatex
+% arara: xelatex
+
+% options:
+% thesis=B bachelor's thesis
+% thesis=M master's thesis
+% czech thesis in Czech language
+% english thesis in English language
+% hidelinks remove colour boxes around hyperlinks
+
+\documentclass[thesis=M,english]{FITthesis}[2019/12/23]
+
+\usepackage{amsmath} %advanced maths
+\usepackage{amssymb} %additional math symbols
+\usepackage{lipsum,tikz}
+\usepackage{csquotes}
+\usepackage[cache=false, outputdir=out]{minted}
+\usepackage{listings} % typesetting of sources
+\usepackage[fontsize=11pt]{fontsize}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+
+\usepackage{dirtree} %directory tree visualisation
+
+\newcommand\todo[1]{\textcolor{red}{#1}}
+\usetikzlibrary{calc,positioning,arrows}
+
+% list of acronyms
+% \usepackage[acronym,nonumberlist,toc,numberedsection=autolabel,nomain]{glossaries}
+\iflanguage{czech}{\renewcommand*{\acronymname}{Seznam pou{\v z}it{\' y}ch zkratek}}{}
+% \makeglossaries
+
+\newcommand{\tg}{\mathop{\mathrm{tg}}} %cesky tangens
+\newcommand{\cotg}{\mathop{\mathrm{cotg}}} %cesky cotangens
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\department{Department of theoretical computer science}
+\title{Tiny86 Debugger}
+\authorGN{Filip} %author's given name/names
+\authorFN{Gregor} %author's surname
+\authorWithDegrees{Bc. Filip Gregor} %author's name with academic degrees
+\author{Filip Gregor} %author's name without academic degrees
+\supervisor{Ing. Petr M\'aj, Ph.D.}
+\acknowledgements{I would like to thank my family and friends for support during writing this thesis.}
+
+
+\abstractCS{Abstrakt v cestine}
+\abstractEN{Abstract In english.}
+
+
+\placeForDeclarationOfAuthenticity{Prague} %where you have signed the declaration
+\keywordsCS{Debugging, Debugger, Debug, Compiler.}
+\keywordsEN{Debugging, Debugger, Debug, Compiler.}
+\declarationOfAuthenticityOption{4} %select as appropriate, according to the desired license
+\website{http://site.example/thesis} %optional URL (remove entirely if you have no URL for this thesis)
+
+\begin{document}
+
+% \newacronym{LZW}{LZW}{Lempel Ziv Welch}
+% \newacronym{RLE}{RLE}{Run-Length Encoding}
+
+\input{chapters/0}
+\input{chapters/1}
+
+\begin{conclusion}
+	Conclusion text yet to be concluded.
+\end{conclusion}
+
+\bibliographystyle{iso690.bst}
+\bibliography{ref}
+
+\appendix
+
+% \printglossaries
+
+\chapter{Contents of CD}\label{app:CDcontent}
+
+Visualise the contents of enclosed media. Use of \verb|dirtree| is recommended. Note that directories src and text with appropriate contents are mandatory.
+
+\begin{figure}
+	\dirtree{%
+		.1 readme.txt\DTcomment{the file with CD contents description}.
+		.1 data\DTcomment{the data files directory}.
+		.2 graphs\DTcomment{the directory of graphs of experiments}.
+		.3 *.eps\DTcomment{the B/W graphs}.
+		.3 *.png\DTcomment{the color graphs}.
+		.3 *.dat\DTcomment{the graphs data files}.
+		.1 exe\DTcomment{the directory with executable WBDCM program}.
+		.2 wbdcm\DTcomment{the WBDCM program executable (UNIX)}.
+		.2 wbdcm.exe\DTcomment{the WBDCM program executable (Windows)}.
+		.1 src\DTcomment{the directory of source codes}.
+		.2 wbdcm\DTcomment{the directory of WBDCM program}.
+		.3 Makefile\DTcomment{the makefile of WBDCM program (UNIX)}.
+		.2 thesis\DTcomment{the directory of \LaTeX{} source codes of the thesis}.
+		.3 figures\DTcomment{the thesis figures directory}.
+		.3 *.tex\DTcomment{the \LaTeX{} source code files of the thesis}.
+		.1 text\DTcomment{the thesis text directory}.
+		.2 thesis.pdf\DTcomment{the Diploma thesis in PDF format}.
+		.2 thesis.ps\DTcomment{the Diploma thesis in PS format}.
+	}
+\end{figure}
+
+
+\end{document}

@@ -1,0 +1,97 @@
+% % % % % % % % % % % % %
+% Example thesis (CTU FIT) based on CTUstyle 
+% use: pdfcsplain <FIT-ZP.tex>
+% write this document as UTF-8
+% % % % % % % % % % % % %
+% CTUstyle: see more at http://petr.olsak.net/ctustyle.html
+% requirements: ctustyle.tex, ctulogo.pdf
+% CTUstyle requires OPmac (opmac.tex)
+% download OPmac from
+% http://petr.olsak.net/opmac.html
+% % % % % % % % % % % % %
+
+% This example created by Ondrej Guth <ondrej.guth@fit.cvut.cz> 2014
+% based on CTUstyle by Petr Olsak
+
+% % % % % % % % % % % % % 
+% The following not to be modified
+% % % % % % % % % % % % % 
+\input ctustyle
+\faculty {F8}
+% % % % % % % % % % % % % 
+% Modify the following
+% % % % % % % % % % % % %
+
+% (thesis type {B,M,D})/(language {CZ,EN})
+\worktype [B/CZ]
+\department {Katedra teoretické informatiky}
+\title {P{\v r}íkladová bakalá{\v r}ská práce}
+\author {Bc. Neznámý Autor}
+\date {Leden 2015}
+\supervisor{prof. M{\r u}j Vedoucí Práce}
+\abstractEN {This document is for testing purpose only.}
+\abstractCZ {Tento dokument je pouze pro pot{\v r}eby testování.}
+\declaration {Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}, zejm\'ena skute\v cnost, \v ze \v Cesk\'e vysok\'e u\v cen\'\i{} technick\'e v~Praze m\'a pr\'avo na uzav\v ren\'\i{} licen\v cn\'\i{} smlouvy o~u\v zit\'\i{} t\'eto pr\'ace jako \v skoln\'\i{}ho d\'\i{}la podle \S{}~60 odst.~1 autorsk\'eho z\'akona.}
+
+\makefront
+\chap Úvod
+
+\sec Prerekvizity a dal{\v s}í informace
+
+Tento dokument slou{\v z}í jako p{\v r}íklad, jak vytvo{\v r}it záv{\v e}re{\v c}nou práci s pou{\v z}itím CTUstyle, kter{\' y} vytvo{\v r}il Petr Ol{\v s}{\' a}k. Následující zdroje informací obsahují makra, která m{\r u}{\v z}ete pou{\v z}ít p{\v r}i psaní své práce.
+
+Více informací o CTUstyle najdete na \url{http://petr.olsak.net/ctustyle.html} -- návod k pou{\v z}ití, povinné {\v c}ásti, tipy. Doporu{\v c}ujeme p{\v r}e{\v c}íst.
+
+Styl je zalo{\v z}ený na sad{\v e} maker OPmac, kterou najdete (v{\v c}etn{\v e} dokumentace) na \url{http://petr.olsak.net/opmac.html} -- doporu{\v c}ujeme prohlédnout.
+
+\sec Pou{\v z}ití na FIT
+
+Krom{\v e} samotného textu práce nastavte základní informace o práci (volání p{\v r}ed p{\v r}íkazem makefront). U svého jména uvád{\v e}jte tituly, které máte v okam{\v z}iku odevzdání. Text prohlá{\v s}ení je nutné doslova p{\v r}evzít z následující kapitoly (to je opravdu nutné).
+
+
+\label[sec:prohlaseni]
+\chap Texty prohlá{\v s}ení
+
+
+Vyberte si jeden z následujících text{\r u} \uv{prohlá{\v s}ení} (strana iii) a ten (doslova a bez jakýchkoli úprav) pou{\v z}ijte (p{\v r}íkaz declaration). Jakoukoli modifikaci musí p{\v r}edem schválit studijní odd{\v e}lení fakulty.
+
+\sec Minimální
+
+Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}, zejm\'ena skute\v cnost, \v ze \v Cesk\'e vysok\'e u\v cen\'\i{} technick\'e v~Praze m\'a pr\'avo na uzav\v ren\'\i{} licen\v cn\'\i{} smlouvy o~u\v zit\'\i{} t\'eto pr\'ace jako \v skoln\'\i{}ho d\'\i{}la podle \S{}~60 odst.~1 autorsk\'eho z\'akona.
+
+\sec Ud{\v e}lení práv {\v s}kole
+
+Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}. V~souladu s~ust. \S{}~46 odst.~6 tohoto z\'akona t\'\i{}mto ud\v eluji nev\'yhradn\'\i{} opr\'avn\v en\'\i{} (licenci) k~u\v zit\'\i{} t\'eto moj\'\i{} pr\'ace, a to v\v cetn\v e v\v sech po\v c\'\i{}ta\v cov\'ych program{\r u}, je\v z jsou jej\'\i{} sou\v c\'ast\'\i{} \v ci p\v r\'\i{}lohou a ve\v sker\'e jejich dokumentace (d\'ale souhrnn\v e jen \uv{D\'\i{}lo}), a to v\v sem osob\'am, kter\'e si p\v rej\'\i{} D\'\i{}lo u\v z\'\i{}t. Tyto osoby jsou opr\'avn\v eny D\'\i{}lo u\v z\'\i{}t jak\'ymkoli zp{\r u}sobem, kter\'y nesni\v zuje hodnotu D\'\i{}la, av\v sak pouze k~nev\'yd\v ele\v cn\'ym \'u\v cel{\r u}m. Toto opr\'avn\v en\'\i{} je \v casov\v e, teritori\'aln\v e i mno\v zstevn\v e neomezen\'e.
+		
+\sec Licen{\v c}ní smlouva se {\v s}kolou
+
+Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}. D\'ale prohla\v suji, \v ze jsem s~\v Cesk\'ym vysok\'ym u\v cen\'\i{}m technick\'ym v~Praze uzav\v rel licen\v cn\'\i{} smlouvu o~u\v zit\'\i{} t\'eto pr\'ace jako \v skoln\'\i{}ho d\'\i{}la podle \S{}~60 odst.~1 autorsk\'eho z\'akona. Tato skute\v cnost nem\'a vliv na ust. \S{}~47b z\'akona \v c.~111/1998~Sb., o~vysok\'ych \v skol\'ach, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}.
+
+\sec Otev{\v r}ená licence
+
+Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}. V~souladu s~ust. \S{}~46 odst.~6 tohoto z\'akona t\'\i{}mto ud\v eluji nev\'yhradn\'\i{} opr\'avn\v en\'\i{} (licenci) k~u\v zit\'\i{} t\'eto moj\'\i{} pr\'ace, a to v\v cetn\v e v\v sech po\v c\'\i{}ta\v cov\'ych program{\r u}, je\v z jsou jej\'\i{} sou\v c\'ast\'\i{} \v ci p\v r\'\i{}lohou, a ve\v sker\'e jejich dokumentace (d\'ale souhrnn\v e jen \uv{D\'\i{}lo}), a to v\v sem osob\'am, kter\'e si p\v rej\'\i{} D\'\i{}lo u\v z\'\i{}t. Tyto osoby jsou opr\'avn\v eny D\'\i{}lo u\v z\'\i{}t jak\'ymkoli zp{\r u}sobem, kter\'y nesni\v zuje hodnotu D\'\i{}la, a za jak\'ymkoli \'u\v celem (v\v cetn\v e u\v zit\'\i{} k~v\'yd\v ele\v cn\'ym \'u\v cel{\r u}m). Toto opr\'avn\v en\'\i{} je \v casov\v e, teritori\'aln\v e i~mno\v zstevn\v e neomezen\'e. Ka\v zd\'a osoba, kter\'a vyu\v zije v\'y\v se
+uvedenou licenci, se v\v sak zavazuje ud\v elit ke ka\v zd\'emu d\'\i{}lu, kter\'e vznikne (by\v t jen z\v c\'asti) na z\'aklad\v e D\'\i{}la, \'upravou D\'\i{}la, spojen\'\i{}m D\'\i{}la s~jin\'ym d\'\i{}lem, za\v razen\'\i{}m D\'\i{}la do d\'\i{}la souborn\'eho \v ci zpracov\'an\'\i{}m D\'\i{}la (v\v cetn\v e p\v rekladu), licenci alespo\v n ve v\'y\v se uveden\'em rozsahu a z\'arove\v n zp\v r\'\i{}stupnit zdrojov\'y k\'od takov\'eho d\'\i{}la alespo\v n srovnateln\'ym zp{\r u}sobem a ve srovnateln\'em rozsahu, jako je zp\v r\'\i{}stupn\v en zdrojov\'y k\'od D\'\i{}la.
+
+\sec Oprávn{\v e}ní k u{\v z}ití
+
+Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}. V~souladu s~ust. \S{}~46 odst.~6 tohoto z\'akona t\'\i{}mto ud\v eluji nev\'yhradn\'\i{} opr\'avn\v en\'\i{} (licenci) k~u\v zit\'\i{} t\'eto moj\'\i{} pr\'ace, a to v\v cetn\v e v\v sech po\v c\'\i{}ta\v cov\'ych program{\r u}, je\v z jsou jej\'\i{} sou\v c\'ast\'\i{} \v ci p\v r\'\i{}lohou a ve\v sker\'e jejich dokumentace (d\'ale souhrnn\v e jen \uv{D\'\i{}lo}), a to v\v sem osob\'am, kter\'e si p\v rej\'\i{} D\'\i{}lo u\v z\'\i{}t. Tyto osoby jsou opr\'avn\v eny D\'\i{}lo u\v z\'\i{}t jak\'ymkoli zp{\r u}sobem, kter\'y nesni\v zuje hodnotu D\'\i{}la a za jak\'ymkoli \'u\v celem (v\v cetn\v e u\v zit\'\i{} k~v\'yd\v ele\v cn\'ym \'u\v cel{\r u}m). Toto opr\'avn\v en\'\i{} je \v casov\v e, teritori\'aln\v e i mno\v zstevn\v e neomezen\'e.
+
+\sec Po dohod{\v e} s {\v C}VUT
+
+Prohla\v suji, \v ze jsem p\v redlo\v zenou pr\'aci vypracoval(a) samostatn\v e a \v ze jsem uvedl(a) ve\v sker\'e pou\v zit\'e informa\v cn\'\i{} zdroje v~souladu s~Metodick\'ym pokynem o~etick\'e p\v r\'\i{}prav\v e vysoko\v skolsk\'ych z\'av\v ere\v cn\'ych prac\'\i{}.
+
+		Beru na v\v edom\'\i{}, \v ze se na moji pr\'aci vztahuj\'\i{} pr\'ava a povinnosti vypl\'yvaj\'\i{}c\'\i{} ze z\'akona \v c.~121/2000~Sb., autorsk\'eho z\'akona, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}. D\'ale prohla\v suji, \v ze jsem s~\v Cesk\'ym vysok\'ym u\v cen\'\i{}m technick\'ym v~Praze uzav\v rel dohodu, na z\'aklad\v e n\'\i{}\v z se \v CVUT vzdalo pr\'ava na uzav\v ren\'\i{} licen\v cn\'\i{} smlouvy o~u\v zit\'\i{} t\'eto pr\'ace jako \v skoln\'\i{}ho d\'\i{}la podle \S{}~60 odst.~1 autorsk\'eho z\'akona. Tato skute\v cnost nem\'a vliv na ust. \S{}~47b z\'akona \v c.~111/1998~Sb., o~vysok\'ych \v skol\'ach, ve zn\v en\'\i{} pozd\v ej\v s\'\i{}ch p\v redpis{\r u}.
+
+\bye
