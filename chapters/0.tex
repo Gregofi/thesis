@@ -12,7 +12,8 @@ programmer knew such mappings, sequences of binary would be very hard to read.
 \section{Assembly language}
 Assembly language is almost a direct mapping from instruction and operand names to machine code. For example the code \mintinline{INC ECX}
 is the previously mentioned increment by one instruction. This is way more readable for programmer than \mintinline{0100 0001}.
-Understanding instructions by themselves is simpler. But programs are still difficult to read. Consider following example:
+Understanding instructions by themselves is simpler. But programs are still difficult to read. Consider example on figure \ref{fig:assembly-example},
+\begin{figure}\label{fig:assembly-example}
 \begin{lstlisting}
 PROC:
     PUSH    EBP
@@ -27,7 +28,8 @@ LN1:
     POP     EBP
     RET
 \end{lstlisting}
-This code checks if value which is in memory at offset \mintinline{[EBP + 8]} is positive and stores $1$ to register \mintinline{EAX} if it is positive, or zero
+\end{figure}
+this code checks if value which is in memory at offset \mintinline{[EBP + 8]} is positive and stores $1$ to register \mintinline{EAX} if it is positive, or zero
 if it is not positive. Understanding the instructions one by one is doable. But understanding what this program does as a whole is not apparent at first glance. 
 
 Programs are executed from top to bottom, instruction by instruction. But certain instructions can change this control flow. For example the instruction \mintinline{JMP dest}
@@ -57,18 +59,20 @@ int positive(int n) {
 This is the same program as the assembly one. Knowing about internals of the computer is no longer needed.
 We do not store values into registers, instead they are kept in variables. We can use conditional statements,
 which are more concise then using jumps. The functions and variables themselves also have names from which
-can be apparent what is the purpose of it (contrast to register named EAX).
+can be apparent what is the purpose of it (contrast to register names like EAX).
 
 However, upon deeper inspection of the language, it does not abstract away everything. C has a feature called
 \textit{pointers}. Those are special kind of variables which points into the computer memory\footnote{On modern OS,
 a concept named virtual memory is used. This maps addresses used by process to physical memory. Pointer values are virtual memory addresses. See \cite{modern-os}.}.
 So C does not necessarily abstract everything away. That can sometimes be a good thing, because if you need to 
 interact with the computer hardware you don't have to resort to assembly, but can use C. For example the Linux
-operating system Kernel is written in C.
+operating system Kernel is written mostly in C.
 
 Not everyone needs that sort of intimacy with the hardware. So more and more abstract languages were created.
 Here is a program that takes two sequences of ordered numbers and merges these two together so that the result
 is still sorted sequence of numbers. It is written in three different languages to illustrate how can they differ.
+
+\begin{figure}\label{fig:merge-c}[H]
 \begin{minted}{c}
 int* merge (int *src1, size_t len1, int *src2, size_t len2) {
     int *dest = malloc((len1 + len2) * sizeof(*dest));
@@ -82,6 +86,8 @@ int* merge (int *src1, size_t len1, int *src2, size_t len2) {
     return dest;
 }
 \end{minted}
+\end{figure}
+
 Here, the array where we will store the result is dynamically allocated using
 the \textit{malloc} functions. This function takes how many bytes it should
 allocate as an argument and returns continuous memory of that size. The two
@@ -89,6 +95,7 @@ sequences to be merged are pointed at by variables. Since pointers are just
 memory addresses, we need to know how long the sequences are and pass that
 along with the pointers.
 
+\begin{figure}[H]
 \begin{minted}{python}
 def merge(l1, l2):
     result = []
@@ -99,6 +106,7 @@ def merge(l1, l2):
     result.extend(l2[idx2:])
     return result
 \end{minted}
+\end{figure}
 
 Python goes further. The code is similar but the length of the sequence (python calls it a \textit{list})
 is baked into the sequence itself. Also, we do not have to say how long will the list be,
@@ -113,6 +121,7 @@ made of statements which are executed one by one (similarly to assembly language
 The languages are similar in terms how an algorithm will be written in either of them.
 However, there are also other paradigms of programming, like object oriented or functional programming.
 
+\begin{figure}[H]
 \begin{minted}{haskell}
 merge :: Ord a => [a] -> [a] -> [a]
 merge [] a = a
@@ -120,12 +129,165 @@ merge a [] = a
 merge (h1:t1) (h2:t2) | h1 < h2 = h1:merge t1 (h2:t2)
                       | otherwise = h2:merge (h1:t1) t2
 \end{minted}
+\end{figure}
+
 Haskell is a functional programming language. As is apparent, functional programming is very different from imperative,
 altrough the two words sometimes intertwine, for example through higher order functions. In the rest of this thesis, we will
 mainly talk about imperative languages, but will sometimes mention how things differ for functional languages.
 
 \section{Debugging}
-Even though the languages keep getting better and better.
+Programs are mostly written by humans, and humans make mistakes \cite{human-error}. These mistakes may be syntactic ones, like
+forgetting to put a semicolon at the end of a statement. This mistake makes it impossible for the program to be run. However,
+programs can still be syntactically valid and still have errors in them. Consider the merge program in C (figure \ref{fig:merge-c}).
+Lets write the allocation of array like this: \lstinline{malloc(len1 + len2)}. We allocated bytes equal to number of elements
+but we haven't incorporated their size (integers are often four bytes long)! Thus, the result would not fit into the allocated
+array (unless both arrays were empty) and the program would most likely crash.
+
+This is called undefined behaviour \cite{undefined-behavior}. This means that the program will not terminate itself, but instead continue execution.
+However, what happens next in the execution is undefined. It may crash, or produce different results than expected, or
+it may run perfectly fine. It also may run perfectly fine when executed for the first time and crash for the second time.
+Errors like this can be very difficult to catch, because they may show up only some of the time. Some languages do prevent this,
+when you try to index an array out of its bounds the program will abort immediately with a descriptive error message,
+but they may have their own different quirks. Some programming languages and paradigms are less error prone, but none 
+can eliminate errors entirely \cite{bugs-by-language, bugs-by-language-2}.
+
+Our merge function (figure \ref{fig:merge-c}) worked with invariant that the two arrays it received are sorted.
+If they are not, then the resulting array will not be sorted. The output is wrong, but the merge function is not
+at fault. Instead, we would have to inspect from which place the unsorted data came to be. We will call
+errors in the code that manifest at run time \textbf{bugs}\footnote{The term \textit{bug} actually comes from a real bug that got stuck in relays.
+They literally had to debug the machine by taking the bug out.}. The process of finding those error shall be
+called \textbf{debugging}.
+
+There are already many research papers which presents methods on preventing errors, or how to find them when they 
+happen \cite{software-debugging-testing-verification, Debugging-difference-between-expert-and-novice, zeller2009programs, debugging-inputs}.
+We will instead focus on a tool that helps with inspecting the program at runtime and finding bugs.
+
+\section{Debugger}
+Debugger is a program which can inspect another program. They often have complete control of the program.
+The program being debugged will be called a \textit{debugee}. In this section, we will talk about debuggers
+which works with high level programming languages. Later we will talk about assembly level debuggers and
+how they tie into high level language debuggers.
+
+Debugger are able to inspect the state of the program - value of its variables. Debuggers are also able to control
+the flow of the program. They allow \textit{breakpoints} to be set at each line of the source code\footnote{Advanced debuggers allows breakpoints to be set inside expressions.
+This is especially important for functional languages, as their functions often consists of one big expression.}.
+When the program is about to execute the line of code with the breakpoint. The control is passed back to the
+debugger and user can inspect the state of the program at that line. There are also conditional breakpoints,
+which only triggers when some condition holds (for example the value of variable \mintinline{i} must be equal to zero).
+
+Finally, debuggers also allow \textit{stepping}. This also modifies the control flow of the program.
+\begin{itemize}
+    \item step in - Executes current statement and stops on the next one. If current statement is a function call then
+                    it will be executed and program will be paused on the first statement in that function.
+    \item step over - Same as step in, but if current statement is a function call then the program will
+                      be paused on the next statement after the call.
+    \item step out -  Executes as much as needed to return from current function. Stops on next statement that
+                      should be executed after the function returns.
+\end{itemize}
+
+The goal of this thesis will be to implement a debugger for special architecture. But before we get it on, there
+is one more thing we need to tackle.
 
 \section{Compilers}
+When we talked about evolution of programming from machine code to assembly to higher level languages, we haven't
+talked about how they are executed. Machine code can be directly executed by processor, as we said, it is a sequence
+of binary. Assembly is text, processors don't understand text. But assembly can be mapped to machine code almost 
+1:1\footnote{There are some exceptions, like labels. But translating them is not very difficult.}.
 
+However, high level programming languages do not map 1:1 to assembly. Some are close to it, like C, while others
+are miles away, like Haskell. But as was said, processors understand only machine code. To this end, programs that
+can translate source code into machine code, were created. They are called compilers and the translation process is
+called compiling. For example, for the C language one might use the GCC or Clang compilers.
+On figure \ref{fig:compiler-structure} can be seen basic structure of a compiler \cite{dragon-book}. 
+
+\tikzstyle{compilerblock} = [rectangle, draw, minimum width=6cm, minimum height=1cm] 
+\tikzstyle{tables} = [rectangle, draw, minimum width=4cm, minimum height=1cm] 
+\begin{figure}\label{fig:compiler-structure}
+    {\centering
+    \begin{tikzpicture}
+    \node (lexer)[compilerblock]{Lexical analyzer};
+    \node (syntax)[compilerblock,below=of lexer]{Syntactic analyzer};
+    \node (semantic)[compilerblock,below=of syntax]{Semantic analyzer};
+    \node (imc)[compilerblock,below=of semantic]{Intermediate Code Generator};
+    \node (gen)[compilerblock,below=of imc]{Code Generator};
+    \node (symbol)[tables, left=of semantic]{Symbol table};
+    \draw[->] (lexer) -- node[below] {} (syntax);
+    \draw[->] (syntax) -- node[below] {} (semantic);
+    \draw[->] (semantic) -- node[below] {} (imc);
+    \draw[->] (imc) -- node[below] {} (gen);
+    \end{tikzpicture} 
+    \par}
+    \caption{Simplified structure of a compiler. Some parts were left out, like optimizations.}
+    \label{fig:compiler_tikz}
+\end{figure}
+
+\subsection{Lexical analyzer}
+The lexical analyzer groups separate symbols into groups. For example the code
+\begin{minted}{c}
+foo = bar(1 + 2);
+\end{minted}
+might be translated into tokens like this
+\begin{lstlisting}[stringstyle=\color{black}]
+<id:"foo"> <assignment-operator> <id:"bar"> 
+<left-bracket> <int-number:1> <plus-operator> 
+<int-number:2> <right-bracket> <semicolon>
+\end{lstlisting}
+The Syntactic analyzer then works with these tokens.
+
+\subsection{Syntantic and semantic analyzer}
+Syntactic analysis accepts tokens and processes them into other intermediate representation. This is
+most often an abstract syntax tree (abbr. AST, figure \ref{fig:ast}). It also checks that the source code complies to the grammar of the language.
+Semantic analysis then checks that the program is semantically consistent. For example that used variable
+has been declared before.
+
+\begin{figure}\label{fig:ast}
+    \centering
+    \begin{tikzpicture}[,shorten >=1pt,node distance=1.8cm,on grid,initial/.style={}]
+    \node (assignment) {$=$};
+    \node (foo) [below left =of assignment] {id:foo};
+    \node (bar) [below right =of assignment] {call:bar};
+    \node (plus) [below right=of bar] {$+$};
+    \node (one) [below left =of plus] {$1$};
+    \node (two) [below right =of plus] {$2$};
+    
+    \draw[-, above, scale=0.7] 
+    (assignment)   edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (foo)
+     (assignment)  edge node[scale=0.7, right, yshift=0.1cm] {rhs}  (bar)
+     (bar)         edge node[scale=0.7, right, yshift=0.1cm] {expr} (plus)
+     (plus)        edge node[scale=0.7, right, yshift=0.1cm] {rhs}  (two)
+     (plus)        edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (one);
+    \end{tikzpicture}
+    \caption{Simplified example of an abstract syntax tree.}
+    \label{fig:astgraph}
+\end{figure}
+ 
+\subsection{Intermediate code generation}
+This part converts AST into some other representation, most commonly called IR\footnote{IR means intermediate representation.
+AST is also intermediate representation, but if we use IR we mean this one.}. IR is closer to machine code, to be easily translated,
+but retain some properties that makes it easier to work with it. There are many types of IR. One of the most popular compilers, LLVM, uses
+single static assignment (SSA) \cite{llvm}. Example of LLVM IR can be found on figure \ref{llvm-ir-example}. Compilers perform most
+optimizations on this intermediate representation.
+
+\begin{figure}\label{llvm-ir-example}
+    \begin{minted}{llvm}
+        define dso_local i32 @_Z6squarei(i32 %0) {
+          %2 = alloca i32, align 4
+          store i32 %0, i32* %2, align 4
+          %3 = load i32, i32* %2, align 4
+          %4 = load i32, i32* %2, align 4
+          %5 = mul nsw i32 %3, %4
+          ret i32 %5
+        }
+    \end{minted}
+    \caption{Simplified example of LLVM IR.}
+\end{figure}
+
+\subsection{Code generation}
+Here, IR is translated directly to the target machine code or possibly assembly. Even though IR can seem very similar to assembly,
+there are still some things to take care of. For example SSA IR doesn't have registers, it uses unlimited number of variables.
+Other architectures might have some other traits that differ it from the IR and they all have to be accounted for when generating code.
+
+\subsection{Modularity of compilers}
+This all may seem unecessarily complicated. 
+
+\subsection{Interpreted languages}
