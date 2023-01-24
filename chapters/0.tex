@@ -3,15 +3,15 @@ Todays world is practically run by a computers. They are everywhere, from our wr
 All of these computers car run some sort of programs. These programs define what the computer does.
 Programs are executed by a processor, an integral part of every computer. Processors have several instructions,
 which can be executed, and can also read and write to either memory or registers. However, processors can only
-understand machine code. For example, very simple machine code instruction is \mintinline{0100 0001} (in x86 architecture).
+understand machine code. For example, very simple machine code instruction is \texttt{0100 0001} (in x86 architecture).
 This instruction increases the value which is in register ECX by one. Real programs are made of thousands and thousands of
 such instructions. Making sense of these programs for human is very, very difficult. To read a program a programmer would
 have to have a mapping from machine code to instruction in his head at least for the most used instructions. Even if the
 programmer knew such mappings, sequences of binary would be very hard to read. 
 
 \section{Assembly language}
-Assembly language is almost a direct mapping from instruction and operand names to machine code. For example the code \mintinline{INC ECX}
-is the previously mentioned increment by one instruction. This is way more readable for programmer than \mintinline{0100 0001}.
+Assembly language is almost a direct mapping from instruction and operand names to machine code. For example the code \texttt{INC ECX}
+is the previously mentioned increment by one instruction. This is way more readable for programmer than \texttt{0100 0001}.
 Understanding instructions by themselves is simpler. But programs are still difficult to read. Consider example on figure \ref{fig:assembly-example},
 \begin{figure}\label{fig:assembly-example}
 \begin{lstlisting}
@@ -29,11 +29,10 @@ LN1:
     RET
 \end{lstlisting}
 \end{figure}
-this code checks if value which is in memory at offset \mintinline{[EBP + 8]} is positive and stores $1$ to register \mintinline{EAX} if it is positive, or zero
-if it is not positive. Understanding the instructions one by one is doable. But understanding what this program does as a whole is not apparent at first glance. 
+this code checks if value which is in memory at offset \texttt{[EBP + 8]} is positive and stores $1$ to register \texttt{EAX} if it is positive, or zero if it is not positive. Understanding the instructions one by one is doable. But understanding what this program does as a whole is not apparent at first glance. 
 
-Programs are executed from top to bottom, instruction by instruction. But certain instructions can change this control flow. For example the instruction \mintinline{JMP dest}
-jumps to a label (\mintinline{LN1} in the example) and the execution continues from there. This allows the program to repeat or skip some part of the code.
+Programs are executed from top to bottom, instruction by instruction. But certain instructions can change this control flow. For example the instruction \texttt{JMP dest}
+jumps to a label (\texttt{LN1} in the example) and the execution continues from there. This allows the program to repeat or skip some part of the code.
 Notice the JLE instruction. This instruction performs mentioned jump but only if certain other condition holds true.
 These instructions can make it harder for programmer to follow the control flow \todo{GOTO statements considered harmful}.
 Programs can also contain comments, as is apparent in the example. These bits only serve to make the code easier to understand.
@@ -72,20 +71,21 @@ Not everyone needs that sort of intimacy with the hardware. So more and more abs
 Here is a program that takes two sequences of ordered numbers and merges these two together so that the result
 is still sorted sequence of numbers. It is written in three different languages to illustrate how can they differ.
 
-\begin{figure}\label{fig:merge-c}[H]
-\begin{minted}{c}
-int* merge (int *src1, size_t len1, int *src2, size_t len2) {
-    int *dest = malloc((len1 + len2) * sizeof(*dest));
-    size_t i = 0;
-    while (src1 != src1 + len1 && src2 != src2 + len2)
-        dest[i++] = src1 <= src2 ? *(src1++) : *(src2++);
-    while (src1 != src1 + len1)
-        dest[i++] = *(src1++);
-    while (src2 != src2 + len2)
-        dest[i++] = *(src2++);
-    return dest;
-}
-\end{minted}
+\begin{figure}[H]\label{fig:merge-c}
+    \begin{minted}{c}
+    int* merge (int *src1, size_t len1, int *src2, size_t len2) {
+        int *dest = malloc((len1 + len2) * sizeof(*dest));
+        size_t i = 0;
+        while (src1 != src1 + len1 && src2 != src2 + len2)
+            dest[i++] = src1 <= src2 ? *(src1++) : *(src2++);
+        while (src1 != src1 + len1)
+            dest[i++] = *(src1++);
+        while (src2 != src2 + len2)
+            dest[i++] = *(src2++);
+        return dest;
+    }
+    \end{minted}
+    \caption{Merge of two sequences in C}
 \end{figure}
 
 Here, the array where we will store the result is dynamically allocated using
@@ -96,16 +96,17 @@ memory addresses, we need to know how long the sequences are and pass that
 along with the pointers.
 
 \begin{figure}[H]
-\begin{minted}{python}
-def merge(l1, l2):
-    result = []
-    idx1, idx2 = 0, 0
-    while idx1 < len(l1) and idx2 < len(l2):
-        result.append(l1[idx1] if l1[idx1] < l2[idx2] else l2[idx2])
-    result.extend(l1[idx1:])
-    result.extend(l2[idx2:])
-    return result
-\end{minted}
+    \begin{minted}{python}
+    def merge(l1, l2):
+        result = []
+        idx1, idx2 = 0, 0
+        while idx1 < len(l1) and idx2 < len(l2):
+            result.append(l1[idx1] if l1[idx1] < l2[idx2] else l2[idx2])
+        result.extend(l1[idx1:])
+        result.extend(l2[idx2:])
+        return result
+    \end{minted}
+    \caption{Merge of two sequences in Python}
 \end{figure}
 
 Python goes further. The code is similar but the length of the sequence (python calls it a \textit{list})
@@ -122,13 +123,14 @@ The languages are similar in terms how an algorithm will be written in either of
 However, there are also other paradigms of programming, like object oriented or functional programming.
 
 \begin{figure}[H]
-\begin{minted}{haskell}
-merge :: Ord a => [a] -> [a] -> [a]
-merge [] a = a
-merge a [] = a
-merge (h1:t1) (h2:t2) | h1 < h2 = h1:merge t1 (h2:t2)
-                      | otherwise = h2:merge (h1:t1) t2
-\end{minted}
+    \begin{minted}{haskell}
+    merge :: Ord a => [a] -> [a] -> [a]
+    merge [] a = a
+    merge a [] = a
+    merge (h1:t1) (h2:t2) | h1 < h2 = h1:merge t1 (h2:t2)
+                          | otherwise = h2:merge (h1:t1) t2
+    \end{minted}
+    \caption{Merge of two sequences in Haskell}
 \end{figure}
 
 Haskell is a functional programming language. As is apparent, functional programming is very different from imperative,
@@ -139,7 +141,7 @@ mainly talk about imperative languages, but will sometimes mention how things di
 Programs are mostly written by humans, and humans make mistakes \cite{human-error}. These mistakes may be syntactic ones, like
 forgetting to put a semicolon at the end of a statement. This mistake makes it impossible for the program to be run. However,
 programs can still be syntactically valid and still have errors in them. Consider the merge program in C (figure \ref{fig:merge-c}).
-Lets write the allocation of array like this: \lstinline{malloc(len1 + len2)}. We allocated bytes equal to number of elements
+Lets write the allocation of array like this: \texttt{malloc(len1 + len2)}. We allocated bytes equal to number of elements
 but we haven't incorporated their size (integers are often four bytes long)! Thus, the result would not fit into the allocated
 array (unless both arrays were empty) and the program would most likely crash.
 
@@ -173,7 +175,7 @@ the flow of the program. They allow \textit{breakpoints} to be set at each line 
 This is especially important for functional languages, as their functions often consists of one big expression.}.
 When the program is about to execute the line of code with the breakpoint. The control is passed back to the
 debugger and user can inspect the state of the program at that line. There are also conditional breakpoints,
-which only triggers when some condition holds (for example the value of variable \mintinline{i} must be equal to zero).
+which only triggers when some condition holds (for example the value of variable \texttt{i} must be equal to zero).
 
 Finally, debuggers also allow \textit{stepping}. This also modifies the control flow of the program.
 \begin{itemize}
@@ -298,7 +300,7 @@ The parts of the compiler which are dependent on the source language are called 
 the target are called \textbf{backend} (Code generation).
 
 This is widely used in practice. The LLVM \cite{llvm} project is a compiler backend. It uses its own IR (as was mentioned on figure \ref{fig:llvm-ir-example}).
-It can compile this IR into many targets, including x86, ARM and Spark \todo{Ocitovat}. The \texttt{Clang} project is a compiler frontend for C, C++ and Objective-C languages.
+It can compile this IR into many targets, including x86, ARM and Spark \todo{Ocitovat}. The \textit{Clang} project is a compiler frontend for C, C++ and Objective-C languages.
 It translates these languages to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a Haskell compiler, or \textit{rustc}, which is a Rust compiler.
 With LLVM, creating new programming language comes down to parsing it into an AST and transforming that AST into the LLVM IR.
 
