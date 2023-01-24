@@ -266,7 +266,7 @@ This part converts AST into some other representation, most commonly called IR\f
 AST is also intermediate representation, but if we use IR we mean this one.}. IR is closer to machine code, to be easily translated,
 but retain some properties that makes it easier to work with it. There are many types of IR. One of the most popular compilers, LLVM, uses
 single static assignment (SSA) \cite{llvm}. Example of LLVM IR can be found on figure \ref{llvm-ir-example}. Compilers perform most
-optimizations on this intermediate representation.
+optimizations on this intermediate representation. 
 
 \begin{figure}\label{llvm-ir-example}
     \begin{minted}{llvm}
@@ -288,6 +288,24 @@ there are still some things to take care of. For example SSA IR doesn't have reg
 Other architectures might have some other traits that differ it from the IR and they all have to be accounted for when generating code.
 
 \subsection{Modularity of compilers}
-This all may seem unecessarily complicated. 
+The main advantage of using an IR is that there is a common ground for every language. Imagine we write a compiler for the C language.
+We need to write all five parts from figure \ref{fig:compiler-structure}. If we later decided that we also want to create a compiler
+for Haskell, we just need to write everything up to the IR translation. Once we can translate Haskell into the IR, we can reuse the
+previous part of the compiler to compile to machine code! This also works the other way around. If we compiled IR to the machine code
+that works with the x86 architecture, and we want to compile to ARM, we just need to create the code generation part for the ARM architecture,
+no need to write whole compiler. Also, most of the optimizations are done on the IR level, this also saves a lot of development time.
+The parts of the compiler which are dependent on the source language are called \textbf{frontend} (Syntax, Semantic and IR translation), the parts that are dependent on
+the target are called \textbf{backend} (Code generation).
 
-\subsection{Interpreted languages}
+This is widely used in practice. The LLVM \cite{llvm} project is a compiler backend. It uses its own IR (as was mentioned on figure \fig{llvm-ir-example}).
+It can compile this IR into many targets, including x86, ARM and Spark \todo{Ocitovat}. The \texttt{Clang} project is a compiler frontend for C, C++ and Objective-C languages.
+It translates these languages to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a Haskell compiler, or \textit{rustc}, which is a Rust compiler.
+With LLVM, creating new programming language comes down to parsing it into an AST and transforming that AST into the LLVM IR.
+
+\subsection{Interpreting programs}
+Not all languages are compiled. Imagine a program which can evaluate arithmetic expressions, each phone nowadays has a program like this.
+We don't have to stop there. Moving this up a notch, we can create a program that reads source code and executes it.
+This is what interpreting means. Dynamically typed languages tend to be interpreted \cite{python, lua, javascript}, because it is simpler
+to implement them in an interpreter\footnote{Since the interpreter is a program, it is another layer of abstraction. This can make
+the resulting languages sometimes more abstract then the compiled ones. Many times at a cost of performance}.\todo{Ocitovat tohle vsechno}.
+
