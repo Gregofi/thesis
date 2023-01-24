@@ -1,7 +1,8 @@
 \chapter{Introduction}
-Todays world is practically run by a computers. They are everywhere, from our wrists to our cars.
-All of these computers car run some sort of programs. These programs define what the computer does.
-Programs are executed by a processor, an integral part of every computer. Processors have several instructions,
+Todays world is practically run by computers. They are everywhere, from our wrists to our cars.
+All of these computers car run programs. These programs define what the computer does.
+Programs are written by humans (or at least most of them) and are executed by a processor, 
+an integral part of every computer. Processors understand several instructions,
 which can be executed, and can also read and write to either memory or registers. However, processors can only
 understand machine code. For example, very simple machine code instruction is \texttt{0100 0001} (in x86 architecture).
 This instruction increases the value which is in register ECX by one. Real programs are made of thousands and thousands of
@@ -10,9 +11,6 @@ have to have a mapping from machine code to instruction in his head at least for
 programmer knew such mappings, sequences of binary would be very hard to read. 
 
 \section{Assembly language}
-Assembly language is almost a direct mapping from instruction and operand names to machine code. For example the code \texttt{INC ECX}
-is the previously mentioned increment by one instruction. This is way more readable for programmer than \texttt{0100 0001}.
-Understanding instructions by themselves is simpler. But programs are still difficult to read. Consider example on figure \ref{fig:assembly-example},
 \begin{figure}\label{fig:assembly-example}
 \begin{lstlisting}
 PROC:
@@ -29,7 +27,7 @@ LN1:
     RET
 \end{lstlisting}
 \end{figure}
-this code checks if value which is in memory at offset \texttt{[EBP + 8]} is positive and stores $1$ to register \texttt{EAX} if it is positive, or zero if it is not positive. Understanding the instructions one by one is doable. But understanding what this program does as a whole is not apparent at first glance. 
+Assembly language is almost a direct mapping from instruction and operand names to machine code. For example the code \texttt{INC ECX} is the previously mentioned increment by one instruction. This is way more readable for programmer than \texttt{0100 0001}. Understanding instructions by themselves is simpler. But programs are still difficult to read. Consider example on figure \ref{fig:assembly-example}, this code checks if value which is in memory at offset \texttt{[EBP + 8]} is positive and stores $1$ to register \texttt{EAX} if it is positive, or zero if it is not positive. Understanding the instructions one by one is doable. But understanding what this program does as a whole is not apparent at first glance. 
 
 Programs are executed from top to bottom, instruction by instruction. But certain instructions can change this control flow. For example the instruction \texttt{JMP dest}
 jumps to a label (\texttt{LN1} in the example) and the execution continues from there. This allows the program to repeat or skip some part of the code.
@@ -44,7 +42,7 @@ separately because different architectures might use different instructions, hav
 different (for example stack based).
 
 \section{High level programming languages}
-Aim of these languages is to abstract away the details of the computer. One of the older languages is the C programming language (1972).
+Aim of these languages is to abstract away the details of a computer. One of the older languages is the C programming language (1972).
 Example of a program in C:
 \begin{minted}{C}
 int positive(int n) {
@@ -55,17 +53,18 @@ int positive(int n) {
     }
 }
 \end{minted}
-This is the same program as the assembly one. Knowing about internals of the computer is no longer needed.
+This program yields same result as the assembly one. Knowing about internals of the computer is no longer needed.
 We do not store values into registers, instead they are kept in variables. We can use conditional statements,
-which are more concise then using jumps. The functions and variables themselves also have names from which
+which are more concise then using jumps \todo{GOTO considered harmful?}. 
+The functions and variables themselves also have names from which
 can be apparent what is the purpose of it (contrast to register names like EAX).
 
 However, upon deeper inspection of the language, it does not abstract away everything. C has a feature called
 \textit{pointers}. Those are special kind of variables which points into the computer memory\footnote{On modern OS,
-a concept named virtual memory is used. This maps addresses used by process to physical memory. Pointer values are virtual memory addresses. See \cite{modern-os}.}.
+a concept named \textit{virtual memory} is used. This maps addresses used by process to physical memory. Pointer values are virtual memory addresses. See \cite{modern-os}.}.
 So C does not necessarily abstract everything away. That can sometimes be a good thing, because if you need to 
 interact with the computer hardware you don't have to resort to assembly, but can use C. For example the Linux
-operating system Kernel is written mostly in C.
+ Kernel is written mostly in C \cite{linux-source}.
 
 Not everyone needs that sort of intimacy with the hardware. So more and more abstract languages were created.
 Here is a program that takes two sequences of ordered numbers and merges these two together so that the result
@@ -110,16 +109,16 @@ along with the pointers.
 \end{figure}
 
 Python goes further. The code is similar but the length of the sequence (python calls it a \textit{list})
-is baked into the sequence itself. Also, we do not have to say how long will the list be,
+is baked into the sequence itself. Also, we do not have to specify how long will the list be upfront,
 Python manages everything for us. In C, we had to have a while cycle that appended
-the rest of the sequence to the output. In python, lists (and other objects) have methods,
+the rest of the sequence to the output. In Python, lists (and other objects) have methods,
 like the \textit{extend}. Notice how we had to specify what type the variables are in C.
 This is not needed in Python, since the language is dynamically typed, whereas 
 C is statically typed. This has its own pros and cons, which is briefly discussed in \todo{Compilling} chapter.
 
 Python and C are so called imperative languages. These languages are 
 made of statements which are executed one by one (similarly to assembly language).
-The languages are similar in terms how an algorithm will be written in either of them.
+The languages are similar in terms of how an algorithm will be written in either of them.
 However, there are also other paradigms of programming, like object oriented or functional programming.
 
 \begin{figure}[H]
@@ -145,9 +144,10 @@ Lets write the allocation of array like this: \texttt{malloc(len1 + len2)}. We a
 but we haven't incorporated their size (integers are often four bytes long)! Thus, the result would not fit into the allocated
 array (unless both arrays were empty) and the program would most likely crash.
 
-This is called undefined behaviour \cite{undefined-behavior}. This means that the program will not terminate itself, but instead continue execution.
-However, what happens next in the execution is undefined. It may crash, or produce different results than expected, or
-it may run perfectly fine. It also may run perfectly fine when executed for the first time and crash for the second time.
+This is called undefined behaviour \cite{undefined-behavior}.
+Everything that happens in the execution next is not guaranteed by the C standard. It may crash, or produce different
+results than expected, or it may run perfectly fine. It also may run perfectly fine
+when executed for the first time and crash for the second time.
 Errors like this can be very difficult to catch, because they may show up only some of the time. Some languages do prevent this,
 when you try to index an array out of its bounds the program will abort immediately with a descriptive error message,
 but they may have their own different quirks. Some programming languages and paradigms are less error prone, but none 
@@ -307,7 +307,6 @@ With LLVM, creating new programming language comes down to parsing it into an AS
 \subsection{Interpreting programs}
 Not all languages are compiled. Imagine a program which can evaluate arithmetic expressions, each phone nowadays has a program like this.
 We don't have to stop there. Moving this up a notch, we can create a program that reads source code and executes it.
-This is what interpreting means. Dynamically typed languages tend to be interpreted \cite{python, lua, javascript}, because it is simpler
-to implement them in an interpreter\footnote{Since the interpreter is a program, it is another layer of abstraction. This can make
-the resulting languages sometimes more abstract then the compiled ones. Many times at a cost of performance}.\todo{Ocitovat tohle vsechno}.
-
+This is what interpreting means. Dynamically typed languages tend to be interpreted \cite{python, lua, javascript}\todo{Instead of languages, cite some relevant source}. Since the interpreter is a program, it is another layer of abstraction. This can make
+the resulting languages sometimes more abstract then the compiled ones, sometimes at the cost of performance.\todo{Ocitovat tohle vsechno}.
+Interpreters still \textit{compile} the code into some intermediate representation, but it's not compiled down to machine code, instead that IR is run by a program\footnote{Nowadays, interpreters use JIT compilation, which compiles some of the code some of the time into machine code}.
