@@ -265,10 +265,10 @@ has been declared before.
 This part converts AST into some other representation, most commonly called IR\footnote{IR means intermediate representation.
 AST is also intermediate representation, but if we use IR we mean this one.}. IR is closer to machine code, to be easily translated,
 but retain some properties that makes it easier to work with it. There are many types of IR. One of the most popular compilers, LLVM, uses
-single static assignment (SSA) \cite{llvm}. Example of LLVM IR can be found on figure \ref{llvm-ir-example}. Compilers perform most
+single static assignment (SSA) \cite{llvm}. Example of LLVM IR can be found on figure \ref{fig:llvm-ir-example}. Compilers perform most
 optimizations on this intermediate representation. 
 
-\begin{figure}\label{llvm-ir-example}
+\begin{figure}\label{fig:llvm-ir-example}
     \begin{minted}{llvm}
         define dso_local i32 @_Z6squarei(i32 %0) {
           %2 = alloca i32, align 4
@@ -297,7 +297,7 @@ no need to write whole compiler. Also, most of the optimizations are done on the
 The parts of the compiler which are dependent on the source language are called \textbf{frontend} (Syntax, Semantic and IR translation), the parts that are dependent on
 the target are called \textbf{backend} (Code generation).
 
-This is widely used in practice. The LLVM \cite{llvm} project is a compiler backend. It uses its own IR (as was mentioned on figure \fig{llvm-ir-example}).
+This is widely used in practice. The LLVM \cite{llvm} project is a compiler backend. It uses its own IR (as was mentioned on figure \ref{fig:llvm-ir-example}).
 It can compile this IR into many targets, including x86, ARM and Spark \todo{Ocitovat}. The \texttt{Clang} project is a compiler frontend for C, C++ and Objective-C languages.
 It translates these languages to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a Haskell compiler, or \textit{rustc}, which is a Rust compiler.
 With LLVM, creating new programming language comes down to parsing it into an AST and transforming that AST into the LLVM IR.
