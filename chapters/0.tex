@@ -307,6 +307,27 @@ With LLVM, creating new programming language comes down to parsing it into an AS
 \subsection{Interpreting programs}
 Not all languages are compiled. Imagine a program which can evaluate arithmetic expressions, each phone nowadays has a program like this.
 We don't have to stop there. Moving this up a notch, we can create a program that reads source code and executes it.
-This is what interpreting means. Dynamically typed languages tend to be interpreted \cite{python, lua, javascript}\todo{Instead of languages, cite some relevant source}. Since the interpreter is a program, it is another layer of abstraction. This can make
-the resulting languages sometimes more abstract then the compiled ones, sometimes at the cost of performance.\todo{Ocitovat tohle vsechno}.
-Interpreters still \textit{compile} the code into some intermediate representation, but it's not compiled down to machine code, instead that IR is run by a program\footnote{Nowadays, interpreters use JIT compilation, which compiles some of the code some of the time into machine code}.
+This is what interpreting means. Dynamically typed languages tend to be interpreted~\cite{python, lua, javascript}\todo{Instead of languages, cite some relevant source}, but it is not a rule~\cite{scala}. Since the interpreter is a program, it is another layer of abstraction. This can make
+the resulting languages sometimes more abstract then the compiled ones, sometimes at the cost of performance~\cite{jit}.
+Interpreters still \textit{compile} the code into some intermediate representation, but it's not compiled down to machine code, instead that IR is run by a program\footnote{Nowadays, interpreters use JIT compilation, which compiles some of the code some of the time into machine code~\cite{jit}}.
+
+\subsection{Debugging source code}
+As we mentioned previously, processors only understand machine code. To run a program written in high level programming language, we need to compile it. Debugger can then inspect the value of variables when the program is running or stop at specific lines. But the machine code doesn't have any variables, nor lines of source code. How is the debugger able to know on which instruction it should put the breakpoint? Compilers must work together with debuggers. They must store this information somewhere, so that debugger knows that line $x$ in source code corresponds to instruction $y$ in machine code. These \textit{debugging informations} are often not compiled with the program by default, for example to compile them with `clang` compiler one needs to use the `-g` flag. If not, then its still possible to debug it, but one will only see the instructions and raw memory, not variables and lines of source code.
+
+\section{Teaching compilers}
+Many schools about computer science have compiler course. At Faculty of Information Technologies, there is one too, called \textit{Code Generators} (NI-GEN). In this course, student is tasked to build a simple compiler for a C like language. The target of the compiler is T86 architecture. This is also an abbreviation, it stands for \textit{tiny x86}. This architecture does not have a processor that implements it, instead a virtual machine (or interpreter, if you will) was created for it. The architecture is supposed to ease the code generation and let the students focus on the more interesting parts of the compiler, like register allocation or optimization, instead of the nitty gritty detail of x86 (or different architecture, should the students choose it).
+
+T86 however has one problem. It doesn't have a debugger. So if a compiler of some student generates code badly, it takes a non-trivial amount of effort to find the error. T86 offers some very light debugging capabilities, but they are very far from real debugging. Also, compiling debugging informations is not taught at all in the NI-GEN course. If a debugger was provided to the students, it might be incetiving to compile such information to ease their lives later, when they will need to find errors in their compilers which will inevitably happen.
+
+\section{Goals of the thesis}
+The primary goal is to create a debugger for the T86 virtual machine which allows to debug both on the machine code level and at the source code level. The debugger should be extensible enough to work with intermediate representation also. This will require non-trivial changes in the T86 virtual machine source code. The students compilers will also have to generate debugging information. Format of the debugging information should be so that it's easy for students to generate.
+
+\section{Structure of the thesis}
+\begin{enumerate}
+    \item The \textit{Introduction} describes the motivation behind the thesis and basic terms with which should the reader be familiar.
+    \item \textit{Debuggers - On the shoulders of giants} describes how are debuggers implemented and what support is needed on various levels (OS, processors, compilers) for them to work.
+    \item \textit{T86 Virtual Machine} describes the T86 architecture and how are some of the parts implemented.
+    \item \textit{Implementation} describes how the implementation is done. It is divided into three main parts, first is what changes and additions were necessary to the T86 VM. Then it is described how the debugger itself is implemented. Finally, a proof of concept compiler is created to demonstrate how the debugger works and that it is indeed simple to generate debugging information for it.
+    \item \textit{Conclusions} summarizes the result of the thesis and speaks of possible future work. 
+\end{enumerate}
+
