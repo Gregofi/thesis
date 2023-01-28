@@ -44,7 +44,7 @@ For now, we pretended that source-level debuggers can magically work with lines 
 As we mentioned, some debuggers only work on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section, we will explore how assembly-level debuggers are implemented. The implementation itself can greatly differ based on the operating system or target machine. The following section aims to describe the most often used OS and targets.
 
 \subsection{Breakpoints}
-Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \mintinline{c}{INT3}, opcode \mintinline{c}{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
+Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \mintinline{c}{INT3}, opcode \mintinline{c}{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later.
 
 Consider the following code \todo{Typeset these guys correctly}
 \begin{minted}{asm}
@@ -192,18 +192,18 @@ Now we have all necessary building block to build a simple proof of concept Wind
     \begin{minted}{c}
 void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 {
-   DWORD dwContinueStatus = DBG_CONTINUE; // exception continuation 
-   for(;;) 
-   { 
-      WaitForDebugEvent(DebugEv, INFINITE); 
-      switch (DebugEv->dwDebugEventCode) 
-      { 
-         case EXCEPTION_DEBUG_EVENT: 
+   DWORD dwContinueStatus = DBG_CONTINUE; // exception continuation
+   for(;;)
+   {
+      WaitForDebugEvent(DebugEv, INFINITE);
+      switch (DebugEv->dwDebugEventCode)
+      {
+         case EXCEPTION_DEBUG_EVENT:
             // Handle exception debug events
          // Other debug events
-      } 
-   ContinueDebugEvent(DebugEv->dwProcessId, 
-                      DebugEv->dwThreadId, 
+      }
+   ContinueDebugEvent(DebugEv->dwProcessId,
+                      DebugEv->dwThreadId,
                       dwContinueStatus);
    }
 }
@@ -212,3 +212,124 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 \label{fig:windows-debugger-mainloop}
 \end{figure}
 
+\section{Compiler support}
+\todo{Moved from introduction here for the time being}
+When we talked about evolution of programming from machine code to assembly to higher level languages, we haven't
+talked about how they are executed. Machine code can be directly executed by processor, as we said, it is a sequence
+of binary. Assembly is text, processors don't understand text. But assembly can be mapped to machine code almost 
+1:1\footnote{There are some exceptions, like labels. But translating them is not very difficult.}.
+
+However, high level programming languages do not map 1:1 to assembly. Some are close to it, like C, while others
+are miles away, like Haskell. But as was said, processors understand only machine code. To this end, programs that
+can translate source code into machine code, were created. They are called compilers and the translation process is
+called compiling. For example, for the C language one might use the GCC or Clang compilers.
+On figure \ref{fig:compiler-structure} can be seen basic structure of a compiler \cite{dragon-book}. 
+
+\tikzstyle{compilerblock} = [rectangle, draw, minimum width=6cm, minimum height=1cm] 
+\tikzstyle{tables} = [rectangle, draw, minimum width=4cm, minimum height=1cm] 
+\begin{figure}\label{fig:compiler-structure}
+    {\centering
+    \begin{tikzpicture}
+    \node (lexer)[compilerblock]{Lexical analyzer};
+    \node (syntax)[compilerblock,below=of lexer]{Syntactic analyzer};
+    \node (semantic)[compilerblock,below=of syntax]{Semantic analyzer};
+    \node (imc)[compilerblock,below=of semantic]{Intermediate Code Generator};
+    \node (gen)[compilerblock,below=of imc]{Code Generator};
+    \node (symbol)[tables, left=of semantic]{Symbol table};
+    \draw[->] (lexer) -- node[below] {} (syntax);
+    \draw[->] (syntax) -- node[below] {} (semantic);
+    \draw[->] (semantic) -- node[below] {} (imc);
+    \draw[->] (imc) -- node[below] {} (gen);
+    \end{tikzpicture} 
+    \par}
+    \caption{Simplified structure of a compiler. Some parts were left out, like optimizations.}
+    \label{fig:compiler_tikz}
+\end{figure}
+
+\subsection{Lexical analyzer}
+The lexical analyzer groups separate symbols into groups. For example the code
+\begin{minted}{c}
+foo = bar(1 + 2);
+\end{minted}
+might be translated into tokens like this
+\begin{lstlisting}[stringstyle=\color{black}]
+<id:"foo"> <assignment-operator> <id:"bar"> 
+<left-bracket> <int-number:1> <plus-operator> 
+<int-number:2> <right-bracket> <semicolon>
+\end{lstlisting}
+The Syntactic analyzer then works with these tokens.
+
+\subsection{Syntantic and semantic analyzer}
+Syntactic analysis accepts tokens and processes them into other intermediate representation. This is
+most often an abstract syntax tree (abbr. AST, figure \ref{fig:ast}). It also checks that the source code complies to the grammar of the language.
+Semantic analysis then checks that the program is semantically consistent. For example that used variable
+has been declared before.
+
+\begin{figure}\label{fig:ast}
+    \centering
+    \begin{tikzpicture}[,shorten >=1pt,node distance=1.8cm,on grid,initial/.style={}]
+    \node (assignment) {$=$};
+    \node (foo) [below left =of assignment] {id:foo};
+    \node (bar) [below right =of assignment] {call:bar};
+    \node (plus) [below right=of bar] {$+$};
+    \node (one) [below left =of plus] {$1$};
+    \node (two) [below right =of plus] {$2$};
+    
+    \draw[-, above, scale=0.7] 
+    (assignment)   edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (foo)
+     (assignment)  edge node[scale=0.7, right, yshift=0.1cm] {rhs}  (bar)
+     (bar)         edge node[scale=0.7, right, yshift=0.1cm] {expr} (plus)
+     (plus)        edge node[scale=0.7, right, yshift=0.1cm] {rhs}  (two)
+     (plus)        edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (one);
+    \end{tikzpicture}
+    \caption{Simplified example of an abstract syntax tree.}
+    \label{fig:astgraph}
+\end{figure}
+ 
+\subsection{Intermediate code generation}
+This part converts AST into some other representation, most commonly called IR\footnote{IR means intermediate representation.
+AST is also intermediate representation, but if we use IR we mean this one.}. IR is closer to machine code, to be easily translated,
+but retain some properties that makes it easier to work with it. There are many types of IR. One of the most popular compilers, LLVM, uses
+single static assignment (SSA) \cite{llvm}. Example of LLVM IR can be found on figure \ref{fig:llvm-ir-example}. Compilers perform most
+optimizations on this intermediate representation. 
+
+\begin{figure}\label{fig:llvm-ir-example}
+    \begin{minted}{llvm}
+        define dso_local i32 @_Z6squarei(i32 %0) {
+          %2 = alloca i32, align 4
+          store i32 %0, i32* %2, align 4
+          %3 = load i32, i32* %2, align 4
+          %4 = load i32, i32* %2, align 4
+          %5 = mul nsw i32 %3, %4
+          ret i32 %5
+        }
+    \end{minted}
+    \caption{Simplified example of LLVM IR.}
+\end{figure}
+
+\subsection{Code generation}
+Here, IR is translated directly to the target machine code or possibly assembly. Even though IR can seem very similar to assembly,
+there are still some things to take care of. For example SSA IR doesn't have registers, it uses unlimited number of variables.
+Other architectures might have some other traits that differ it from the IR and they all have to be accounted for when generating code.
+
+\subsection{Modularity of compilers}
+The main advantage of using an IR is that there is a common ground for every language. Imagine we write a compiler for the C language.
+We need to write all five parts from figure \ref{fig:compiler-structure}. If we later decided that we also want to create a compiler
+for Haskell, we just need to write everything up to the IR translation. Once we can translate Haskell into the IR, we can reuse the
+previous part of the compiler to compile to machine code! This also works the other way around. If we compiled IR to the machine code
+that works with the x86 architecture, and we want to compile to ARM, we just need to create the code generation part for the ARM architecture,
+no need to write whole compiler. Also, most of the optimizations are done on the IR level, this also saves a lot of development time.
+The parts of the compiler which are dependent on the source language are called \textbf{frontend} (Syntax, Semantic and IR translation), the parts that are dependent on
+the target are called \textbf{backend} (Code generation).
+
+This is widely used in practice. The LLVM \cite{llvm} project is a compiler backend. It uses its own IR (as was mentioned on figure \ref{fig:llvm-ir-example}).
+It can compile this IR into many targets, including x86, ARM and Spark \todo{Ocitovat}. The \textit{Clang} project is a compiler frontend for C, C++ and Objective-C languages.
+It translates these languages to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a Haskell compiler, or \textit{rustc}, which is a Rust compiler.
+With LLVM, creating new programming language comes down to parsing it into an AST and transforming that AST into the LLVM IR.
+
+\subsection{Interpreting programs}
+Not all languages are compiled. Imagine a program which can evaluate arithmetic expressions, each phone nowadays has a program like this.
+We don't have to stop there. Moving this up a notch, we can create a program that reads source code and executes it.
+This is what interpreting means. Dynamically typed languages tend to be interpreted~\cite{python, lua, javascript}\todo{Instead of languages, cite some relevant source}, but it is not a rule~\cite{scala}. Since the interpreter is a program, it is another layer of abstraction. This can make
+the resulting languages sometimes more abstract then the compiled ones, sometimes at the cost of performance~\cite{jit}.
+Interpreters still \textit{compile} the code into some intermediate representation, but it's not compiled down to machine code, instead that IR is run by a program\footnote{Nowadays, interpreters use JIT compilation, which compiles some of the code some of the time into machine code~\cite{jit}}.
