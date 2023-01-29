@@ -1,4 +1,4 @@
-\chapter{Debugging}
+\chapter{Debugging support}
 
 \begin{quote}
   \textit{Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.}\begin{flushright}
@@ -6,37 +6,120 @@
   \end{flushright}
 \end{quote}
 
+We already mentioned in first chapter that to debug programs in high level programming languages we need the compiler to emit debugging information.
+But debugging support must also be provided by operating system (if there is one) and by processor itself.
+In this chapter, we discuss how debugging is supported at various levels.
 
-Debuggers can attach to existing process or spawn a new one. They often have functionalities like displaying variable/register values, allowing to read and write into program memory, change the executed code itself and to stop at some point in the program. Implementation of debuggers can vary based on target machine, operating system or if the program is native or expected to be run by an interpreter.
-
-There are multiple debugger types \todo{Ocitovat tu microsoft press store thingie popr. kokesovo prednasky}.
+\section{Instruction set architecture}
+In first chapter it was said that CPU can only execute machine code which is made of instructions
+and that it has certain registers. Which instructions and registers the CPU has can differ from CPU to CPU.
+This is specified by \textit{Instruction Set Architecture} (ISA) \cite{aps-isa}. It is an abstract interface between
+the hardware and lowest level software (machine code). It contains all information needed to write a program in machine
+code. In general, ISA specifies following:
 \begin{itemize}
-    \item An user-mode debugger - Can debug applications in user mode.
-    \item A kernel debugger - Can debug the kernel and the kernel drivers.
-    \item A source-level debugger - Can set breakpoints in application according to its source code.
-    \item An assembly-level debugger - Works with the assembly language
+    \item Set of machine code instructions - Specifies instructions the ISA has and what operands each instruction has.
+    \item Register set - Which registers the ISA has\footnote{Strictly speaking ISA doesn't have to use registers. It's possible to use only stack or accumulator, but most used ISAs use registers. }.
+    \item Addressing modes - Possible methods to refer to memory or register.
 \end{itemize}
+There are other specification, they are not relevant to this thesis. For each instruction and operand there is
+specified how they should be encoded into binary (remember, that's what the CPU can understand).
+CPU then \textit{implements} some ISA. If two different CPUs implements the same ISA then they should be able to run the same machine code program.
+For example, most PC use the \textit{x86} architecture \cite{aps-isa}, althrough the \textit{ARM} architecture is on the rise with the Apple sillicon.
 
-This thesis will mainly focus on source-level debugging and assembly level debugging. We will see that those two are closely intertwined. First, we will present the most important and common debugger features.
+The x86 architecture is so called \textit{Complex Instruction Set Architecture} (CISC). It contains many instructions that do
+many things at once, have varying length and takes multiple clock cycles to complete \cite{intel-manual}. On the other hand
+the ARM architecture is \textit{Reduced Instruction Set Architecture} (RISC). The number of instructions is smaller, they
+are intended to be small building blocks from which complex operations may be created by using many of them. Each instruction in RISC also
+has same length. Both architectures have their pros and cons, althrough some literature suggest that in modern days the choice of architecture
+is irrelevant if one is only considering performance and power consuption  \cite{riscvscisc1, riscvscisc2}.
+Unless specified otherwise the rest of this chapter will be talking about x86.
 
-\section{Fundamental debugger features}
-\subsection{Breakpoint}\label{breakpoint}
-Breakpoints are one of the most important debugger features. Source-level debugger can set them on some location in the source code and when the program arrives at that location, it will pause. The debugger can then inspect various traits of the running program. The location is most often line, but can even be inside expressions\footnote{This is especially important for functional languages, where function can just be one big expression.}. Hovewer we will consider breakpoints that only stops on a line. Assembly-level debuggers can stop when instruction on some address is being executed, so effectively on a line of the assembly program.
+In first chapter we briefly mentioned that machine code programs can instead be written in Assembly language.
+Assembly is almost 1:1 mapping to machine code. When showing programs, we will instead use Assembly. In figure
+\ref{fig:assembly-example2}, we present another example of a program that was compiled from C to Assembly of the x86 architecture.
+As seen, instructions have various operands. Most often registers (\texttt{RBP, RSP, EAX}), memory (\texttt{[rbp-4]} is reference to memory at address which
+is in register \texttt{rbp} minus $4$), or labels (like \texttt{L2}). Labels are not part of machine code, instead
+memory address has to be provided. This is a small part where assembly and machine code differ.
+For detailed overview of the x86 instructions see \cite{intel-manual}.
 
-Breakpoints may also have conditions that are checked when the program arrives at a given line. If the condition holds then the program is paused. This can be useful for example to stop at the end of the loop.
+\begin{figure}\label{fig:assembly-example2}
+    \begin{lstlisting}
+max:
+    push    rbp
+    mov     rbp, rsp
+    mov     QWORD PTR [rbp-24], rdi
+    mov     DWORD PTR [rbp-28], esi
+    mov     rax, QWORD PTR [rbp-24]
+    mov     eax, DWORD PTR [rax]
+    mov     DWORD PTR [rbp-4], eax
+    mov     DWORD PTR [rbp-8], 1
+    jmp     .L2
+.L3:
+    mov     eax, DWORD PTR [rbp-8]
+    cdqe
+    lea     rdx, [0+rax*4]
+    mov     rax, QWORD PTR [rbp-24]
+    add     rax, rdx
+    mov     eax, DWORD PTR [rax]
+    cmp     DWORD PTR [rbp-4], eax
+    cmovge  eax, DWORD PTR [rbp-4]
+    mov     DWORD PTR [rbp-4], eax
+    add     DWORD PTR [rbp-8], 1
+.L2:
+    mov     eax, DWORD PTR [rbp-8]
+    cmp     eax, DWORD PTR [rbp-28]
+    jl      .L3
+    mov     eax, DWORD PTR [rbp-4]
+    pop     rbp
+    ret
+    \end{lstlisting}
+    \caption{Compiled C program with GCC 9.4 compiler as x86 assembly.}
+\end{figure}
 
-\subsection{Stepping}
-Debuggers also allow us to "make a step" in the code. It executes one line and pauses on the next one. This means that we can run the program line by line and inspect the behavior of the program.
-There are often multiple categories of steps:
+\subsection{Registers}
 
+The x86 architecture has a set of general purpose registers.
+Some of these are
 \begin{itemize}
-    \item Step in - Executes one line. If the line was a call to a function, it pauses on the first line of the called function.
-    \item Step over - Executes one line. If the line was a call to a function, it executes the whole body of the function and pauses on the line after the call instruction.
-    \item Step out - Runs the program until it returns from current function, and pauses on that line.
+    \item RAX - Accumulator for operands and results data,
+    \item RCX - Counter for string and loop operations,
+    \item RSP - Stack pointer,
+    \item RBP - Pointer to data on the stack.
 \end{itemize}
+The names and number of general purpose registers change based on bit mode. 64-bit mode has 16 of them, while 32-bit has 8.
+Althrough the \texttt{RSP} and \texttt{RBP} are called general purpose they are often only used for pointing at the top of the stack,
+resp. to the base of the stack. Stack is special part of program memory, it mostly has LIFO semantics.
+It can be used to store intermediate result, arguments to functions, return address etc.
+This register is weird in a sense that it has this very special purpose but is still considered part of
+the general purpose registers. One might use it for storing calculations, but it would make
+rest of the instructions that work with stack behave unexpectedly \cite{intel-manual}.
 
-\subsection{Inspecting and changing memory}
-\todo{TODO}
+Instruction pointer register (RIP) contains address of the current instruction to be executed.
+As we mentioned in Introduction \todo{ref}, programs are executed sequentially from top to bottom,
+with certain instructions having the ability to change the control flow. When an instruction get
+executed, the size of the instruction will be added to the value in RIP register. This will advance
+the instruction pointer to the next instruction. Or, if the instruction changes control flow,
+the value in instruction pointer will be changed to the destination of the instruction.
+
+Another interesting register is the \texttt{EFLAGS} register. The register contains group
+of flags, which can alter various behavior of the CPU, or the CPU itself sets them
+as result of some instruction. For example the instruction \texttt{cmp} compares its two operands
+and if they are the same the \textit{zero} flag in the \texttt{EFLAGS} register will be set.
+
+\subsection{Interrupts}
+Interrupt is a special request to the CPU to stop execution of current program and to quickly react to
+the reason that caused the request \cite{aps-interrupts}. Example of such event can be keyboard press or error in an program (division by zero).
+There are two main categories \cite{intel-manual}
+\begin{itemize}
+    \item An \textbf{interrupt} is an asynchronous\footnote{Meaning that the interrupt may happen when another instruction is being processed (not on the CPU clock edge).} event that is typically triggered by an Input/Output (IO) device.
+    \item An \textbf{exception}\footnote{Unfortunately, this term will become quite overloaded in this thesis.} is a synchronous event that is generated when the processor detects one or more
+          predefined conditions when executing an instruction. These are further divided into three classes: faults, traps and aborts.
+\end{itemize}
+When an interrupt or exception happens, the processor halts execution of current program and switches to specific interrupt handler.
+Example of an exception is the \texttt{INT3} instruction. When this instruction is executed an interrupt is generated.
+This instruction is specifically meant to be used as a breakpoint. So, we have a way of how the CPU
+can stop execution and handle the breakpoint.
+
 
 \section{Debugging native programs}
 For now, we pretended that source-level debuggers can magically work with lines of source code. However, for programs to be run they first need to be compiled to native code - a series of binary instructions (there are also interpreted programs, which we will touch upon later). The debugger then interacts with this native code. It, by itself, has no idea that line $x$ corresponds to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug information is DWARF format \cite{dwarf}, which will be thoroughly described in \todo{TODO} section. 
@@ -44,7 +127,7 @@ For now, we pretended that source-level debuggers can magically work with lines 
 As we mentioned, some debuggers only work on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section, we will explore how assembly-level debuggers are implemented. The implementation itself can greatly differ based on the operating system or target machine. The following section aims to describe the most often used OS and targets.
 
 \subsection{Breakpoints}
-Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \mintinline{c}{INT3}, opcode \mintinline{c}{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later. 
+Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \mintinline{c}{INT3}, opcode \mintinline{c}{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later.
 
 Consider the following code \todo{Typeset these guys correctly}
 \begin{minted}{asm}
@@ -192,18 +275,18 @@ Now we have all necessary building block to build a simple proof of concept Wind
     \begin{minted}{c}
 void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 {
-   DWORD dwContinueStatus = DBG_CONTINUE; // exception continuation 
-   for(;;) 
-   { 
-      WaitForDebugEvent(DebugEv, INFINITE); 
-      switch (DebugEv->dwDebugEventCode) 
-      { 
-         case EXCEPTION_DEBUG_EVENT: 
+   DWORD dwContinueStatus = DBG_CONTINUE; // exception continuation
+   for(;;)
+   {
+      WaitForDebugEvent(DebugEv, INFINITE);
+      switch (DebugEv->dwDebugEventCode)
+      {
+         case EXCEPTION_DEBUG_EVENT:
             // Handle exception debug events
          // Other debug events
-      } 
-   ContinueDebugEvent(DebugEv->dwProcessId, 
-                      DebugEv->dwThreadId, 
+      }
+   ContinueDebugEvent(DebugEv->dwProcessId,
+                      DebugEv->dwThreadId,
                       dwContinueStatus);
    }
 }
@@ -212,3 +295,124 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 \label{fig:windows-debugger-mainloop}
 \end{figure}
 
+\section{Compiler support}
+\todo{Moved from introduction here for the time being}
+When we talked about evolution of programming from machine code to assembly to higher level languages, we haven't
+talked about how they are executed. Machine code can be directly executed by processor, as we said, it is a sequence
+of binary. Assembly is text, processors don't understand text. But assembly can be mapped to machine code almost 
+1:1\footnote{There are some exceptions, like labels. But translating them is not very difficult.}.
+
+However, high level programming languages do not map 1:1 to assembly. Some are close to it, like C, while others
+are miles away, like Haskell. But as was said, processors understand only machine code. To this end, programs that
+can translate source code into machine code, were created. They are called compilers and the translation process is
+called compiling. For example, for the C language one might use the GCC or Clang compilers.
+On figure \ref{fig:compiler-structure} can be seen basic structure of a compiler \cite{dragon-book}. 
+
+\tikzstyle{compilerblock} = [rectangle, draw, minimum width=6cm, minimum height=1cm] 
+\tikzstyle{tables} = [rectangle, draw, minimum width=4cm, minimum height=1cm] 
+\begin{figure}\label{fig:compiler-structure}
+    {\centering
+    \begin{tikzpicture}
+    \node (lexer)[compilerblock]{Lexical analyzer};
+    \node (syntax)[compilerblock,below=of lexer]{Syntactic analyzer};
+    \node (semantic)[compilerblock,below=of syntax]{Semantic analyzer};
+    \node (imc)[compilerblock,below=of semantic]{Intermediate Code Generator};
+    \node (gen)[compilerblock,below=of imc]{Code Generator};
+    \node (symbol)[tables, left=of semantic]{Symbol table};
+    \draw[->] (lexer) -- node[below] {} (syntax);
+    \draw[->] (syntax) -- node[below] {} (semantic);
+    \draw[->] (semantic) -- node[below] {} (imc);
+    \draw[->] (imc) -- node[below] {} (gen);
+    \end{tikzpicture} 
+    \par}
+    \caption{Simplified structure of a compiler. Some parts were left out, like optimizations.}
+    \label{fig:compiler_tikz}
+\end{figure}
+
+\subsection{Lexical analyzer}
+The lexical analyzer groups separate symbols into groups. For example the code
+\begin{minted}{c}
+foo = bar(1 + 2);
+\end{minted}
+might be translated into tokens like this
+\begin{lstlisting}[stringstyle=\color{black}]
+<id:"foo"> <assignment-operator> <id:"bar"> 
+<left-bracket> <int-number:1> <plus-operator> 
+<int-number:2> <right-bracket> <semicolon>
+\end{lstlisting}
+The Syntactic analyzer then works with these tokens.
+
+\subsection{Syntantic and semantic analyzer}
+Syntactic analysis accepts tokens and processes them into other intermediate representation. This is
+most often an abstract syntax tree (abbr. AST, figure \ref{fig:ast}). It also checks that the source code complies to the grammar of the language.
+Semantic analysis then checks that the program is semantically consistent. For example that used variable
+has been declared before.
+
+\begin{figure}\label{fig:ast}
+    \centering
+    \begin{tikzpicture}[,shorten >=1pt,node distance=1.8cm,on grid,initial/.style={}]
+    \node (assignment) {$=$};
+    \node (foo) [below left =of assignment] {id:foo};
+    \node (bar) [below right =of assignment] {call:bar};
+    \node (plus) [below right=of bar] {$+$};
+    \node (one) [below left =of plus] {$1$};
+    \node (two) [below right =of plus] {$2$};
+    
+    \draw[-, above, scale=0.7] 
+    (assignment)   edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (foo)
+     (assignment)  edge node[scale=0.7, right, yshift=0.1cm] {rhs}  (bar)
+     (bar)         edge node[scale=0.7, right, yshift=0.1cm] {expr} (plus)
+     (plus)        edge node[scale=0.7, right, yshift=0.1cm] {rhs}  (two)
+     (plus)        edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (one);
+    \end{tikzpicture}
+    \caption{Simplified example of an abstract syntax tree.}
+    \label{fig:astgraph}
+\end{figure}
+ 
+\subsection{Intermediate code generation}
+This part converts AST into some other representation, most commonly called IR\footnote{IR means intermediate representation.
+AST is also intermediate representation, but if we use IR we mean this one.}. IR is closer to machine code, to be easily translated,
+but retain some properties that makes it easier to work with it. There are many types of IR. One of the most popular compilers, LLVM, uses
+single static assignment (SSA) \cite{llvm}. Example of LLVM IR can be found on figure \ref{fig:llvm-ir-example}. Compilers perform most
+optimizations on this intermediate representation. 
+
+\begin{figure}\label{fig:llvm-ir-example}
+    \begin{minted}{llvm}
+        define dso_local i32 @_Z6squarei(i32 %0) {
+          %2 = alloca i32, align 4
+          store i32 %0, i32* %2, align 4
+          %3 = load i32, i32* %2, align 4
+          %4 = load i32, i32* %2, align 4
+          %5 = mul nsw i32 %3, %4
+          ret i32 %5
+        }
+    \end{minted}
+    \caption{Simplified example of LLVM IR.}
+\end{figure}
+
+\subsection{Code generation}
+Here, IR is translated directly to the target machine code or possibly assembly. Even though IR can seem very similar to assembly,
+there are still some things to take care of. For example SSA IR doesn't have registers, it uses unlimited number of variables.
+Other architectures might have some other traits that differ it from the IR and they all have to be accounted for when generating code.
+
+\subsection{Modularity of compilers}
+The main advantage of using an IR is that there is a common ground for every language. Imagine we write a compiler for the C language.
+We need to write all five parts from figure \ref{fig:compiler-structure}. If we later decided that we also want to create a compiler
+for Haskell, we just need to write everything up to the IR translation. Once we can translate Haskell into the IR, we can reuse the
+previous part of the compiler to compile to machine code! This also works the other way around. If we compiled IR to the machine code
+that works with the x86 architecture, and we want to compile to ARM, we just need to create the code generation part for the ARM architecture,
+no need to write whole compiler. Also, most of the optimizations are done on the IR level, this also saves a lot of development time.
+The parts of the compiler which are dependent on the source language are called \textbf{frontend} (Syntax, Semantic and IR translation), the parts that are dependent on
+the target are called \textbf{backend} (Code generation).
+
+This is widely used in practice. The LLVM \cite{llvm} project is a compiler backend. It uses its own IR (as was mentioned on figure \ref{fig:llvm-ir-example}).
+It can compile this IR into many targets, including x86, ARM and Spark \todo{Ocitovat}. The \textit{Clang} project is a compiler frontend for C, C++ and Objective-C languages.
+It translates these languages to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a Haskell compiler, or \textit{rustc}, which is a Rust compiler.
+With LLVM, creating new programming language comes down to parsing it into an AST and transforming that AST into the LLVM IR.
+
+\subsection{Interpreting programs}
+Not all languages are compiled. Imagine a program which can evaluate arithmetic expressions, each phone nowadays has a program like this.
+We don't have to stop there. Moving this up a notch, we can create a program that reads source code and executes it.
+This is what interpreting means. Dynamically typed languages tend to be interpreted~\cite{python, lua, javascript}\todo{Instead of languages, cite some relevant source}, but it is not a rule~\cite{scala}. Since the interpreter is a program, it is another layer of abstraction. This can make
+the resulting languages sometimes more abstract then the compiled ones, sometimes at the cost of performance~\cite{jit}.
+Interpreters still \textit{compile} the code into some intermediate representation, but it's not compiled down to machine code, instead that IR is run by a program\footnote{Nowadays, interpreters use JIT compilation, which compiles some of the code some of the time into machine code~\cite{jit}}.
