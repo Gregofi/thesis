@@ -129,45 +129,69 @@ We can supply code that will be responsible for handling the breakpoint as the i
 However, on modern PCs a Operating System (OS) is governing the PC. Alas, we cannot touch the interrupt handler directly.
 Instead, an OS is going to have to provide another layer of support for debugging.
 
-Recall the EFLAGS register mentioned in section \ref{X}. There is a special flag called trap flag. When it is set, cpu will issue an interrupt 
+Recall the EFLAGS register mentioned in section \ref{X}. There is a special flag called trap flag. When it is set, cpu will issue an interrupt
 after every executed instruction. This could be useful if we wanted to inspect execution instruction by instruction.
 
 \todo{Debugging embedded}
 
 \section{Operating system support}
-Operating system is a layer between computer components (cpu, memory, input/output devices, \dots) and software. It is responsible for handling all those resources so programmers do not have to think about it \cite{modern-os}. Managing resources is not only to make writing programs easier, but to make sure that they are 
-safe from each other. Modern operating system allows to run multiple programs at once (or atleast offer the illusion that it can) and they make sure that
-one program cannot directly overwrite the other program data. There must be exceptions, for example, debuggers can often change the values of variables,
-so they should be able to write into memory of other programs. But it still shouldn't be allowed to write to all programs, just the one that is currently being debugged.
+Operating system is a layer between computer components (cpu, memory, input/output devices, \dots) and software. It is responsible for
+handling all those resources so programmers do not have to think about it \cite{modern-os, os-concepts}. Managing resources is not only to make writing programs easier, but to make sure that they are
+safe from each other. Modern operating system allows to run multiple programs at once (or at least offer the illusion that it can) and they make sure that
+one program cannot overwrite data or otherwise interfere with other programs. Normal programs runs in so called \textit{user space}, which has limited capabilites.
+Kernel on the other hand runs in \textit{kernel space}. It has full access to hardware of the computer, can use all instructions, can permit or mask interrupts and so on.
 
-The two most prelevant operating systems today are either Microsoft Windows or Linux.
+However, if programs were limited to user space all the time they would be very limited.
+Sometimes, they need to escape the confiment of the OS, for example to read a file or communicate with other processes.
+Operating systems provide an interface through which the user space program
+can leverage small part of the kernel - system calls. They offer a way of requiring some service from the OS.
+This API is often in form of C and C++ functions~\cite{os-concepts}. A part of these functions is a special instruction, like \texttt{SYSCALL} on x86~\cite{intel-manual}, that
+switches the mode to kernel space. The kernel has to check if the call is correct, since it will
+be executed in kernel space with full access.
+
+The most prelevant operating systems today are Microsoft Windows, Linux and MacOS.
+Linux and MacOS systems are somewhat similar, but Windows is very different.
 
 \subsection{Linux}
-Linux offers special system call which is very handy for debugging. It is called \mintinline{c}{ptrace} \cite{ptrace} - process
-trace. It has following signature: \mintinline{c}{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \mintinline{c}{PTRACE_COMMAND},
-which specifies the behaviour of the function (for example \mintinline{c}{PTRACE_SINGLESTEP} for single step), pid of some
-process and some other parameters, depending on the \mintinline{c}{PTRACE_COMMAND}. 
-
-It allows to observe and control the execution of another process, which will most often be the debuggee.
-When the debugee is traced, it will stop each time a signal is delivered\footnote{\mintinline{c}{SIGKILL}
-is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \mintinline{c}{waitpid}.
-This system call return value will indicate the reason debuggee stopped. \mintinline{c}{ptrace(PTRACE_TRACEME, ...)}
-called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee.
-The debugger can then issue other commands to the child. There are also \mintinline{c}{PTRACE_ATTACH} and
-\mintinline{c}{PTRACE_SEIZE}, which can be used for attaching to existing process.
+Linux offers special system call which is very handy for debugging. It is called \texttt{ptrace} \cite{ptrace} - process
+trace. It has following signature: \texttt{ptrace(PTRACE\_COMMAND, pid, ...)}. It takes a \texttt{PTRACE\_COMMAND},
+which specifies the behaviour of the function (for example \texttt{PTRACE\_SINGLESTEP} for single step), pid of some
+process and some other parameters, depending on the \texttt{PTRACE\_COMMAND} that was chosen.
+It allows to observe and control the execution of another process, this process will be the debugee.
+In the context of \texttt{ptrace}, we will instead use the word tracee, to be consistent with ptrace documentation.
 
 \mintinline{c}{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
-    \item \mintinline{c}{PTRACE_PEEKTEXT, PTRACE_PEEKDATA} - Read tracee's memory,
-    \item \mintinline{c}{PTRACE_POKETEXT, PTRACE_POKEDATA} - Write into tracee's memory,
-    \item \mintinline{c}{PTRACE_GETREGS} - Read tracee's register values,
-    \item \mintinline{c}{PTRACE_SETREGSET} - Modify tracee's register values,
-    \item \mintinline{c}{PTRACE_GETSIGINFO} - Retrieve information about the signal that caused tracee to stop,
-    \item \mintinline{c}{PTRACE_CONT} - Restart the stopped tracee process,
-    \item \mintinline{c}{PTRACE_SINGLESTEP} - Restart the stopped tracee but stop it after executing one instruction.
+    \item \texttt{PTRACE\_PEEKTEXT, PTRACE\_PEEKDATA} - Read tracee's memory,
+    \item \texttt{PTRACE\_POKETEXT, PTRACE\_POKEDATA} - Write into tracee's memory,
+    \item \texttt{PTRACE\_GETREGS} - Read tracee's register values,
+    \item \texttt{PTRACE\_SETREGSET} - Modify tracee's register values,
+    \item \texttt{PTRACE\_GETSIGINFO} - Retrieve information about the signal that caused tracee to stop,
+    \item \texttt{PTRACE\_CONT} - Restart the stopped tracee process,
+    \item \texttt{PTRACE\_SINGLESTEP} - Restart the stopped tracee but stop it after executing one instruction.
 \end{itemize}
 
-\todo{Describe how they are used in real code}
+Linux however needs some way of notifying the debugger that the tracee encountered a breakpoint, or that some other
+event requiring debugger attention happened. To this end, \textit{signals} are used.
+They are in principle similar to CPU interrupts. They are however on the OS level.
+A signal is used in UNIX and Linux systems to notify a process that a particular event has occured \cite{os-concepts}.
+Signals can be sent to processes. When such process receives a signal, it stops its execution and starts
+the execution of a signal handler. There are various signal types. Most signals can have custom signal handler
+defined by the process. If no handler is defined then a default one is provided by the OS.
+However handlers for \texttt{SIGKILL} and \texttt{SIGSTOP} cannot be changed \cite{signals}.
+
+Reason for rising a signal can be \todo{Tady toho asi bude vic}
+\begin{itemize}
+    \item CPU Interrupt (Division by zero, Breakpoint hit),
+    \item System call (\textit{kill(pid, signal)}).
+\end{itemize}
+
+For example, the signal \texttt{SIGTERM} can be send to a process to ask it nicely to exit.
+The process can handle this request, for example to save some state before exiting.
+It can also however be completely ignored. For this, a signal \texttt{SIGKILL} can be used,
+which cannot be handled, ignored or blocked.
+
+
 
 \subsection{Windows}
 Windows also has built-in support for debugging at the Win32API layer \cite{windows-msdn-debugging-api, windows-press-debugging-api}.
@@ -175,7 +199,7 @@ It builds on \textit{debug events} and \textit{debug functions}. Summary of some
 
 \begin{itemize}
     \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an active process.
-    \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process. 
+    \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process.
                                           This passes control of the process to the debugger if there is one.
     \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events.
     \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution after processing debug event.
