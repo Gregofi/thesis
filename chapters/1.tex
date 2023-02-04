@@ -6,11 +6,16 @@
   \end{flushright}
 \end{quote}
 
-We already mentioned in first chapter that to debug programs in high level programming languages we need the compiler to emit debugging information.
+We already mentioned in the first chapter that to debug programs written in high level programming languages, we need the compiler to emit debugging information.
 But debugging support must also be provided by operating system (if there is one) and by processor itself.
-In this chapter, we discuss how debugging is supported at various levels.
+However, we can still debug programs in machine code. We briefly mentioned this in chapter 1 \todo{ref},
+however, we won't see source code, but only assembly. This can still be useful, for example
+for reverse engineering. And, as was already hinted, source level debugging is built upon
+assembly debugging. In this chapter, we will describe on which levels must assembly level debugging
+be supported. Additionaly, we'll discuss how are compilers and debuggers able to allows us 
+to debug source code althrough the programs are still machine code programs. 
 
-\section{Instruction set architecture}
+\section{Support on CPU level}
 In first chapter it was said that CPU can only execute machine code which is made of instructions
 and that it has certain registers. Which instructions and registers the CPU has can differ from CPU to CPU.
 This is specified by \textit{Instruction Set Architecture} (ISA) \cite{aps-isa}. It is an abstract interface between
@@ -18,25 +23,23 @@ the hardware and lowest level software (machine code). It contains all informati
 code. In general, ISA specifies following:
 \begin{itemize}
     \item Set of machine code instructions - Specifies instructions the ISA has and what operands each instruction has.
-    \item Register set - Which registers the ISA has\footnote{Strictly speaking ISA doesn't have to use registers. It's possible to use only stack or accumulator, but most used ISAs use registers. }.
+    \item Register set - Which registers the ISA has\footnote{Strictly speaking ISA doesn't have to use registers. It's possible to use only stack or accumulator, but most used ISAs use registers, so we'll ignore those architectures. }.
     \item Addressing modes - Possible methods to refer to memory or register.
 \end{itemize}
-There are other specification, they are not relevant to this thesis. For each instruction and operand there is
+There are other specification, however they are not relevant to this thesis. For each instruction and operand there is
 specified how they should be encoded into binary (remember, that's what the CPU can understand).
 CPU then \textit{implements} some ISA. If two different CPUs implements the same ISA then they should be able to run the same machine code program.
-For example, most PC use the \textit{x86} architecture \cite{aps-isa}, althrough the \textit{ARM} architecture is on the rise with the Apple sillicon.
+For example, most PC use the \textit{x86} architecture \cite{aps-isa}, althrough the ARM architecture is also seeing use in personal computers, for example the Apple Sillicon is of ARM architecture.
 
-The x86 architecture is so called \textit{Complex Instruction Set Architecture} (CISC). It contains many instructions that do
-many things at once, have varying length and takes multiple clock cycles to complete \cite{intel-manual}. On the other hand
-the ARM architecture is \textit{Reduced Instruction Set Architecture} (RISC). The number of instructions is smaller, they
-are intended to be small building blocks from which complex operations may be created by using many of them. Each instruction in RISC also
-has same length. Both architectures have their pros and cons, althrough some literature suggest that in modern days the choice of architecture
-is irrelevant if one is only considering performance and power consuption  \cite{riscvscisc1, riscvscisc2}.
-Unless specified otherwise the rest of this chapter will be talking about x86.
+The x86 architecture is so called \textit{Complex Instruction Set Architecture} (CISC).
+It contains many instructions that do many things at once, have varying length and takes multiple clock cycles to complete \cite{intel-manual}.
+On the other hand the ARM architecture is \textit{Reduced Instruction Set Architecture} (RISC).
+The number of instructions is smaller, they are intended to be small building blocks from which complex operations may be created by using many of them. Each instruction in RISC also has same length. Both architectures have their pros and cons, althrough some literature suggest that in modern days the choice of architecture is irrelevant if one is only considering performance and power consuption  \cite{riscvscisc1, riscvscisc2}. Unless specified otherwise the rest of this chapter will be talking about x86. This is because T86 \todo{ref} is loosely based on x86, so it is most relevant for us.
 
 In first chapter we briefly mentioned that machine code programs can instead be written in Assembly language.
-Assembly is almost 1:1 mapping to machine code. When showing programs, we will instead use Assembly. In figure
-\ref{fig:assembly-example2}, we present another example of a program that was compiled from C to Assembly of the x86 architecture.
+Assembly is almost 1:1 mapping to machine code. When showing programs, we will show them in assembly.
+In figure \ref{fig:assembly-example2}, we present another example of a program that was compiled from C
+to assembly of the x86 architecture.
 As seen, instructions have various operands. Most often registers (\texttt{RBP, RSP, EAX}), memory (\texttt{[rbp-4]} is reference to memory at address which
 is in register \texttt{rbp} minus $4$), or labels (like \texttt{L2}). Labels are not part of machine code, instead
 memory address has to be provided. This is a small part where assembly and machine code differ.
@@ -86,20 +89,22 @@ Some of these are
     \item RSP - Stack pointer,
     \item RBP - Pointer to data on the stack.
 \end{itemize}
-The names and number of general purpose registers change based on bit mode. 64-bit mode has 16 of them, while 32-bit has 8.
+The names and number of general purpose registers change based on bit mode. 64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8.
 Althrough the \texttt{RSP} and \texttt{RBP} are called general purpose they are often only used for pointing at the top of the stack,
-resp. to the base of the stack. Stack is special part of program memory, it mostly has LIFO semantics.
+resp. to the base of the stack. Stack is special part of program memory, it mostly has LIFO
+semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]} does not respect
+LIFO semantics, because it reads directly from the stack and not from the top.}
 It can be used to store intermediate result, arguments to functions, return address etc.
 This register is weird in a sense that it has this very special purpose but is still considered part of
-the general purpose registers. One might use it for storing calculations, but it would make
-rest of the instructions that work with stack behave unexpectedly \cite{intel-manual}.
+the general purpose registers~\cite{intel-manual}. One might use it for storing calculations, but it would make
+rest of the instructions that work with stack behave unexpectedly.
 
-Instruction pointer register (RIP) contains address of the current instruction to be executed.
-As we mentioned in Introduction \todo{ref}, programs are executed sequentially from top to bottom,
-with certain instructions having the ability to change the control flow. When an instruction get
-executed, the size of the instruction will be added to the value in RIP register. This will advance
-the instruction pointer to the next instruction. Or, if the instruction changes control flow,
-the value in instruction pointer will be changed to the destination of the instruction.
+Instruction pointer register (RIP on x86-64, EIP on x86) contains address of the current instruction to be executed. As we mentioned
+in Introduction \todo{ref}, programs are executed sequentially from top to bottom, with certain instructions
+having the ability to change the control flow. When an instruction get executed, the size of the instruction
+will be added to the value in RIP register. This will advance the instruction pointer to the next instruction.
+Or, if the instruction changes control flow, the value in instruction pointer will be changed to the destination
+of the instruction. The register can also be changed directly.
 
 Another interesting register is the \texttt{EFLAGS} register. The register contains group
 of flags, which can alter various behavior of the CPU, or the CPU itself sets them
@@ -115,41 +120,41 @@ There are two main categories \cite{intel-manual}
     \item An \textbf{exception}\footnote{Unfortunately, this term will become quite overloaded in this thesis.} is a synchronous event that is generated when the processor detects one or more
           predefined conditions when executing an instruction. These are further divided into three classes: faults, traps and aborts.
 \end{itemize}
-When an interrupt or exception happens, the processor halts execution of current program and switches to specific interrupt handler.
-Example of an exception is the \texttt{INT3} instruction. When this instruction is executed an interrupt is generated.
-This instruction is specifically meant to be used as a breakpoint. So, we have a way of how the CPU
-can stop execution and handle the breakpoint.
 
+When an interrupt or exception happens, the processor halts execution of current program and switches to specific
+interrupt handler. Interrupt handler is just another sequence of instructions that handles the interrupt.
+Example of an exception is the \texttt{INT3} instruction.
+When this instruction is executed an interrupt is generated. This instruction is specifically meant to be used as a breakpoint.
+We can supply code that will be responsible for handling the breakpoint as the interrupt handler.
+However, on modern PCs a Operating System (OS) is governing the PC. Alas, we cannot touch the interrupt handler directly.
+Instead, an OS is going to have to provide another layer of support for debugging.
 
-\section{Debugging native programs}
-For now, we pretended that source-level debuggers can magically work with lines of source code. However, for programs to be run they first need to be compiled to native code - a series of binary instructions (there are also interpreted programs, which we will touch upon later). The debugger then interacts with this native code. It, by itself, has no idea that line $x$ corresponds to address $y$. The compiler must embed this information in the executable, or somewhere else, for the debugger to know this type of information. One of such standards of encoding debug information is DWARF format \cite{dwarf}, which will be thoroughly described in \todo{TODO} section. 
+Recall the EFLAGS register mentioned in section \ref{X}. There is a special flag called trap flag. When it is set, cpu will issue an interrupt 
+after every executed instruction. This could be useful if we wanted to inspect execution instruction by instruction.
 
-As we mentioned, some debuggers only work on the assembly level. They do not perform any mapping to the source code. And the debuggers that do have to work with machine code all the same. In the next section, we will explore how assembly-level debuggers are implemented. The implementation itself can greatly differ based on the operating system or target machine. The following section aims to describe the most often used OS and targets.
+\todo{Debugging embedded}
 
-\subsection{Breakpoints}
-Term \textit{debuggee} means a program that is being debugged. The instuction architecture \textit{x86} contains special instruction \mintinline{c}{INT3}, opcode \mintinline{c}{0xCC}. When processor executes this instruction it issues special interrupt and advances program counter by one. The interrupt is then handled by OS. How the handling is done depends heavily on OS and will be covered later.
+\section{Operating system support}
+Operating system is a layer between computer components (cpu, memory, input/output devices, \dots) and software. It is responsible for handling all those resources so programmers do not have to think about it \cite{modern-os}. Managing resources is not only to make writing programs easier, but to make sure that they are 
+safe from each other. Modern operating system allows to run multiple programs at once (or atleast offer the illusion that it can) and they make sure that
+one program cannot directly overwrite the other program data. There must be exceptions, for example, debuggers can often change the values of variables,
+so they should be able to write into memory of other programs. But it still shouldn't be allowed to write to all programs, just the one that is currently being debugged.
 
-Consider the following code \todo{Typeset these guys correctly}
-\begin{minted}{asm}
-0x0 xor    eax,eax        33 c0
-0x2 mov    esp,ebp        8b e5
-0x4 pop    ebp            5d
-\end{minted}
-To create a breakpoint on address \mintinline{c}{0x02}, the debugger needs to replace the code on that location with the \mintinline{c}{0xCC}. The result would look like this:
-\begin{minted}{asm}
-0x0 xor    eax,eax        33 c0
-0x2 int3                  cc e5
-0x4 pop    ebp            5d
-\end{minted}
-The processor executes the \mintinline{c}{xor}, then the \mintinline{c}{int3}, this sends the interrupt, but because that instruction was executed the program counter is now set to \mintinline{c}{0x3}. If the debugger would just told the program to continue it would execute the instruction at that point, which begins with \mintinline{c}{0xe5}. If the replaced instruction is one byte in size, it would skip the replaced instruction and execute the rest of the program. If it was bigger, it would essentially interpret the body of that instruction as new instruction. This would most likely cause a crash. The debugger needs to deal with this. 
+The two most prelevant operating systems today are either Microsoft Windows or Linux.
 
-\subsection{Trap flags}
-The x86 architecture contains special \textit{Trap flag}. When it is set, the processor issues interrupt \mintinline{c}{INT1} every time an instruction is executed. \todo{Doplnit nebo smazat: Viz konzultace}.
+\subsection{Linux}
+Linux offers special system call which is very handy for debugging. It is called \mintinline{c}{ptrace} \cite{ptrace} - process
+trace. It has following signature: \mintinline{c}{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \mintinline{c}{PTRACE_COMMAND},
+which specifies the behaviour of the function (for example \mintinline{c}{PTRACE_SINGLESTEP} for single step), pid of some
+process and some other parameters, depending on the \mintinline{c}{PTRACE_COMMAND}. 
 
-\subsection{ptrace}
-Linux offers special system call which is very handy for debugging. It is called \mintinline{c}{ptrace} \cite{ptrace} - process trace. It has following signature: \mintinline{c}{ptrace(PTRACE_COMMAND, pid, ...)}. It takes a \mintinline{c}{PTRACE_COMMAND}, which specifies the behaviour of the function (for example \mintinline{c}{PTRACE_SINGLESTEP} for single step), pid of some process and some other parameters, depending on the \mintinline{c}{PTRACE_COMMAND}. 
-
-It allows to observe and control the execution of another process, which will most often be the debuggee. When the debugee is traced, it will stop each time a signal is delivered\footnote{\mintinline{c}{SIGKILL} is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \mintinline{c}{waitpid}. This system call return value will indicate the reason debuggee stopped. \mintinline{c}{ptrace(PTRACE_TRACEME, ...)} called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee. The debugger can then issue other commands to the child. There are also \mintinline{c}{PTRACE_ATTACH} and \mintinline{c}{PTRACE_SEIZE}, which can be used for attaching to existing process.
+It allows to observe and control the execution of another process, which will most often be the debuggee.
+When the debugee is traced, it will stop each time a signal is delivered\footnote{\mintinline{c}{SIGKILL}
+is an exception, it will have its usual effect.}. The debugger will be notified at its next call to \mintinline{c}{waitpid}.
+This system call return value will indicate the reason debuggee stopped. \mintinline{c}{ptrace(PTRACE_TRACEME, ...)}
+called from a child of the debugger will cause the debugger to \textit{attach} to the child, which is the debuggee.
+The debugger can then issue other commands to the child. There are also \mintinline{c}{PTRACE_ATTACH} and
+\mintinline{c}{PTRACE_SEIZE}, which can be used for attaching to existing process.
 
 \mintinline{c}{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
