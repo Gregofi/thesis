@@ -113,27 +113,35 @@ Some of these are
     \item RSP - Stack pointer,
     \item RBP - Pointer to data on the stack.
 \end{itemize}
-The names and number of general purpose registers change based on bit mode. 64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8.
-Althrough the \texttt{RSP} and \texttt{RBP} are called general purpose they are often only used for pointing at the top of the stack,
-resp. to the base of the stack. Stack is special part of program memory, it mostly has LIFO
-semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]} does not respect
-LIFO semantics, because it reads directly from the stack and not from the top.}
-It can be used to store intermediate result, arguments to functions, return address etc.
-This register is weird in a sense that it has this very special purpose but is still considered part of
-the general purpose registers~\cite{intel-manual}. One might use it for storing calculations, but it would make
-rest of the instructions that work with stack behave unexpectedly.
+The names and number of general purpose registers change based on bit mode.
+64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8. Althrough
+the \texttt{RSP} and \texttt{RBP} are called general purpose they are often
+only used for pointing at the top of the stack, resp. to the base of the stack.
+Stack is special part of program memory, it mostly has LIFO
+semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]} does
+not respect LIFO semantics, because it reads directly from the stack and not
+from the top.} It can be used to store intermediate result, arguments to
+functions, return address etc. This register is weird in a sense that it has
+this very special purpose but is still considered part of the general purpose
+registers~\cite{intel-manual}. One might use it for storing calculations, but
+it would make rest of the instructions that work with stack behave
+unexpectedly.
 
-Instruction pointer register (RIP on x86-64, EIP on x86) contains address of the current instruction to be executed. As we mentioned
-in Introduction \todo{ref}, programs are executed sequentially from top to bottom, with certain instructions
-having the ability to change the control flow. When an instruction get executed, the size of the instruction
-will be added to the value in RIP register. This will advance the instruction pointer to the next instruction.
-Or, if the instruction changes control flow, the value in instruction pointer will be changed to the destination
-of the instruction. The register can also be changed directly.
+Instruction pointer register (RIP on x86-64, EIP on x86) contains address of
+the current instruction to be executed. As we mentioned in Introduction
+\todo{ref}, programs are executed sequentially from top to bottom, with certain
+instructions having the ability to change the control flow. When an instruction
+get executed, the size of the instruction will be added to the value in RIP
+register. This will advance the instruction pointer to the next instruction.
+Or, if the instruction changes control flow, the value in instruction pointer
+will be changed to the destination of the instruction. The register can also be
+changed directly.
 
-Another interesting register is the \texttt{EFLAGS} register. The register contains group
-of flags, which can alter various behavior of the CPU, or the CPU itself sets them
-as result of some instruction. For example the instruction \texttt{cmp} compares its two operands
-and if they are the same the \textit{zero} flag in the \texttt{EFLAGS} register will be set.
+Another interesting register is the \texttt{EFLAGS} register. The register
+contains group of flags, which can alter various behavior of the CPU, or the
+CPU itself sets them as result of some instruction. For example the instruction
+\texttt{cmp} compares its two operands and if they are the same the
+\textit{zero} flag in the \texttt{EFLAGS} register will be set.
 
 \subsection{Interrupts}
 Interrupt is a special request to the CPU to stop execution of current program
