@@ -276,7 +276,8 @@ it is being traced \cite{execve}.
 The parent first issues a \texttt{waitpid} system call. This waits for the
 childs \texttt{execve} to finish. The debugger then has a chance to debug the
 child immediately, because it is stopped. The \texttt{while} loop can then
-request input from user and act accordingly.
+request input from user and act accordingly. The tracee can be continued by
+\texttt{PTRACE\_CONT} command.
 
 \begin{figure}\label{fig:debugger-init}
     \begin{minted}{c}
@@ -381,11 +382,40 @@ by hand - Reverse engineered from LLDB source code}.).
 
 Additionaly, if we just moved back and resumed the program, we would again hit
 the breakpoint which is still set! We need to temporarily unset it, move one
-instruction forward, and set it again. 
+instruction forward, and set it again. The general idea behind it can be found
+on figure \ref{fig:continue}. With breakpoints, we essentially gained the
+ability to single step as well. To implement it, we need a way to manipulate
+with registers, namely instruction pointer. 
 
-\begin{figure}
-    \includegraphics{media/breakpoint_tbd}
+\begin{figure}\label{fig:continue}
+    \centering
+    \includegraphics[width=100mm,scale=0.5]{media/breakpoint_tbd}
+    \caption{Continue sketch}
 \end{figure}
+
+However, before we get to registers, we showed that the breakpoint must be put
+at the next instruction. This is not as simple as it sounds. Where is next
+instruction? On CISC architectures, this is not easy to find out since
+instructions have different sizes. But even on RISC architectures like ARM,
+what if the instruction is a jump of some sort and the next instruction is not
+simply the one that follows this one in the code? For this reason, debuggers may
+need to have an instruction emulator, which needs to emulate whole instruction
+set to see where the program counter ends up\footnote{And there can be a
+\textit{lot} of instructions \cite{intel-manual}}. However, some architectures
+offer hardware support, like the trap flag we mentioned in section \todo{ref}.
+
+The ptrace library contains special \texttt{PTRACE\_SINGLESTEP} command. This
+executes one instruction in the tracee and then signal \texttt{SIGTRAP} will be
+sent to it. The linux kernel (as of v6.1.8) uses previously mentioned trap flag
+for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide a way
+to support single stepping then the call will return an error.
+
+Registers themselves are simple like memory. Linux contains predefined structure
+\texttt{user\_regs\_struct}, which maps all registers on current architecture.
+The command \texttt{PTRACE\_GETREGS} then fills up this structure with the
+value in registers.
+
+
 
 \subsection{Windows}
 Windows also has built-in support for debugging at the Win32API layer
