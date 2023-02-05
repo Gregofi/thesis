@@ -24,14 +24,17 @@ registers. Which instructions and registers the CPU has can differ from CPU to
 CPU. This is specified by \textit{Instruction Set Architecture} (ISA)
 \cite{aps-isa}. It is an abstract interface between the hardware and lowest
 level software (machine code). It contains all information needed to write a
-program in machine code. In general, ISA specifies following: \begin{itemize}
+program in machine code. In general, ISA specifies following: 
+\begin{itemize}
     \item Set of machine code instructions - Specifies instructions the ISA has
-        and what operands each instruction has. \item Register set - Which
-            registers the ISA has\footnote{Strictly speaking ISA doesn't have
-            to use registers. It's possible to use only stack or accumulator,
-            but most used ISAs use registers, so we'll ignore those
-            architectures. }. \item Addressing modes - Possible methods to
-refer to memory or register. \end{itemize} There are other specification,
+          and what operands each instruction has.
+    \item Register set - Which
+          registers the ISA has\footnote{Strictly speaking ISA doesn't have
+          to use registers. It's possible to use only stack or accumulator,
+          but most used ISAs use registers, so we'll ignore those
+          architectures. }.   
+    \item Addressing modes - Possible methods to refer to memory or register. 
+\end{itemize} There are other specification,
 however they are not relevant to this thesis. For each instruction and operand
 there is specified how they should be encoded into binary (remember, that's
 what the CPU can understand). CPU then \textit{implements} some ISA. If two
@@ -324,7 +327,7 @@ one has to pad the breakpoint opcode with already existing data. Also, the
 rewrited data has to be kept so that the breakpoint may later be deactivated.
 Abbreviated implementation can be found on \ref{fig:lldb-breakpoints-enable}.
 
-\begin{figure}\ref{fig:with-and-without-bp}
+\begin{figure}\label{fig:with-and-without-bp}
     \begin{minipage}{0.45\textwidth}
         \begin{lstlisting}
 c7 45 fc 05 00 00 00 	MOVL
@@ -342,7 +345,7 @@ cc 7d fc 00          	INT3
     \caption{Code with and without breakpoint.}
 \end{figure}
 
-\begin{figure}\ref{fig:lldb-breakpoints-enable}
+\begin{figure}\label{fig:lldb-breakpoints-enable}
     \begin{minted}{cpp}
   // Get the right opcode for current architecture
   auto expected_trap = GetSoftwareBreakpointTrapOpcode(size_hint);
@@ -380,6 +383,9 @@ Additionaly, if we just moved back and resumed the program, we would again hit
 the breakpoint which is still set! We need to temporarily unset it, move one
 instruction forward, and set it again. 
 
+\begin{figure}
+    \includegraphics{media/breakpoint_tbd}
+\end{figure}
 
 \subsection{Windows}
 Windows also has built-in support for debugging at the Win32API layer
