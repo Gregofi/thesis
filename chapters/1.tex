@@ -158,9 +158,10 @@ trace. It has following signature: \texttt{ptrace(PTRACE\_COMMAND, pid, ...)}. I
 which specifies the behaviour of the function (for example \texttt{PTRACE\_SINGLESTEP} for single step), pid of some
 process and some other parameters, depending on the \texttt{PTRACE\_COMMAND} that was chosen.
 It allows to observe and control the execution of another process, this process will be the debugee.
-In the context of \texttt{ptrace}, we will instead use the word tracee, to be consistent with ptrace documentation.
+In the context of \texttt{ptrace}, we will instead use the word tracee for the debugee,
+and tracer for the debugger, to be consistent with ptrace documentation.
 
-\mintinline{c}{ptrace} has many commands, here are some of the most important:
+\texttt{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
     \item \texttt{PTRACE\_PEEKTEXT, PTRACE\_PEEKDATA} - Read tracee's memory,
     \item \texttt{PTRACE\_POKETEXT, PTRACE\_POKEDATA} - Write into tracee's memory,
@@ -191,11 +192,143 @@ The process can handle this request, for example to save some state before exiti
 It can also however be completely ignored. For this, a signal \texttt{SIGKILL} can be used,
 which cannot be handled, ignored or blocked.
 
+To begin tracing a command \texttt{PTRACE\_ATTACH} may be used for already existing process, or a
+\texttt{fork} followed with child calling \texttt{PTRACE\_TRACEME} and typically \texttt{execve}.
+When the tracee is being traced it will stop each time a signal is delivered to it, even if
+it choose to ignore said signal. The tracer will be notified at its next call to the \texttt{waitpid}
+function. It will return a value which indicates the cause of the stop in the tracee. When the tracee
+is stopped the tracer can initiate various ptrace request listed above to inspect and change the state
+of the tracee \cite{ptrace}.
+
+In the CPU chapter we mentioned that there are debug instructions and that they issue an interrupt.
+We do not directly handle the interrupt here. Even if we wanted, user space programs can't do that.
+The Linux kernel handles this for us and instead uses the signals as an abstraction. \todo{Include kernel code.}
+
+\subsubsection{Debugger implementation}
+Now, we have all the necessary building blocks to build a simple debugger on the Linux operating system.
+Running a program under the debugger is simple. On figure \ref{fig:debugger-init} you can see the initialization
+of the debugger. It uses the fork-exec idiom. \texttt{fork} system call creates an exact copy of the process as a child 
+except the following: process ID (PID) of the child is different. In the parent process, PID of the child is returned,
+in the child a $0$ is returned. In the child, we initiate the \texttt{PTRACE\_TRACEME} call,
+which indicates that this process is to be traced by its parent. Then it calls \texttt{execve}
+system call, which replaces this program with the one we want to debug. The execve causes a
+\texttt{SIGTRAP} signal on completetion because it is being traced \cite{execve}.
+
+The parent first issues a \texttt{waitpid} system call. This waits for the childs \texttt{execve}
+to finish. The debugger then has a chance to debug the child immediately, because it is stopped.
+The \texttt{while} loop can then request input from user and act accordingly.
+
+\begin{figure}\label{fig:debugger-init}
+    \begin{minted}{c}
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Begin tracing
+            ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+            // Replace the code with the intended tracee code
+            execve(executable, argv, NULL);
+        } else {
+            int w;
+            waitpid(pid, &w, 0);
+            while(...) {
+                // Main debugger loop
+            }
+        }
+    \end{minted}
+    \caption{Debugger initialization in C.}
+\end{figure}
+
+Rest of the examples will be taken from the \textit{LLDB} debugger
+\todo{Perhaps link the concrete file where are those functions located?}. They
+will be abbreviated and sometimes some code will be cut (like error handling)
+to demostrate the example more clearly and to show that real world debuggers
+actually do use those techniques. LLDB has all ptrace calls wrapped in another
+function which handles errors and if the signal was interrupted by other
+signal. This function is called \textit{PtraceWrapper}.
+
+Reading and writing to memory is simple. The \texttt{PTRACE\_PEEKTEXT} and
+\texttt{PTRACE\_POKETEXT} are used for this purpose. This call reads or writes
+a word (32 or 64 bits, depending on the Linux variant) into tracees memory.
+However, if we want to write arbitrary amount of bytes, we have to work around
+the word limitation. We need to write by blocks and for the last one we have to
+pad the write with already existing data if the block size does not divide the
+word size. In the LLDB debugger, those are wrapped in the \texttt{ReadMemory}
+and \texttt{WriteMemory}.
+
+Breakpoints are more interesting. Debuggers often allow to enable and disable
+breakpoint, so we will distinguish setting a breakpoint and enabling it.
+Setting a breakpoint just means that the debugger needs to keep track where the
+breakpoint was set and if it is enabled or disabled. Enabling a breakpoint
+means writing into the program memory the debug instruction (we will use the
+x86 \texttt{INT3} with opcode \texttt{0xCC}. On figure
+\ref{fig:with-and-without-bp} there is shown how code looks with and without
+enabled breakpoint. On line $2$, the opcode changes from \texttt{0x83} to
+\texttt{0xCC}. Since the breakpoint is set via the \texttt{PTRACE\_POKEDATA},
+one has to pad the breakpoint opcode with already existing data. Also, the
+rewrited data has to be kept so that the breakpoint may later be deactivated.
+Abbreviated implementation can be found on \ref{fig:lldb-breakpoints-enable}.
+
+\begin{figure}\ref{fig:with-and-without-bp}
+    \begin{minipage}{0.45\textwidth}
+        \begin{lstlisting}
+c7 45 fc 05 00 00 00 	MOVL
+83 7d fc 00          	CMPL
+7e 07                	JLE
+        \end{lstlisting}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+        \begin{lstlisting}
+c7 45 fc 05 00 00 00 	MOVL
+cc 7d fc 00          	INT3
+7e 07                	JLE
+        \end{lstlisting}
+    \end{minipage}
+    \caption{Code with and without breakpoint.}
+\end{figure}
+
+\begin{figure}\ref{fig:lldb-breakpoints-enable}
+    \begin{minted}{cpp}
+  // Get the right opcode for current architecture
+  auto expected_trap = GetSoftwareBreakpointTrapOpcode(size_hint);
+
+  llvm::SmallVector<uint8_t, 4> saved_opcode_bytes(expected_trap->size(), 0);
+  // Save the original opcodes by reading them so we can restore later.
+  size_t bytes_read = 0;
+  ReadMemory(addr, saved_opcode_bytes.data(),
+             saved_opcode_bytes.size(), bytes_read);
+
+  // Write a software breakpoint in place of the original opcode.
+  size_t bytes_written = 0;
+  WriteMemory(addr, expected_trap->data(), expected_trap->size(),
+              bytes_written);
+
+  // Read memory once again to check that it was truly set
+  ...
+
+  return SoftwareBreakpoint{1, saved_opcode_bytes, *expected_trap};
+    \end{minted}
+    \caption{LLDB - Enabling breakpoints, abbr.}
+\end{figure}
+
+When breakpoint is hit, the control is passed to the debugger, at this point,
+the instruction pointer would point to the next instruction, which has opcode
+\texttt{0x7D}, not \texttt{7E} (the \texttt{JLE} instruction) as might be
+expected. This is because \texttt{INT3} is instruction with size $1$. It gets
+executed, instruction pointer is advanced by the size ($1$) and interrupt is
+issued. But after the INT3 there were operands to the CMPL instruction, we
+definitely do not want to interpret them as instruction. On some architectures,
+advancing PC does not happen for the debug instruction (like ARM \todo{Checked
+by hand - Reverse engineered from LLDB source code}.).
+
+Additionaly, if we just moved back and resumed the program, we would again hit
+the breakpoint which is still set! We need to temporarily unset it, move one
+instruction forward, and set it again. 
 
 
 \subsection{Windows}
-Windows also has built-in support for debugging at the Win32API layer \cite{windows-msdn-debugging-api, windows-press-debugging-api}.
-It builds on \textit{debug events} and \textit{debug functions}. Summary of some of the functions that Win32 API offers which all help with debugging:
+Windows also has built-in support for debugging at the Win32API layer
+\cite{windows-msdn-debugging-api, windows-press-debugging-api}.
+It builds on \textit{debug events} and \textit{debug functions}. Summary of
+some of the functions that Win32 API offers which all help with debugging:
 
 \begin{itemize}
     \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an active process.
@@ -204,7 +337,8 @@ It builds on \textit{debug events} and \textit{debug functions}. Summary of some
     \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events.
     \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution after processing debug event.
     \item \mintinline{c}{OutputDebugString} - Sends a string to the debugger for display.
-    \item \mintinline{c}{ReadProcessMemory} and \mintinline{c}{WriteProcessMemory} - Read and modify process virtual address space.
+    \item \mintinline{c}{ReadProcessMemory} and \mintinline{c}{WriteProcessMemory} - Read and modify
+          process virtual address space.
     \item \mintinline{c}{FlushInstructionCache} - Flushes instruction cache of the process.
 \end{itemize}
 
