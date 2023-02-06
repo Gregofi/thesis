@@ -1,8 +1,10 @@
-#include <unistd.h>
+#include <signal.h>
 #include <sys/ptrace.h>
-#include <sys/user.h>
-#include <sys/personality.h>
 #include <sys/wait.h>
+#include <sys/personality.h>
+#include <unistd.h>
+#include <sys/user.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -21,13 +23,57 @@ struct breakpoint {
 struct breakpoint breakpoints[MAX_BREAKPOINTS];
 size_t bp_cnt;
 
+uint64_t* get_register(struct user_regs_struct* regs, const char* name);
+uint64_t read_register(pid_t pid, const char* name);
+void set_register(pid_t pid, const char* name, uint64_t data);
+void set_bp(pid_t pid, uint64_t address);
+void step_over_bp(pid_t pid);
+
+siginfo_t get_siginfo(pid_t pid) {
+    siginfo_t inf;
+    ptrace(PTRACE_GETSIGINFO, pid, NULL, &inf);
+    return inf;
+}
+
+void sigtrap(pid_t pid, siginfo_t inf) {
+    switch(inf.si_code) {
+    case SI_KERNEL:
+    case TRAP_BRKPT: {
+        uint64_t pc = read_register(pid, "rip") - 1;
+        set_register(pid, "rip", pc);
+        // Currently, this gets hit even in step out, which is unfortunate.
+        printf("Hit breakpoint at address 0x%lx\n", pc);
+        break;
+    }
+    case TRAP_TRACE:
+        // Single step
+        break;
+    default:
+        fprintf(stderr, "Unknown trap code '%d'\n", inf.si_code);
+    }
+}
+
 int wait_for_debugee(pid_t pid) {
     int status;
     waitpid(pid, &status, 0);
+    siginfo_t inf = get_siginfo(pid);
+    switch (inf.si_signo) {
+    case SIGTRAP:
+        sigtrap(pid, inf);
+        break;
+    case SIGSEGV:
+        fprintf(stderr, "Debugee received SIGSEGV, segmentation fault.\n");
+        return 1;
+    default:
+        printf("Received signal '%s'\n", strsignal(inf.si_signo));
+        break;
+    }
+
     return status;
 }
 
 void cont(pid_t pid) {
+    step_over_bp(pid);
     ptrace(PTRACE_CONT, pid, NULL, NULL);
     wait_for_debugee(pid);
 }
@@ -38,7 +84,7 @@ uint8_t read_memory(pid_t pid, uint64_t address) {
 }
 
 void write_memory(pid_t pid, uint64_t address, uint8_t data) {
-    uint64_t old_data = read_memory(pid, address);
+    uint64_t old_data = ptrace(PTRACE_PEEKDATA, pid, address, NULL);
     uint64_t new_data = (old_data & ~0xFF) | data;
     ptrace(PTRACE_POKEDATA, pid, address, new_data);
 }
@@ -90,7 +136,7 @@ uint64_t read_register(pid_t pid, const char* name) {
     return *data;
 }
 
-uint64_t set_register(pid_t pid, const char* name, uint64_t data) {
+void set_register(pid_t pid, const char* name, uint64_t data) {
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
     uint64_t* reg_data = get_register(&regs, name);
@@ -99,49 +145,94 @@ uint64_t set_register(pid_t pid, const char* name, uint64_t data) {
 }
 
 void enable(pid_t pid, struct breakpoint* bp) {
+    if (bp->enabled) {
+        return;
+    }
     bp->backup = read_memory(pid, bp->address);
     write_memory(pid, bp->address, BP_OPCODE);
     bp->enabled = true;
 }
 
 void disable(pid_t pid, struct breakpoint* bp) {
+    if (!bp->enabled) {
+        return;
+    }
     write_memory(pid, bp->address, bp->backup);
     bp->enabled = false;
 }
 
-/// Returns 0 if found, 1 if not found and returned new and
-/// 2 if max breakpoints reached
-int find_bp(uint64_t address, struct breakpoint* bp) {
+/// Returns bp if exists, otherwise returns NULL
+struct breakpoint* find_bp(uint64_t address) {
     for (size_t i = 0; i < bp_cnt; ++i) {
         if (breakpoints[i].address == address) {
-            bp = &breakpoints[i];
-            return 0;
+            return &breakpoints[i];
         }
     }
-    if (bp_cnt >= MAX_BREAKPOINTS) {
-        fprintf(stderr, "Maximum number of breakpoints reached.\n");
-        return 2;
+    return NULL;
+}
+
+/// Creates new breakpoint at address or returns existing one.
+/// Returns NULL if maximum number of bps has been reached.
+struct breakpoint* new_bp(uint64_t address) {
+    struct breakpoint* bp = find_bp(address);
+    if (bp != NULL) {
+        return bp;
     }
+
+    if (bp_cnt >= MAX_BREAKPOINTS) {
+        return NULL;
+    }
+
     bp = &breakpoints[bp_cnt++];
-    return 1;
+    bp->address = address;
+    return bp;
 }
 
 void set_bp(pid_t pid, uint64_t address) {
-    struct breakpoint* bp = NULL;
-    int ret = find_bp(address, bp);
-    if (ret == 2) {
-        return;
-    } else if (ret == 0) {
-        fprintf(stderr, "Breakpoint is already set at address %lx\n", address);
-        return;
+    struct breakpoint* bp = new_bp(address);
+    if (bp == NULL) {
+        fprintf(stderr, "Max breakpoints reached, exiting...");
     }
     
     enable(pid, bp);
 }
 
+void single_step(pid_t pid) {
+    if (read_memory(pid, read_register(pid, "rip")) == BP_OPCODE) {
+        step_over_bp(pid);
+    } else {
+        ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+    }
+}
+
+/// Singlesteps over breakpoint if there is one, otherwise does nothing
+void step_over_bp(pid_t pid) {
+    uint64_t loc = read_register(pid, "rip");
+    struct breakpoint* bp = find_bp(loc);
+    if (bp == NULL) {
+        return;
+    }
+
+    disable(pid, bp);
+    ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+    wait_for_debugee(pid);
+    enable(pid, bp);
+}
+
+void step_out(pid_t pid) {
+    uint64_t out_idx_stack = read_register(pid, "rbp") + 8;
+    uint64_t out_addr = ptrace(PTRACE_PEEKDATA, pid, out_idx_stack, NULL);
+    struct breakpoint bp;
+    bp.address = out_addr;
+    bp.enabled = false;
+    enable(pid, &bp);
+    cont(pid);
+    disable(pid, &bp);
+}
+
 int debug_loop(pid_t pid) {
-    while (true) {
-        char command;
+    char command = 0;
+    while (command != EOF) {
         scanf(" %c", &command);
         switch (command) {
         // continue
@@ -157,14 +248,18 @@ int debug_loop(pid_t pid) {
             break;
         }
         // step
-        case 's':
+        case 's': {
+            char subcommand;
+            scanf(" %c", &subcommand);
+            if (subcommand == 's') {
+                single_step(pid);
+            } else if (subcommand == 'o') {
+                step_out(pid);
+            } else {
+                printf("step subcommand - 's' for singlestep, 'o' for step out\n");
+            }
             break;
-        // enable breakpoint
-        case 'e':
-            break;
-        // disable breakpoint
-        case 'd':
-            break;
+        }
         // memory
         case 'm': {
             char c;
@@ -172,11 +267,12 @@ int debug_loop(pid_t pid) {
             scanf(" %c %lx", &c, &addr);
             if (c == 'w') {
                 uint8_t data;
-                scanf(" %lx", &data);
-                printf("Writing data '%x' at address '%lx'\n", data, addr);
+                scanf(" %hhx", &data);
+                printf("Writing data '0x%x' at address '0x%lx'\n", data, addr);
+                write_memory(pid, addr, data);
             } else if (c == 'r') {
                 uint8_t data = read_memory(pid, addr);
-                printf("Data at '%lx' = '%hhx'\n", addr, data);
+                printf("Data at '0x%lx' = '0x%hhX'\n", addr, data);
             } else {
                 fprintf(stderr, "memory subcommand usage: m r|w addr\n"
                                 "For example 'm r 0x100000'\n");
@@ -191,11 +287,11 @@ int debug_loop(pid_t pid) {
             // read register
             if (subcommand == 'r') {
                 uint64_t data = read_register(pid, reg);
-                printf("Contents of register '%s' are %lld (0x%llx)\n", reg,
+                printf("Contents of register '%s' are %ld (0x%lx)\n", reg,
                         data, data);
             } else if (subcommand == 'w') {
                 uint64_t data;
-                scanf(" %llx", &data);
+                scanf(" %lx", &data);
                 set_register(pid, reg, data);
             } else {
                 fprintf(stderr, "The register subcommand usage: r r|w reg\n"
