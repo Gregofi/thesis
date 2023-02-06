@@ -1,7 +1,9 @@
 \chapter{Debugging support}
 
 \begin{quote}
-  \textit{Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.}\begin{flushright}
+  \textit{Debugging is twice as hard as writing the code in the first place.
+    Therefore, if you write the code as cleverly as possible, you are, by
+    definition, not smart enough to debug it.}\begin{flushright}
     \tiny{Brian W. Kernighan}
   \end{flushright}
 \end{quote}
@@ -223,7 +225,8 @@ consistent with ptrace documentation.
     \item \texttt{PTRACE\_POKETEXT, PTRACE\_POKEDATA} - Write into tracee's memory,
     \item \texttt{PTRACE\_GETREGS} - Read tracee's register values,
     \item \texttt{PTRACE\_SETREGSET} - Modify tracee's register values,
-    \item \texttt{PTRACE\_GETSIGINFO} - Retrieve information about the signal that caused tracee to stop,
+    \item \texttt{PTRACE\_GETSIGINFO} - Retrieve information about the signal
+                                        that caused tracee to stop,
     \item \texttt{PTRACE\_CONT} - Restart the stopped tracee process,
     \item \texttt{PTRACE\_SINGLESTEP} - Restart the stopped tracee but
           stop it after executing one instruction.
@@ -416,14 +419,31 @@ The ptrace library contains special \texttt{PTRACE\_SINGLESTEP} command. This
 executes one instruction in the tracee and then signal \texttt{SIGTRAP} will be
 sent to it. The linux kernel (as of v6.1.8) uses previously mentioned trap flag
 for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide a way
-to support single stepping then the call will return an error.
+to support single stepping then the call will return an error. If we are on an
+architecture that support this command we can use it instead of the register
+dance mentioned above. Implementation is described on figure
+\ref{fig:singlestep}.
+
+\begin{figure}\label{fig:singlestep}
+    \begin{minted}{c}
+        uint64_t loc = fetch_ip()  - 1;
+        struct breakpoint* bp = get_breakpoint(..., loc);
+        if (bp->enabled) {
+            set_ip(loc);
+            disable_bp(bp);
+            ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+            int wt;
+            waitpid(pid, &wt, 0);
+            enable_bp(bp);
+        }
+    \end{minted}
+    \caption{Stepping over breakpoint, abbreviated.}
+\end{figure}
 
 Registers themselves are simple like memory. Linux contains predefined structure
 \texttt{user\_regs\_struct}, which maps all registers on current architecture.
 The command \texttt{PTRACE\_GETREGS} then fills up this structure with the
-value in registers.
-
-
+value in registers. To save registers, \texttt{PTRACE\_SETREGS} can be used.
 
 \subsection{Windows}
 Windows also has built-in support for debugging at the Win32API layer
