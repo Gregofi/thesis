@@ -310,14 +310,6 @@ request input from user and act accordingly. The tracee can be continued by
     \caption{Linux - Debugger initialization.}
 \end{figure}
 
-Rest of the examples will be taken from the \textit{LLDB} debugger
-\todo{Perhaps link the concrete file where are those functions located?}. They
-will be abbreviated and sometimes some code will be cut (like error handling)
-to demostrate the example more clearly and to show that real world debuggers
-actually do use those techniques. LLDB has all ptrace calls wrapped in another
-function which handles errors and if the signal was interrupted by other
-signal. This function is called \textit{PtraceWrapper}.
-
 Reading and writing to memory is simple. The \texttt{PTRACE\_PEEKTEXT} and
 \texttt{PTRACE\_POKETEXT} are used for this purpose. This call reads or writes
 a word (32 or 64 bits, depending on the Linux variant) into tracees memory.
@@ -465,7 +457,12 @@ dance mentioned above. Implementation is described on figure
 \ref{fig:singlestep}. We presume that the instruction pointer was moved when
 the breakpoint was hit, so we do not need to return one byte backward. This is
 more reasonable anyway, since you want to show the user at which address was
-the breakpoint hit.
+the breakpoint hit. The LLDB \cite{lldb} debugger uses the hardware support if
+there is one, else it uses an instruction emulator. For example for the ARM
+architecture LLDB uses instruction emulator. All instruction are of the same
+length, however some jump or another program counter modifier could cause that
+the next instruction to be executed is not necessarily the following one in the
+code.
 
 \begin{figure}\label{fig:singlestep}
     \begin{minted}{c}
@@ -502,6 +499,13 @@ continue execution, wait for the debugee to hit the breakpoint and then disable
 and remove it. This has its flaws, for example it won't work if the step out is
 used before the rbp is set. Or if some library completely bypasses the call
 instruction.
+
+This concludes the implementation of very basic assembly level debugger for
+Linux on the x86 platform. The proof of concept implementation is provided as
+an extension to this thesis, and can be found under \todo{\texttt{<path to the
+debugger>}}. The implementation was partialy inspired by \cite{linux-debugger-blog} and \cite{lldb}.
+
+\todo{Describe how LLDB does things?}
 
 \subsection{Windows}
 \todo{WIP: Will be rewritten (probably shortened)}
