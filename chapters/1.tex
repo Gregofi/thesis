@@ -178,7 +178,7 @@ flag called trap flag. When it is set, cpu will issue an interrupt after every
 executed instruction. This could be useful if we wanted to inspect execution
 instruction by instruction.
 
-\todo{Debugging embedded}
+\todo{Debugging embedded and hardware breakpoints}
 
 \section{Operating system support} Operating system is a layer between computer
 components (cpu, memory, input/output devices, \dots) and software. It is
@@ -273,16 +273,17 @@ and instead uses the signals as an abstraction. \todo{Include kernel code.}
 
 \subsubsection{Debugger implementation}
 Now, we have all the necessary building blocks to build a simple debugger on
-the Linux operating system. Running a program under the debugger is simple. On
-figure \ref{fig:debugger-init} you can see the initialization of the debugger.
-It uses the fork-exec idiom. \texttt{fork} system call creates an exact copy of
-the process as a child except the following: process ID (PID) of the child is
-different. In the parent process, PID of the child is returned, in the child a
-$0$ is returned. In the child, we initiate the \texttt{PTRACE\_TRACEME} call,
-which indicates that this process is to be traced by its parent. Then it calls
-\texttt{execve} system call, which replaces this program with the one we want
-to debug. The execve causes a \texttt{SIGTRAP} signal on completetion because
-it is being traced \cite{execve}.
+the Linux operating system running on the x86 platform. Running a program under
+the debugger is simple. On figure \ref{fig:debugger-init} you can see the
+initialization of the debugger. It uses the fork-exec idiom. \texttt{fork}
+system call creates an exact copy of the process as a child except the
+following: process ID (PID) of the child is different. In the parent process,
+PID of the child is returned, in the child a $0$ is returned. In the child, we
+initiate the \texttt{PTRACE\_TRACEME} call, which indicates that this process
+is to be traced by its parent. Then it calls \texttt{execve} system call, which
+replaces this program with the one we want to debug. The execve causes a
+\texttt{SIGTRAP} signal on completetion because it is being traced
+\cite{execve}.
 
 The parent first issues a \texttt{waitpid} system call. This waits for the
 childs \texttt{execve} to finish. The debugger then has a chance to debug the
@@ -306,7 +307,7 @@ request input from user and act accordingly. The tracee can be continued by
             }
         }
     \end{minted}
-    \caption{Debugger initialization in C.}
+    \caption{Linux - Debugger initialization.}
 \end{figure}
 
 Rest of the examples will be taken from the \textit{LLDB} debugger
@@ -323,21 +324,63 @@ a word (32 or 64 bits, depending on the Linux variant) into tracees memory.
 However, if we want to write arbitrary amount of bytes, we have to work around
 the word limitation. We need to write by blocks and for the last one we have to
 pad the write with already existing data if the block size does not divide the
-word size. In the LLDB debugger, those are wrapped in the \texttt{ReadMemory}
-and \texttt{WriteMemory}.
+word size. In figure \ref{fig:write-read} is shown how to read and write
+exactly one byte of memory at given address.
+
+\begin{figure}\label{fig:write-read}
+    \begin{minted}{c}
+uint8_t read_memory(pid_t pid, uint64_t address) {
+    uint64_t data = ptrace(PTRACE_PEEKDATA, pid, address, NULL);
+    return (uint8_t)data;
+}
+
+void write_memory(pid_t pid, uint64_t address, uint8_t data) {
+    uint64_t old_data = ptrace(PTRACE_PEEKDATA, pid, address, NULL);
+    uint64_t new_data = (old_data & ~0xFF) | data;
+    ptrace(PTRACE_POKEDATA, pid, address, new_data);
+}
+    \end{minted}
+    \caption{Linux - Reading and writing one byte using ptrace.}
+\end{figure}
+
+Registers are similar to memory in regards how to read them. Linux contains
+predefined structure \texttt{user\_regs\_struct}, which maps all registers on
+current architecture. The command \texttt{PTRACE\_GETREGS} then fills up this
+structure with the value in registers. To save registers,
+\texttt{PTRACE\_SETREGS} can be used. One has to pass the whole structure, so
+if we want to modify only some registers we first need to fetch the structure,
+fill the registers we want with values, and then finally use \texttt{SETREGS}.
+An implementation can be seen on figure \ref{fig:set-register}, the
+\texttt{get\_register} functions maps the structure members to register name.
+Since the address of current instruction to be executed is also stored in
+register, we now have access to it.
+
+\begin{figure}\label{fig:set-register}
+    \begin{minted}{c}
+void set_register(pid_t pid, const char* name, uint64_t data) {
+    struct user_regs_struct regs;
+    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+    uint64_t* reg_data = get_register(&regs, name);
+    *reg_data = data;
+    ptrace(PTRACE_SETREGS, pid, NULL, &regs);
+}
+    \end{minted}
+    \caption{Linux - Setting one register using ptrace}
+\end{figure}
 
 Breakpoints are more interesting. Debuggers often allow to enable and disable
 breakpoint, so we will distinguish setting a breakpoint and enabling it.
 Setting a breakpoint just means that the debugger needs to keep track where the
 breakpoint was set and if it is enabled or disabled. Enabling a breakpoint
 means writing into the program memory the debug instruction (we will use the
-x86 \texttt{INT3} with opcode \texttt{0xCC}. On figure
+x86 \texttt{INT3} with opcode \texttt{0xCC}). On figure
 \ref{fig:with-and-without-bp} there is shown how code looks with and without
 enabled breakpoint. On line $2$, the opcode changes from \texttt{0x83} to
 \texttt{0xCC}. Since the breakpoint is set via the \texttt{PTRACE\_POKEDATA},
-one has to pad the breakpoint opcode with already existing data. Also, the
-rewrited data has to be kept so that the breakpoint may later be deactivated.
-Abbreviated implementation can be found on \ref{fig:lldb-breakpoints-enable}.
+which only works data blocks, one has to pad the breakpoint opcode with already
+existing data. Also, the rewriten data has to be kept so that the breakpoint
+may later be deactivated. Abbreviated implementation can be found on
+\ref{fig:breakpoint-enable}.
 
 \begin{figure}\label{fig:with-and-without-bp}
     \begin{minipage}{0.45\textwidth}
@@ -357,28 +400,26 @@ cc 7d fc 00          	INT3
     \caption{Code with and without breakpoint.}
 \end{figure}
 
-\begin{figure}\label{fig:lldb-breakpoints-enable}
-    \begin{minted}{cpp}
-  // Get the right opcode for current architecture
-  auto expected_trap = GetSoftwareBreakpointTrapOpcode(size_hint);
+\begin{figure}\label{fig:breakpoint-enable}
+    \begin{minted}{c}
+void enable(pid_t pid, struct breakpoint* bp) {
+    if (bp->enabled) {
+        return;
+    }
+    bp->backup = read_memory(pid, bp->address);
+    write_memory(pid, bp->address, BP_OPCODE);
+    bp->enabled = true;
+}
 
-  llvm::SmallVector<uint8_t, 4> saved_opcode_bytes(expected_trap->size(), 0);
-  // Save the original opcodes by reading them so we can restore later.
-  size_t bytes_read = 0;
-  ReadMemory(addr, saved_opcode_bytes.data(),
-             saved_opcode_bytes.size(), bytes_read);
-
-  // Write a software breakpoint in place of the original opcode.
-  size_t bytes_written = 0;
-  WriteMemory(addr, expected_trap->data(), expected_trap->size(),
-              bytes_written);
-
-  // Read memory once again to check that it was truly set
-  ...
-
-  return SoftwareBreakpoint{1, saved_opcode_bytes, *expected_trap};
+void disable(pid_t pid, struct breakpoint* bp) {
+    if (!bp->enabled) {
+        return;
+    }
+    write_memory(pid, bp->address, bp->backup);
+    bp->enabled = false;
+}
     \end{minted}
-    \caption{LLDB - Enabling breakpoints, abbr.}
+    \caption{Enabling breakpoints, abbr.}
 \end{figure}
 
 When breakpoint is hit, the control is passed to the debugger, at this point,
@@ -395,8 +436,7 @@ Additionaly, if we just moved back and resumed the program, we would again hit
 the breakpoint which is still set! We need to temporarily unset it, move one
 instruction forward, and set it again. The general idea behind it can be found
 on figure \ref{fig:continue}. With breakpoints, we essentially gained the
-ability to single step as well. To implement it, we need a way to manipulate
-with registers, namely instruction pointer. 
+ability to single step as well. 
 
 \begin{figure}\label{fig:continue}
     \centering
@@ -404,7 +444,7 @@ with registers, namely instruction pointer.
     \caption{Continue sketch}
 \end{figure}
 
-However, before we get to registers, we showed that the breakpoint must be put
+We showed that the breakpoint must be put
 at the next instruction. This is not as simple as it sounds. Where is next
 instruction? On CISC architectures, this is not easy to find out since
 instructions have different sizes. But even on RISC architectures like ARM,
@@ -422,30 +462,49 @@ for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide a way
 to support single stepping then the call will return an error. If we are on an
 architecture that support this command we can use it instead of the register
 dance mentioned above. Implementation is described on figure
-\ref{fig:singlestep}.
+\ref{fig:singlestep}. We presume that the instruction pointer was moved when
+the breakpoint was hit, so we do not need to return one byte backward. This is
+more reasonable anyway, since you want to show the user at which address was
+the breakpoint hit.
 
 \begin{figure}\label{fig:singlestep}
     \begin{minted}{c}
-        uint64_t loc = fetch_ip()  - 1;
-        struct breakpoint* bp = get_breakpoint(..., loc);
-        if (bp->enabled) {
-            set_ip(loc);
-            disable_bp(bp);
-            ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
-            int wt;
-            waitpid(pid, &wt, 0);
-            enable_bp(bp);
-        }
+void step_over_bp(pid_t pid) {
+    uint64_t loc = read_register(pid, "rip");
+    struct breakpoint* bp = find_bp(loc);
+    if (bp == NULL || !bp->enabled) {
+        return;
+    }
+
+    disable(pid, bp);
+    ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+    // Waits until debugee finishes singlestepping
+    wait_for_debugee(pid);
+    enable(pid, bp);
+}
     \end{minted}
     \caption{Stepping over breakpoint, abbreviated.}
 \end{figure}
 
-Registers themselves are simple like memory. Linux contains predefined structure
-\texttt{user\_regs\_struct}, which maps all registers on current architecture.
-The command \texttt{PTRACE\_GETREGS} then fills up this structure with the
-value in registers. To save registers, \texttt{PTRACE\_SETREGS} can be used.
+For normal single step, we can just use the \texttt{PTRACE\_SINGLESTEP} command.
+We however need to check if the current line doesn't have a breakpoint, since
+that would cause or debugger to return the program counter back before it and
+we wouldn't be able to step over it. So, if there is a breakpoint use the code
+from \texttt{fig:singlestep}, else just use \texttt{PTRACE\_SINGLESTEP}.
+
+Step over is more entertaining. It is used to jump out of current function.
+When a procedure is entered using the \texttt{call} instruction, the address
+immediately after the call instruction is put onto the stack. Then, on entry to
+the function \texttt{rbp} register is pushed onto the stack and then the value
+of it is set to the current value of stack pointer. So the return address is
+located at \texttt{rbp + 8}. We can set breakpoint at that address and then
+continue execution, wait for the debugee to hit the breakpoint and then disable
+and remove it. This has its flaws, for example it won't work if the step out is
+used before the rbp is set. Or if some library completely bypasses the call
+instruction.
 
 \subsection{Windows}
+\todo{WIP: Will be rewritten (probably shortened)}
 Windows also has built-in support for debugging at the Win32API layer
 \cite{windows-msdn-debugging-api, windows-press-debugging-api}.
 It builds on \textit{debug events} and \textit{debug functions}. Summary of
@@ -624,7 +683,7 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 \end{figure}
 
 \section{Compiler support}
-\todo{Moved from introduction here for the time being}
+\todo{WIP: Moved from introduction here for the time being}
 When we talked about evolution of programming from machine code to assembly to
 higher level languages, we haven't talked about how they are executed. Machine
 code can be directly executed by processor, as we said, it is a sequence of
