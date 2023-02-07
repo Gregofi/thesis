@@ -8,16 +8,15 @@
   \end{flushright}
 \end{quote}
 
-We already mentioned in the first chapter that to debug programs written in
-high level programming languages, we need the compiler to emit debugging
-information. But debugging support must also be provided by operating system
-(if there is one) and by processor itself. However, we can still debug programs
-in machine code. We briefly mentioned this in chapter 1 \todo{ref}, however, we
-won't see source code, but only assembly. This can still be useful, for example
-for reverse engineering. And, as was already hinted, source level debugging is
-built upon assembly debugging. In this chapter, we will describe on which
-levels must assembly level debugging be supported. Additionaly, we'll discuss
-how are compilers and debuggers able to allows us to debug source code
+We mentioned in the first chapter that to debug programs written in high level
+programming languages, we need the compiler to emit debugging information.
+However, we can still debug programs at the assembly level.   This can still be
+useful, for example for reverse engineering. And, as was already hinted, source
+level debugging is built upon assembly debugging. In this chapter, we will
+describe on which level and what kind of debugging support is provided. First,
+we will mention which kind of mechanism the CPU itself offers. Going one step
+higher, we will talk about APIs that operating systems provide. Finally, we'll
+discuss how are compilers and debuggers able to allows us to debug source code
 althrough the programs are still machine code programs. 
 
 \section{Support on CPU level} In first chapter it was said that CPU can only
@@ -38,7 +37,7 @@ program in machine code. In general, ISA specifies following:
     \item Addressing modes - Possible methods to refer to memory or register. 
 \end{itemize} There are other specification,
 however they are not relevant to this thesis. For each instruction and operand
-there is specified how they should be encoded into binary (remember, that's
+it is specified how they should be encoded into binary (remember, that's
 what the CPU can understand). CPU then \textit{implements} some ISA. If two
 different CPUs implements the same ISA then they should be able to run the same
 machine code program. For example, most PC use the \textit{x86} architecture
@@ -47,7 +46,7 @@ computers, for example the Apple Sillicon is of ARM architecture.
 
 The x86 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
-length and takes multiple clock cycles to complete \cite{intel-manual}. On the
+length and take multiple clock cycles to complete \cite{intel-manual}. On the
 other hand the ARM architecture is \textit{Reduced Instruction Set
 Architecture} (RISC). The number of instructions is smaller, they are intended
 to be small building blocks from which complex operations may be created by
@@ -69,7 +68,7 @@ various operands. Most often registers (\texttt{RBP, RSP, EAX}), memory
 \texttt{rbp} minus $4$), or labels (like \texttt{L2}). Labels are not part of
 machine code, instead memory address has to be provided. This is a small part
 where assembly and machine code differ. For detailed overview of the x86
-instructions see \cite{intel-manual}.
+instruction set see \cite{intel-manual}.
 
 \begin{figure}\label{fig:assembly-example2}
     \begin{lstlisting}
@@ -105,7 +104,7 @@ max:
     \caption{Compiled C program with GCC 9.4 compiler as x86 assembly.}
 \end{figure}
 
-\subsection{Registers}
+\subsection{Registers}\label{subsection:registers}
 
 The x86 architecture has a set of general purpose registers.
 Some of these are
@@ -116,13 +115,14 @@ Some of these are
     \item RBP - Pointer to data on the stack.
 \end{itemize}
 The names and number of general purpose registers change based on bit mode.
-64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8. Althrough
-the \texttt{RSP} and \texttt{RBP} are called general purpose they are often
-only used for pointing at the top of the stack, resp. to the base of the stack.
-Stack is special part of program memory, it mostly has LIFO
-semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]} does
-not respect LIFO semantics, because it reads directly from the stack and not
-from the top.} It can be used to store intermediate result, arguments to
+64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8. The names
+are more of a convention. It is not necessary to use RCX only for loop
+operations. Althrough the \texttt{RSP} and \texttt{RBP} are called general
+purpose they are often only used for pointing at the top of the stack, resp. to
+the base of the stack. Stack is special part of program memory, it mostly has
+LIFO semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]}
+does not respect LIFO semantics, because it reads directly from the stack and
+not from the top.} It can be used to store intermediate result, arguments to
 functions, return address etc. This register is weird in a sense that it has
 this very special purpose but is still considered part of the general purpose
 registers~\cite{intel-manual}. One might use it for storing calculations, but
@@ -173,10 +173,10 @@ Operating System (OS) is governing the PC. Alas, we cannot touch the interrupt
 handler directly. Instead, an OS is going to have to provide another layer of
 support for debugging.
 
-Recall the EFLAGS register mentioned in section \ref{X}. There is a special
-flag called trap flag. When it is set, cpu will issue an interrupt after every
-executed instruction. This could be useful if we wanted to inspect execution
-instruction by instruction.
+Recall the EFLAGS register mentioned in section \ref{subsection:registers}.
+There is a special flag called trap flag. When it is set, cpu will issue an
+interrupt after every executed instruction. This could be useful if we wanted
+to inspect execution instruction by instruction.
 
 \todo{Debugging embedded and hardware breakpoints}
 
@@ -210,19 +210,21 @@ Linux and MacOS systems are somewhat similar, but Windows is very different.
 \subsection{Linux}
 Linux offers special system call which is very handy for debugging. It is
 called \texttt{ptrace} \cite{ptrace} - process trace. It has following
-signature: \texttt{ptrace(PTRACE\_COMMAND, pid, ...)}. It takes a
+signature: \texttt{ptrace(PTRACE\_<COMMAND>, pid, ...)}. It takes a
 \texttt{PTRACE\_COMMAND}, which specifies the behaviour of the function (for
-example \texttt{PTRACE\_SINGLESTEP} for single step), pid of some process and
-some other parameters, depending on the \texttt{PTRACE\_COMMAND} that was
-chosen. It allows to observe and control the execution of another process, this
-process will be the debugee. In the context of \texttt{ptrace}, we will instead
-use the word tracee for the debugee, and tracer for the debugger, to be
-consistent with ptrace documentation.
+example \texttt{PTRACE\_SINGLESTEP}), pid of some process
+(presumably the debugee) and some other parameters, depending on the
+\texttt{PTRACE\_COMMAND} that was chosen\footnote{Peak API design!}. It allows
+to observe and control the execution of another process, this process will be
+the debugee. In the context of \texttt{ptrace}, we will instead use the word
+tracee for the debugee, and tracer for the debugger, to be consistent with
+ptrace documentation.
 
 \texttt{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
     \item \texttt{PTRACE\_PEEKTEXT, PTRACE\_PEEKDATA} - Read tracee's memory,
-    \item \texttt{PTRACE\_POKETEXT, PTRACE\_POKEDATA} - Write into tracee's memory,
+    \item \texttt{PTRACE\_POKETEXT, PTRACE\_POKEDATA} - Write into tracee's
+          memory,
     \item \texttt{PTRACE\_GETREGS} - Read tracee's register values,
     \item \texttt{PTRACE\_SETREGSET} - Modify tracee's register values,
     \item \texttt{PTRACE\_GETSIGINFO} - Retrieve information about the signal
@@ -235,19 +237,22 @@ consistent with ptrace documentation.
 Linux however needs some way of notifying the debugger that the tracee
 encountered a breakpoint, or that some other event requiring debugger attention
 happened. To this end, \textit{signals} are used. They are in principle similar
-to CPU interrupts. They are however on the OS level. A signal is used in UNIX
-and Linux systems to notify a process that a particular event has occured
-\cite{os-concepts}. Signals can be sent to processes. When such process
-receives a signal, it stops its execution and starts the execution of a signal
-handler. There are various signal types. Most signals can have custom signal
-handler defined by the process. If no handler is defined then a default one is
-provided by the OS. However handlers for \texttt{SIGKILL} and \texttt{SIGSTOP}
-cannot be changed \cite{signals}.
+to CPU interrupts. CPU interrupts are sent by the CPU and processed by the
+operating system kernel. Signals are sent by the operating system kernel and
+received by processes. They can also be sent by a process, that however
+happens via system calls and so it goes through kernel, so the statement still
+stands. A signal is used in UNIX and Linux systems to notify a process that a
+particular event has occured \cite{os-concepts}.  When a process receives a
+signal, it stops its execution and starts the execution of a signal handler.
+There are various signal types. Most signals can have custom signal handler
+defined by the process. If no handler is defined then a default one is provided
+by the OS. However handlers for \texttt{SIGKILL} and \texttt{SIGSTOP} cannot be
+changed \cite{signals}.
 
 Reason for rising a signal can be \todo{Tady toho asi bude vic}
 \begin{itemize}
     \item CPU Interrupt (Division by zero, Breakpoint hit),
-    \item System call (\textit{kill(pid, signal)}).
+    \item System call (\texttt{kill(pid, signal)}).
 \end{itemize}
 
 For example, the signal \texttt{SIGTERM} can be send to a process to ask it
@@ -260,11 +265,10 @@ To begin tracing a command \texttt{PTRACE\_ATTACH} may be used for already
 existing process, or a \texttt{fork} followed with child calling
 \texttt{PTRACE\_TRACEME} and typically \texttt{execve}. When the tracee is
 being traced it will stop each time a signal is delivered to it, even if it
-choose to ignore said signal. The tracer will be notified at its next call to
-the \texttt{waitpid} function. It will return a value which indicates the cause
-of the stop in the tracee. When the tracee is stopped the tracer can initiate
-various ptrace request listed above to inspect and change the state of the
-tracee \cite{ptrace}.
+choose to ignore said signal. The tracer will be notified that the tracee
+received a signal at its next call to the \texttt{waitpid} function. When the
+tracee is stopped the tracer can initiate various ptrace request listed above
+to inspect and change the state of the tracee \cite{ptrace}.
 
 In the CPU chapter we mentioned that there are debug instructions and that they
 issue an interrupt. We do not directly handle the interrupt here. Even if we
