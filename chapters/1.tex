@@ -8,66 +8,66 @@
   \end{flushright}
 \end{quote}
 
-We mentioned in the first chapter that to debug programs written in high level
-programming languages, we need the compiler to emit debugging information.
-However, we can still debug programs at the assembly level.   This can still be
-useful, for example for reverse engineering. And, as was already hinted, source
-level debugging is built upon assembly debugging. In this chapter, we will
-describe on which level and what kind of debugging support is provided. First,
-we will mention which kind of mechanism the CPU itself offers. Going one step
-higher, we will talk about APIs that operating systems provide. Finally, we'll
-discuss how are compilers and debuggers able to allows us to debug source code
-althrough the programs are still machine code programs. 
+We mentioned in the first chapter that to debug programs written in a high
+level programming languages, we need the compiler to emit debugging
+information. However, we can still debug programs at the assembly level. This
+can still be useful, for example for reverse engineering. And, as was already
+hinted, source level debugging is built upon assembly debugging. In this
+chapter, we will describe at which level and what kind of debugging support is
+provided. First, we will mention which kind of mechanism the CPU itself offers.
+Going one step higher, we will talk about the API that various operating
+systems provide. Finally, we'll discuss how are compilers and debuggers able to
+allow us to debug source code although the programs are still machine code
+programs. 
 
-\section{Support on CPU level} In first chapter it was said that CPU can only
-execute machine code which is made of instructions and that it has certain
-registers. Which instructions and registers the CPU has can differ from CPU to
-CPU. This is specified by \textit{Instruction Set Architecture} (ISA)
-\cite{aps-isa}. It is an abstract interface between the hardware and lowest
+\section{Support on CPU level} In the first chapter it was said that the CPU
+can only execute machine code which is made of instructions and that it has
+certain registers. Which instructions and registers the CPU has can differ from
+CPU to CPU. This is specified by \textit{Instruction Set Architecture} (ISA)
+\cite{aps-isa}. It is an abstract interface between the hardware and the lowest
 level software (machine code). It contains all information needed to write a
-program in machine code. In general, ISA specifies following: 
+program in machine code. In general, ISA specifies the following: 
 \begin{itemize}
     \item Set of machine code instructions - Specifies instructions the ISA has
-          and what operands each instruction has.
-    \item Register set - Which
-          registers the ISA has\footnote{Strictly speaking ISA doesn't have
-          to use registers. It's possible to use only stack or accumulator,
-          but most used ISAs use registers, so we'll ignore those
-          architectures. }.   
+        and what operands each instruction has.
+    \item Register set - Which registers the ISA has\footnote{Strictly speaking
+        ISA doesn't have to use registers. It's possible to use only stack or
+        accumulator, but most used ISAs use registers, so we'll ignore those
+        architectures. }.   
     \item Addressing modes - Possible methods to refer to memory or register. 
-\end{itemize} There are other specification,
-however they are not relevant to this thesis. For each instruction and operand
-it is specified how they should be encoded into binary (remember, that's
-what the CPU can understand). CPU then \textit{implements} some ISA. If two
-different CPUs implements the same ISA then they should be able to run the same
+\end{itemize} There are other specifications,
+however, they are not relevant to this thesis. For each instruction and operand
+it is specified how they should be encoded into binary (remember, that's what
+the CPU can understand). CPU then \textit{implements} some ISA. If two
+different CPUs implement the same ISA then they should be able to run the same
 machine code program. For example, most PC use the \textit{x86} architecture
-\cite{aps-isa}, althrough the ARM architecture is also seeing use in personal
-computers, for example the Apple Sillicon is of ARM architecture.
+\cite{aps-isa}, although the ARM architecture is also seeing use in personal
+computers, for example, the Apple Sillicon is of ARM architecture.
 
 The x86 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
-length and take multiple clock cycles to complete \cite{intel-manual}. On the
-other hand the ARM architecture is \textit{Reduced Instruction Set
+lengths, and take multiple clock cycles to complete \cite{intel-manual}. On the
+other hand, the ARM architecture is \textit{Reduced Instruction Set
 Architecture} (RISC). The number of instructions is smaller, they are intended
 to be small building blocks from which complex operations may be created by
-using many of them. Each instruction in RISC also has same length. Both
-architectures have their pros and cons, althrough some literature suggest that
+using many of them. Each instruction in RISC also has the same length. Both
+architectures have their pros and cons, although some literature suggests that
 in modern days the choice of architecture is irrelevant if one is only
-considering performance and power
-consuption  \cite{riscvscisc1, riscvscisc2}. Unless specified otherwise the
-rest of this chapter will be talking about x86. This is because T86 \todo{ref}
-is loosely based on x86, so it is most relevant for us.
+considering performance and power consumption \cite{riscvscisc1, riscvscisc2}.
+Unless specified otherwise the rest of this chapter will be talking about x86.
+This is because T86 \todo{ref} is loosely based on x86, so it is most relevant
+for us.
 
-In first chapter we briefly mentioned that machine code programs can instead be
-written in Assembly language. Assembly is almost 1:1 mapping to machine code.
-When showing programs, we will show them in assembly. In figure
+In the first chapter, we briefly mentioned that machine code programs can
+instead be written in Assembly language. Assembly is almost 1:1 mapping to
+machine code. When showing programs, we will show them in assembly. In figure
 \ref{fig:assembly-example2}, we present another example of a program that was
 compiled from C to assembly of the x86 architecture. As seen, instructions have
 various operands. Most often registers (\texttt{RBP, RSP, EAX}), memory
 (\texttt{[rbp-4]} is reference to memory at address which is in register
 \texttt{rbp} minus $4$), or labels (like \texttt{L2}). Labels are not part of
 machine code, instead memory address has to be provided. This is a small part
-where assembly and machine code differ. For detailed overview of the x86
+where assembly and machine code differ. For a detailed overview of the x86
 instruction set see \cite{intel-manual}.
 
 \begin{figure}\label{fig:assembly-example2}
@@ -117,108 +117,110 @@ Some of these are
 The names and number of general purpose registers change based on bit mode.
 64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8. The names
 are more of a convention. It is not necessary to use RCX only for loop
-operations. Althrough the \texttt{RSP} and \texttt{RBP} are called general
+operations. Although the \texttt{RSP} and \texttt{RBP} are called general
 purpose they are often only used for pointing at the top of the stack, resp. to
-the base of the stack. Stack is special part of program memory, it mostly has
+the base of the stack. Stack is a special part of program memory, it mostly has
 LIFO semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]}
 does not respect LIFO semantics, because it reads directly from the stack and
-not from the top.} It can be used to store intermediate result, arguments to
-functions, return address etc. This register is weird in a sense that it has
-this very special purpose but is still considered part of the general purpose
-registers~\cite{intel-manual}. One might use it for storing calculations, but
-it would make rest of the instructions that work with stack behave
-unexpectedly.
+not from the top.} It can be used to store the intermediate result, arguments
+to functions, return address, etc. This register is weird in a sense that it
+has this very special purpose but is still considered part of the general
+purpose registers~\cite{intel-manual}. One might use it for storing
+calculations, but it would make the rest of the instructions that work with
+stack behave unexpectedly.
 
-Instruction pointer register (RIP on x86-64, EIP on x86) contains address of
-the current instruction to be executed. As we mentioned in Introduction
-\todo{ref}, programs are executed sequentially from top to bottom, with certain
-instructions having the ability to change the control flow. When an instruction
-get executed, the size of the instruction will be added to the value in RIP
-register. This will advance the instruction pointer to the next instruction.
-Or, if the instruction changes control flow, the value in instruction pointer
-will be changed to the destination of the instruction. The register can also be
-changed directly.
+The instruction pointer register (RIP on x86-64, EIP on x86) contains the
+address of the current instruction to be executed. As we mentioned in
+Introduction \todo{ref}, programs are executed sequentially from top to bottom,
+with certain instructions having the ability to change the control flow. When
+an instruction gets executed, the size of the instruction will be added to the
+value in RIP register. This will advance the instruction pointer to the next
+instruction. Or, if the instruction changes the control flow, the value in the
+instruction pointer will be changed to the destination of the instruction. The
+register can also be changed directly.
 
 Another interesting register is the \texttt{EFLAGS} register. The register
-contains group of flags, which can alter various behavior of the CPU, or the
-CPU itself sets them as result of some instruction. For example the instruction
-\texttt{cmp} compares its two operands and if they are the same the
+contains a group of flags, which can alter various behavior of the CPU, or the
+CPU itself sets them as a result of some instruction. For example the
+instruction \texttt{cmp} compares its two operands and if they are the same the
 \textit{zero} flag in the \texttt{EFLAGS} register will be set.
 
 \subsection{Interrupts}
-Interrupt is a special request to the CPU to stop execution of current program
-and to quickly react to the reason that caused the request
-\cite{aps-interrupts}. Example of such event can be keyboard press or error in
-an program (division by zero). There are two main categories
+An interrupt is a special request to the CPU to stop the execution of the
+current program and to quickly react to the reason that caused the request
+\cite{aps-interrupts}. An example of such event can be a keyboard press or
+error in a program (division by zero). There are two main categories
 \cite{intel-manual}
 \begin{itemize}
     \item An \textbf{interrupt} is an asynchronous\footnote{Meaning that the
-    interrupt may happen when another instruction is being processed (not on
-the CPU clock edge).} event that is typically triggered by an Input/Output (IO)
-device. \item An \textbf{exception}\footnote{Unfortunately, this term will
-    become quite overloaded in this thesis.} is a synchronous event that is
+        interrupt may happen when another instruction is being processed (not
+        on the CPU clock edge).} event that is typically triggered by an
+        Input/Output (IO) device.
+    \item An \textbf{exception}\footnote{Unfortunately, this term will become
+        quite overloaded in this thesis.} is a synchronous event that is
         generated when the processor detects one or more predefined conditions
         when executing an instruction. These are further divided into three
-        classes: faults, traps and aborts.
+        classes: faults, traps, and aborts.
 \end{itemize}
 
-When an interrupt or exception happens, the processor halts execution of
-current program and switches to specific interrupt handler. Interrupt handler
-is just another sequence of instructions that handles the interrupt. Example of
-an exception is the \texttt{INT3} instruction. When this instruction is
-executed an interrupt is generated. This instruction is specifically meant to
-be used as a breakpoint. We can supply code that will be responsible for
-handling the breakpoint as the interrupt handler. However, on modern PCs a
-Operating System (OS) is governing the PC. Alas, we cannot touch the interrupt
-handler directly. Instead, an OS is going to have to provide another layer of
-support for debugging.
+When an interrupt or exception happens, the processor halts the execution of a
+current program and switches to a specific interrupt handler. An interrupt
+handler is just another sequence of instructions that gets executed when the
+interrupt happens. It is supposed to handle the interrupt. An example of an
+exception is the \texttt{INT3} instruction. When this instruction is executed
+an interrupt is generated. This instruction is specifically meant to be used as
+a breakpoint. We can supply code that will be responsible for handling the
+breakpoint as the interrupt handler. However, on modern PCs, an Operating
+System (OS) is governing the PC. Alas, we cannot touch the interrupt handler
+directly. Instead, an OS is going to have to provide another layer of support
+for debugging.
 
 Recall the EFLAGS register mentioned in section \ref{subsection:registers}.
-There is a special flag called trap flag. When it is set, cpu will issue an
-interrupt after every executed instruction. This could be useful if we wanted
-to inspect execution instruction by instruction.
+There is a special flag called the trap flag. When it is set, the CPU will
+issue an interrupt after every executed instruction. This could be useful if we
+wanted to inspect execution instruction by instruction.
 
 \todo{Debugging embedded and hardware breakpoints}
 
-\section{Operating system support} Operating system is a layer between computer
-components (cpu, memory, input/output devices, \dots) and software. It is
-responsible for handling all those resources so programmers do not have to
-think about it \cite{modern-os, os-concepts}. Managing resources is not only to
-make writing programs easier, but to make sure that they are safe from each
-other. Modern operating system allows to run multiple programs at once (or at
-least offer the illusion that it can) and they make sure that one program
-cannot overwrite data or otherwise interfere with other programs. Normal
-programs runs in so called \textit{user space}, which has limited capabilites.
-Kernel on the other hand runs in \textit{kernel space}. It has full access to
-hardware of the computer, can use all instructions, can permit or mask
-interrupts and so on.
+\section{Operating system support}
+Operating system is a layer between computer components (CPU, memory,
+input/output devices, \dots) and software. It is responsible for handling all
+those resources so programmers do not have to think about it \cite{modern-os,
+os-concepts}. Managing resources is not only to make writing programs easier
+but to make sure that they are safe from each other. Modern operating system
+allows to run multiple programs at once (or at least offer the illusion that it
+can) and they make sure that one program cannot overwrite data or otherwise
+interfere with other programs. Normal programs run in so-called \textit{user
+space}, which has limited capabilities. The kernel on the other hand runs in
+\textit{kernel space}. It has full access to the hardware of the computer, can
+use all instructions, can permit or mask interrupts, and so on.
 
 However, if programs were limited to user space all the time they would be very
-limited. Sometimes, they need to escape the confiment of the OS, for example to
-read a file or communicate with other processes. Operating systems provide an
-interface through which the user space program can leverage small part of the
-kernel - system calls. They offer a way of requiring some service from the OS.
-This API is often in form of C and C++ functions~\cite{os-concepts}. A part of
-these functions is a special instruction, like \texttt{SYSCALL} on
-x86~\cite{intel-manual}, that switches the mode to kernel space. The kernel has
-to check if the call is correct, since it will be executed in kernel space with
-full access.
+limited. Sometimes, they need to escape the confinement of the OS, for example,
+to read a file or communicate with other processes. Operating systems provide
+an interface through which the user space program can leverage a small part of
+the kernel in form of system calls. They offer a way of requiring some service
+from the OS. This API is often in form of C and C++
+functions~\cite{os-concepts}. A part of these functions is a special
+instruction, like \texttt{SYSCALL} on x86~\cite{intel-manual}, that switches
+the mode to kernel space. The kernel has to check if the call is correct since
+it will be executed in kernel space with full access.
 
-The most prelevant operating systems today are Microsoft Windows, Linux and MacOS.
+The most used operating systems today are Microsoft Windows, Linux, and MacOS.
 Linux and MacOS systems are somewhat similar, but Windows is very different.
 
 \subsection{Linux}
-Linux offers special system call which is very handy for debugging. It is
+Linux offers a special system call which is very handy for debugging. It is
 called \texttt{ptrace} \cite{ptrace} - process trace. It has following
 signature: \texttt{ptrace(PTRACE\_<COMMAND>, pid, ...)}. It takes a
-\texttt{PTRACE\_COMMAND}, which specifies the behaviour of the function (for
-example \texttt{PTRACE\_SINGLESTEP}), pid of some process
-(presumably the debugee) and some other parameters, depending on the
-\texttt{PTRACE\_COMMAND} that was chosen\footnote{Peak API design!}. It allows
-to observe and control the execution of another process, this process will be
-the debugee. In the context of \texttt{ptrace}, we will instead use the word
-tracee for the debugee, and tracer for the debugger, to be consistent with
-ptrace documentation.
+\texttt{PTRACE\_COMMAND}, which specifies the behavior of the function (for
+example \texttt{PTRACE\_SINGLESTEP}), pid of some process (presumably the
+debugee) and some other parameters, depending on the \texttt{PTRACE\_COMMAND}
+that was chosen\footnote{Peak API design!}. It allows to observe and control
+the execution of another process, this process will be the debugee. In the
+context of \texttt{ptrace}, we will instead use the word tracee for the
+debugee, and tracer for the debugger, to be consistent with ptrace
+documentation.
 
 \texttt{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
@@ -239,60 +241,60 @@ encountered a breakpoint, or that some other event requiring debugger attention
 happened. To this end, \textit{signals} are used. They are in principle similar
 to CPU interrupts. CPU interrupts are sent by the CPU and processed by the
 operating system kernel. Signals are sent by the operating system kernel and
-received by processes. They can also be sent by a process, that however
-happens via system calls and so it goes through kernel, so the statement still
+received by processes. They can also be sent by a process, that however happens
+via system calls and so it goes through the kernel, so the statement still
 stands. A signal is used in UNIX and Linux systems to notify a process that a
-particular event has occured \cite{os-concepts}.  When a process receives a
+particular event has occurred \cite{os-concepts}.  When a process receives a
 signal, it stops its execution and starts the execution of a signal handler.
-There are various signal types. Most signals can have custom signal handler
+There are various signal types. Most signals can have a custom signal handler
 defined by the process. If no handler is defined then a default one is provided
-by the OS. However handlers for \texttt{SIGKILL} and \texttt{SIGSTOP} cannot be
-changed \cite{signals}.
+by the OS. However, handlers for \texttt{SIGKILL} and \texttt{SIGSTOP} cannot
+be changed \cite{signals}.
 
-Reason for rising a signal can be \todo{Tady toho asi bude vic}
+The reason for rising a signal can be \todo{Tady toho asi bude vic}
 \begin{itemize}
     \item CPU Interrupt (Division by zero, Breakpoint hit),
     \item System call (\texttt{kill(pid, signal)}).
 \end{itemize}
 
-For example, the signal \texttt{SIGTERM} can be send to a process to ask it
-nicely to exit. The process can handle this request, for example to save some
+For example, the signal \texttt{SIGTERM} can be sent to a process to ask it
+nicely to exit. The process can handle this request, for example, to save some
 state before exiting. It can also however be completely ignored. For this, a
-signal \texttt{SIGKILL} can be used, which cannot be handled, ignored or
+signal \texttt{SIGKILL} can be used, which cannot be handled, ignored, or
 blocked.
 
-To begin tracing a command \texttt{PTRACE\_ATTACH} may be used for already
-existing process, or a \texttt{fork} followed with child calling
+To begin tracing a command \texttt{PTRACE\_ATTACH} may be used for an already
+existing process, or a \texttt{fork} followed with a child calling
 \texttt{PTRACE\_TRACEME} and typically \texttt{execve}. When the tracee is
 being traced it will stop each time a signal is delivered to it, even if it
-choose to ignore said signal. The tracer will be notified that the tracee
+chooses to ignore said signal. The tracer will be notified that the tracee
 received a signal at its next call to the \texttt{waitpid} function. When the
-tracee is stopped the tracer can initiate various ptrace request listed above
+tracee is stopped the tracer can initiate various ptrace requests listed above
 to inspect and change the state of the tracee \cite{ptrace}.
 
-In the CPU chapter we mentioned that there are debug instructions and that they
-issue an interrupt. We do not directly handle the interrupt here. Even if we
-wanted, user space programs can't do that. The Linux kernel handles this for us
-and instead uses the signals as an abstraction. \todo{Include kernel code.}
+In the CPU chapter, we mentioned that there are debug instructions and that
+they issue an interrupt. We do not directly handle the interrupt here. Even if
+we wanted, user space programs can't do that. The Linux kernel handles this for
+us and instead uses the signals as an abstraction. \todo{Include kernel code.}
 
 \subsubsection{Debugger implementation}
 Now, we have all the necessary building blocks to build a simple debugger on
 the Linux operating system running on the x86 platform. Running a program under
-the debugger is simple. On figure \ref{fig:debugger-init} you can see the
+the debugger is simple. In figure \ref{fig:debugger-init} you can see the
 initialization of the debugger. It uses the fork-exec idiom. \texttt{fork}
 system call creates an exact copy of the process as a child except the
 following: process ID (PID) of the child is different. In the parent process,
-PID of the child is returned, in the child a $0$ is returned. In the child, we
+PID of the child is returned. In the child, $0$ is returned. In the child, we
 initiate the \texttt{PTRACE\_TRACEME} call, which indicates that this process
 is to be traced by its parent. Then it calls \texttt{execve} system call, which
 replaces this program with the one we want to debug. The execve causes a
-\texttt{SIGTRAP} signal on completetion because it is being traced
+\texttt{SIGTRAP} signal on completion because it is being traced
 \cite{execve}.
 
 The parent first issues a \texttt{waitpid} system call. This waits for the
-childs \texttt{execve} to finish. The debugger then has a chance to debug the
+child \texttt{execve} to finish. The debugger then has a chance to debug the
 child immediately, because it is stopped. The \texttt{while} loop can then
-request input from user and act accordingly. The tracee can be continued by
+request input from the user and act accordingly. The tracee can be continued by
 \texttt{PTRACE\_CONT} command.
 
 \begin{figure}\label{fig:debugger-init}
@@ -317,11 +319,11 @@ request input from user and act accordingly. The tracee can be continued by
 Reading and writing to memory is simple. The \texttt{PTRACE\_PEEKTEXT} and
 \texttt{PTRACE\_POKETEXT} are used for this purpose. This call reads or writes
 a word (32 or 64 bits, depending on the Linux variant) into tracees memory.
-However, if we want to write arbitrary amount of bytes, we have to work around
-the word limitation. We need to write by blocks and for the last one we have to
-pad the write with already existing data if the block size does not divide the
-word size. In figure \ref{fig:write-read} is shown how to read and write
-exactly one byte of memory at given address.
+However, if we want to write an arbitrary amount of bytes, we have to work
+around the word limitation. We need to write by blocks and for the last one we
+have to pad the write with already existing data if the block size does not
+divide the word size. Figure \ref{fig:write-read} is shown how to read and
+write exactly one byte of memory at a given address.
 
 \begin{figure}\label{fig:write-read}
     \begin{minted}{c}
@@ -339,16 +341,16 @@ void write_memory(pid_t pid, uint64_t address, uint8_t data) {
     \caption{Linux - Reading and writing one byte using ptrace.}
 \end{figure}
 
-Registers are similar to memory in regards how to read them. Linux contains
-predefined structure \texttt{user\_regs\_struct}, which maps all registers on
-current architecture. The command \texttt{PTRACE\_GETREGS} then fills up this
-structure with the value in registers. To save registers,
+Registers are similar to a memory in regards to how to read them. Linux
+contains a predefined structure \texttt{user\_regs\_struct}, which maps all
+registers on the current architecture. The command \texttt{PTRACE\_GETREGS}
+then fills up this structure with the value in registers. To save registers,
 \texttt{PTRACE\_SETREGS} can be used. One has to pass the whole structure, so
 if we want to modify only some registers we first need to fetch the structure,
 fill the registers we want with values, and then finally use \texttt{SETREGS}.
-An implementation can be seen on figure \ref{fig:set-register}, the
+An implementation can be seen in figure \ref{fig:set-register}, the
 \texttt{get\_register} functions maps the structure members to register name.
-Since the address of current instruction to be executed is also stored in
+Since the address of the current instruction to be executed is also stored in a
 register, we now have access to it.
 
 \begin{figure}\label{fig:set-register}
@@ -364,17 +366,17 @@ void set_register(pid_t pid, const char* name, uint64_t data) {
     \caption{Linux - Setting one register using ptrace}
 \end{figure}
 
-Breakpoints are more interesting. Debuggers often allow to enable and disable
-breakpoint, so we will distinguish setting a breakpoint and enabling it.
-Setting a breakpoint just means that the debugger needs to keep track where the
-breakpoint was set and if it is enabled or disabled. Enabling a breakpoint
-means writing into the program memory the debug instruction (we will use the
-x86 \texttt{INT3} with opcode \texttt{0xCC}). On figure
-\ref{fig:with-and-without-bp} there is shown how code looks with and without
-enabled breakpoint. On line $2$, the opcode changes from \texttt{0x83} to
+Breakpoints are more interesting. Debuggers often allow to enable and disable a
+breakpoint, so we will distinguish between setting a breakpoint and enabling
+it. Setting a breakpoint just means that the debugger needs to keep track of
+where the breakpoint was set and if it is enabled or disabled. Enabling a
+breakpoint means writing into the program memory the debug instruction (we will
+use the x86 \texttt{INT3} with opcode \texttt{0xCC}). Figure
+\ref{fig:with-and-without-bp} shows how code looks with and without enabled
+breakpoint. On line $2$, the opcode changes from \texttt{0x83} to
 \texttt{0xCC}. Since the breakpoint is set via the \texttt{PTRACE\_POKEDATA},
 which only works data blocks, one has to pad the breakpoint opcode with already
-existing data. Also, the rewriten data has to be kept so that the breakpoint
+existing data. Also, the rewritten data has to be kept so that the breakpoint
 may later be deactivated. Abbreviated implementation can be found on
 \ref{fig:breakpoint-enable}.
 
@@ -418,20 +420,20 @@ void disable(pid_t pid, struct breakpoint* bp) {
     \caption{Enabling breakpoints, abbr.}
 \end{figure}
 
-When breakpoint is hit, the control is passed to the debugger, at this point,
+When a breakpoint is hit, the control is passed to the debugger, at this point,
 the instruction pointer would point to the next instruction, which has opcode
 \texttt{0x7D}, not \texttt{7E} (the \texttt{JLE} instruction) as might be
-expected. This is because \texttt{INT3} is instruction with size $1$. It gets
-executed, instruction pointer is advanced by the size ($1$) and interrupt is
-issued. But after the INT3 there were operands to the CMPL instruction, we
-definitely do not want to interpret them as instruction. On some architectures,
-advancing PC does not happen for the debug instruction (like ARM \todo{Checked
-by hand - Reverse engineered from LLDB source code}.).
+expected. This is because \texttt{INT3} is an instruction with size $1$. It
+gets executed, the instruction pointer is advanced by the size ($1$) and an
+interrupt is issued. But after the INT3 there were operands to the CMPL
+instruction, we definitely do not want to interpret them as instruction. On
+some architectures, advancing PC does not happen for the debug instruction
+(like ARM \todo{Checked by hand - Reverse engineered from LLDB source code}.).
 
-Additionaly, if we just moved back and resumed the program, we would again hit
+Additionally, if we just moved back and resumed the program, we would again hit
 the breakpoint which is still set! We need to temporarily unset it, move one
 instruction forward, and set it again. The general idea behind it can be found
-on figure \ref{fig:continue}. With breakpoints, we essentially gained the
+in figure \ref{fig:continue}. With breakpoints, we essentially gained the
 ability to single step as well. 
 
 \begin{figure}\label{fig:continue}
@@ -440,31 +442,31 @@ ability to single step as well.
     \caption{Continue sketch}
 \end{figure}
 
-We showed that the breakpoint must be put
-at the next instruction. This is not as simple as it sounds. Where is next
-instruction? On CISC architectures, this is not easy to find out since
-instructions have different sizes. But even on RISC architectures like ARM,
-what if the instruction is a jump of some sort and the next instruction is not
-simply the one that follows this one in the code? For this reason, debuggers may
-need to have an instruction emulator, which needs to emulate whole instruction
-set to see where the program counter ends up\footnote{And there can be a
-\textit{lot} of instructions \cite{intel-manual}}. However, some architectures
-offer hardware support, like the trap flag we mentioned in section \todo{ref}.
+We showed that the breakpoint must be put at the next instruction. This is not
+as simple as it sounds. Where is the next instruction? On CISC architectures,
+this is not easy to find out since instructions have different sizes. But even
+on RISC architectures like ARM, what if the instruction is a jump of some sort
+and the next instruction is not simply the one that follows this one in the
+code? For this reason, debuggers may need to have an instruction emulator,
+which needs to emulate the whole instruction set to see where the program
+counter ends up\footnote{And there can be a \textit{lot} of instructions
+\cite{intel-manual}}. However, some architectures offer hardware support, like
+the trap flag we mentioned in section \todo{ref}.
 
-The ptrace library contains special \texttt{PTRACE\_SINGLESTEP} command. This
+The ptrace library contains a special \texttt{PTRACE\_SINGLESTEP} command. This
 executes one instruction in the tracee and then signal \texttt{SIGTRAP} will be
-sent to it. The linux kernel (as of v6.1.8) uses previously mentioned trap flag
-for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide a way
-to support single stepping then the call will return an error. If we are on an
-architecture that support this command we can use it instead of the register
-dance mentioned above. Implementation is described on figure
+sent to it. The Linux kernel (as of v6.1.8) uses the previously mentioned trap
+flag for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide
+a way to support single stepping then the call will return an error. If we are
+on an architecture that supports this command we can use it instead of the
+register dance mentioned above. Implementation is described in figure
 \ref{fig:singlestep}. We presume that the instruction pointer was moved when
 the breakpoint was hit, so we do not need to return one byte backward. This is
-more reasonable anyway, since you want to show the user at which address was
-the breakpoint hit. The LLDB \cite{lldb} debugger uses the hardware support if
-there is one, else it uses an instruction emulator. For example for the ARM
-architecture LLDB uses instruction emulator. All instruction are of the same
-length, however some jump or another program counter modifier could cause that
+more reasonable anyway since you want to show the user at which address was the
+breakpoint hit. The LLDB \cite{lldb} debugger uses hardware support if there is
+one, else it uses an instruction emulator. For example for the ARM
+architecture, LLDB uses an instruction emulator. All instructions are of the
+same length, however, some jump or another program counter modifier could cause
 the next instruction to be executed is not necessarily the following one in the
 code.
 
@@ -487,27 +489,29 @@ void step_over_bp(pid_t pid) {
     \caption{Stepping over breakpoint, abbreviated.}
 \end{figure}
 
-For normal single step, we can just use the \texttt{PTRACE\_SINGLESTEP} command.
-We however need to check if the current line doesn't have a breakpoint, since
-that would cause or debugger to return the program counter back before it and
-we wouldn't be able to step over it. So, if there is a breakpoint use the code
-from \texttt{fig:singlestep}, else just use \texttt{PTRACE\_SINGLESTEP}.
+For a normal single step, we can just use the \texttt{PTRACE\_SINGLESTEP}
+command. We however need to check if the current line doesn't have a
+breakpoint, since that would cause the debugger to return the program counter
+back before it and we wouldn't be able to step over it. So, if there is a
+breakpoint use the code from \texttt{fig:singlestep}, else just use
+\texttt{PTRACE\_SINGLESTEP}.
 
-Step over is more entertaining. It is used to jump out of current function.
+Step over is more entertaining. It is used to jump out of the current function.
 When a procedure is entered using the \texttt{call} instruction, the address
 immediately after the call instruction is put onto the stack. Then, on entry to
-the function \texttt{rbp} register is pushed onto the stack and then the value
-of it is set to the current value of stack pointer. So the return address is
-located at \texttt{rbp + 8}. We can set breakpoint at that address and then
-continue execution, wait for the debugee to hit the breakpoint and then disable
-and remove it. This has its flaws, for example it won't work if the step out is
-used before the rbp is set. Or if some library completely bypasses the call
-instruction.
+the function, \texttt{rbp} register is pushed onto the stack and then the value
+of it is set to the current value of the stack pointer. So the return address
+is located at \texttt{rbp + 8}. We can set a breakpoint at that address and
+then continue execution, wait for the debugee to hit the breakpoint, and then
+disable and remove it. This has its flaws, for example, it won't work if the
+step out is used before the rbp is set. Or if some library completely bypasses
+the call instruction.
 
-This concludes the implementation of very basic assembly level debugger for
+This concludes the implementation of a very basic assembly level debugger for
 Linux on the x86 platform. The proof of concept implementation is provided as
-an extension to this thesis, and can be found under \todo{\texttt{<path to the
-debugger>}}. The implementation was partialy inspired by \cite{linux-debugger-blog} and \cite{lldb}.
+an extension to this thesis and can be found under \todo{\texttt{<path to the
+debugger>}}. The implementation was partially inspired by
+\cite{linux-debugger-blog} and \cite{lldb}.
 
 \todo{Describe how LLDB does things?}
 
