@@ -1,22 +1,25 @@
 \chapter{Introduction}
-Computers have many components that allow them to function. One of the most
-integral ones is the processor, or central processing unit (CPU). This
-component does all the calculations that the computer needs to do. However, the
-CPU can only understand zeros and ones. Those sequences of zeroes and ones
-(called machine code) make up a program that the CPU can execute. They can also
-save the results of their calculations, for this, the computer has a memory,
-but writing and reading from it can be slow. Fortunately, \textit{registers}
-come to the rescue! They are part of the CPU itself and so it has very fast
-access to them, but unfortunately, there are only a few of them.
+Computers have many components that allow them to function. The most important
+one is the central processing unit (CPU). This component does all the
+calculations that the computer needs to do. However, the CPU can only
+understand zeros and ones. Those sequences of zeroes and ones (called machine
+code) make up a program that the CPU can execute. They can also save the
+results of their calculations, for this, the computer has a memory, but writing
+and reading from it can be slow. Fortunately, \textit{registers} come to the
+rescue. They are part of the CPU itself and so it has very fast access to them,
+but unfortunately, there are only a few of them.
 
-As we said, processors can only understand machine code. But writing those
-sequences of zeros and ones and understanding what they do is very hard for a
-human programmer. Because of this, a text mapping was created, called
-\textit{assembly language}. See the example in figure
-\ref{fig:assembly-example}. This is certainly more readable than binary but is
-ugly nonetheless\footnote{At least for a normal mortal. Some of us enjoy
-reading such monstrosities.}. For example, the \texttt{MOV EAX, 1} instruction
-moves value $1$ to the register named \texttt{EAX}.
+Writing programs in machine code proved to be difficult. Even reading such
+sequences and understanding their meaning is not easy for a human programmer.
+Because of this, a text mapping was created, called \textit{assembly language}.
+See the example in figure \ref{fig:assembly-example}, where we present a simple
+assembly program. Each line contains an instruction or label. For example, the
+\texttt{MOV EAX, 1} instruction moves value $1$ to the register named
+\texttt{EAX}. Instructions are executed sequentially from top to bottom. But
+certain instructions can change this flow of control. For example, the
+instruction \texttt{JMP <dest>} jumps to a label and the execution continues
+from there. This allows us to repeat or skip some part of the code. Assembly is
+certainly more readable than binary but is still very close to the machine.
 
 \begin{figure}\label{fig:assembly-example}
 \begin{lstlisting}
@@ -36,20 +39,11 @@ LN1:
 \caption{Example of assembly language}
 \end{figure}
 
-Programs are executed from top to bottom sequentially, instruction by
-instruction. But certain instructions can change this control flow. For
-example, the instruction \texttt{JMP dest} jumps to a label (\texttt{LN1} in
-the example) and the execution continues from there. This allows the program to
-repeat or skip some parts of the code. Notice the JLE instruction. This
-instruction performs mentioned jump but only if certain other condition holds
-true. These instructions can make it harder for the programmer to follow the
-control flow \cite{gotobad}.
-
-Because writing and reading assembly was a pain, higher level programming
-languages were created. The aim of these languages is to abstract away the
-details of a computer. One of the older languages is the C programming language
-(1972). An example of a program in C is seen in figure \ref{fig:c-positive},
-this program does the same thing as the assembly one in figure
+Finally, high level programming languages were created. The aim of these
+languages is to abstract away the details of a computer. One of the older
+languages is the C programming language (1972). An example of a program in C is
+seen in figure \ref{fig:c-positive}, this program does the same thing as the
+assembly one in figure
 \ref{fig:assembly-example}.
 
 \begin{figure}\label{fig:c-positive}
@@ -65,12 +59,12 @@ int positive(int n) {
 \caption{C function that checks if a number is positive.}
 \end{figure}
 
-With C, knowing about the internals of the computer is no longer needed. We do
-not store values in registers. Instead, they are kept in variables. We can use
-conditional statements, which are more concise than using jumps \cite{gotobad}.
-The functions and variables themselves also have names from which can be
-apparent what is the purpose of it contrast to register names like
-\texttt{EAX}.
+With C, knowing about the details of the CPU is no longer needed to write a
+valid program. We do not store values in registers. Instead, they are kept in
+variables. We can use conditional statements, which are more concise than using
+jumps \cite{gotobad}. The functions and variables themselves also have names
+from which can be apparent what is the purpose of it contrast to register names
+like \texttt{EAX}.
 
 However, upon deeper inspection of the language, it does not abstract away
 everything. C has a feature called \textit{pointers}. Those are special kind of
@@ -83,7 +77,7 @@ computer hardware you don't have to resort to assembly, but can use C. For
 example the Linux Kernel is written mostly in C \cite{linux-source}. Over the
 years, many programming languages came to be, and some are more abstract than
 others. For example, the Python language doesn't have pointers and in general,
-is more abstract than C.
+is more abstract than C and easier to use.
 
 However, we previously said that processors can only understand machine code
 and high level languages are certainly not machine code. We need to translate
@@ -92,8 +86,8 @@ compiler is a program that reads some source code of high level language and
 produces assembly for the processor to understand. Compilers are a very
 complicated piece of software, and we will talk about them in detail in chapter
 \todo{Debugging - Compiler support}. For now, just keep in mind that the source
-code needs to be someway translated and that the computer cannot run the source
-code of high level language directly.
+code needs to be someway translated into machine code and that the computer
+cannot run the source code of high level language directly.
 
 \begin{figure}[H]\label{fig:binary-search}
     \begin{minted}{c}
@@ -118,9 +112,10 @@ int binary_search(int* arr, int len, int n) {
 
 In the \ref{fig:binary-search} figure we present a more complicated example of
 a program written in high level programming language. This is an implementation
-of the binary search algorithm. It operates on a sorted sequence of numbers and
-checks if there is some concrete number contained. This algorithm is widely
-implemented in many standard libraries \todo{Citace}.
+of the binary search algorithm. As an input, it receives sorted sequence of
+numbers and some number $n$ and checks if that number $n$ is in the sequence.
+This algorithm is widely used when searching because of its
+$\mathcal{O}(\text{log}(n)$ complexity.
 
 \section{Debugging}
 Programs are mostly written by humans, and humans tend to make mistakes
@@ -130,22 +125,22 @@ program that implements binary search. Let us try to run the program with a
 apparently not in the sequence, so the expected output would be $0$. Instead,
 the program would run forever, because of a mistake we have made in the source
 code. We will call such mistakes a \textit{bug}\footnote{The term \textit{bug}
-actually comes from a real bug that got stuck in relays back when it was a
-critical part of computers. They literally had to debug the machine by taking
-the bug out.}.
+actually comes from a real bug that got stuck in relays back when computers
+were made from relays. They literally had to debug the machine by taking the
+bug out.}.
 
 Well, now we have to find out where the error is. We could just try to look at
 the source code and find the mistake this way. This is a valid strategy, here
 we could probably figure out that the condition \texttt{lo < hi} never comes to
 be, since where else could we get stuck in an infinite loop? Now, it would be
 helpful if we could see the states of \texttt{lo} and \texttt{hi} in each
-iteration of the cycle. We could resort to print statements, but that can
-quickly get overwhelming, especially in an infinite loop. Not to mention we
-need to recompile the program if we want to print something different. All is
-not lost, a special piece of a program was created specifically for this
-purpose, called a \textit{debugger}. Debugger is a program that can inspect
-another program. They often have complete control of the program. The program
-being debugged will be called a \textit{debugee}.
+iteration of the cycle. We could resort to print statements, but that is not
+very flexible, we have to recompile the program and run it again just to see
+different variable. It can also quickly get overwhelming, especially in an
+infinite loop. All is not lost, a special piece of a program was created
+specifically for this purpose, called a \textit{debugger}. Debugger is a
+program that can inspect another program. They often have complete control of
+the program. The program being debugged will be called a \textit{debugee}.
 
 Debugger is able to inspect the state of the debugee, like the values of its
 variables. Debugger is also able to control the flow of the program. They allow
@@ -155,8 +150,9 @@ expressions. This is especially important for functional languages, as their
 functions often consist of one big expression.}. When the program is about to
 execute the line of code with the breakpoint, the control is passed back to the
 debugger and the user can inspect the state of the program at that line. There
-are also conditional breakpoints, which only trigger when some condition holds
-(for example the value of variable \texttt{i} must be equal to zero).
+are also conditional breakpoints, which only trigger when some condition holds.
+Example of such condition can be that the breakpoint gets activated only when
+\texttt{i == 3}.
 
 Finally, debuggers also allow \textit{stepping}. This also modifies the control
 flow of the program.
@@ -181,11 +177,12 @@ the execution was stopped. It is also possible to print the state of variables.
 In each loop, you can print the value of a variable and then continue execution
 until another breakpoint. There is only one set, so the execution will again be
 stopped on line $8$. The value of \texttt{hi} will not change, which is
-expected. Value of \texttt{lo} will gain following values: $0$, $1$, $2$, $2$,
-$2$ and the trend continues. The value of variable $i$ is computed as $i =
-(\text{lo} + \text{hi})/2 = (2 + 3)/2 = 2$, because division in C rounds the
-value down. The fix is to change the line $9$ to \texttt{lo = i + 1}. With the
-debugger, it was simple to find out what was happening.
+expected. Value of \texttt{lo} will gain following values: $0, 1, 2, 2, 2,
+\dots$. The value apparently gets stuck at $2$ and never change. The value of
+variable $i$ is computed as $i = (\text{lo} + \text{hi})/2 = (2 + 3)/2 = 2$,
+because division in C rounds the value down. The fix is to change the line $9$
+to \texttt{lo = i + 1}. With the debugger, it was simple to find out where the
+error came from.
 
 \begin{figure}\label{fig:lldb-debug1}
 \begin{minted}{c}
@@ -227,26 +224,28 @@ discomforting than debugging source code directly.
 \end{figure}
 
 \section{Teaching compilers}
-Many schools about computer science have a compiler course. At Faculty of
-Information Technologies, there is one too, called \textit{Code Generators}
-(NI-GEN). In this course, students are tasked to build a simple compiler for a
-C-like language. The target of the compiler is Tiny86 (T86) architecture. This
-architecture \todo{Never mentioned any architectures before} does not have a a
-processor that can execute it, instead a virtual machine (or interpreter, if
-you will) was created for it. The architecture is supposed to ease the code
-generation and let the students focus on the more interesting parts of the
-compiler, like register allocation or optimization, instead of the nitty gritty
-detail of x86 (or different architecture, should the students choose it).
+Many schools about computer science have a compiler course. And Faculty of
+Information Technologies is no exception. The course there is called
+\textit{Code Generators} (NI-GEN). In this course, students are tasked to build
+a simple compiler for a C-like language. The target of the compiler is Tiny86
+(T86) architecture. This architecture \todo{Never mentioned any architectures
+before} does not have a a processor that implements it, instead a virtual
+machine, a program that reads the assembly and executes it, was created for it.
+The architecture is supposed to ease the code generation and let the students
+focus on the more interesting parts of the compiler, like register allocation
+or optimization, instead of the nitty gritty detail of x86 (or different
+architecture, should the students choose it).
 
 There is however a problem with using T86, there is no debugger that supports
 it. So if a compiler of some student generates code badly, it takes a
 non-trivial amount of effort to find the error. T86 offers some very light
 debugging capabilities, but they are very far from real debugging. Also,
-compiling debugging information is not taught at all in the NI-GEN course. If a
-debugger was provided to the students, it might be incentivizing to compile
-such information to ease their lives later, when they will need to find errors
-in their compilers which will inevitably happen. This way they will also learn
-how and what information the compiler needs to embed for the debugger to work.
+compiling debugging information is not taught at all in the NI-GEN course
+because there is no reason to as of now. If a debugger was provided to the
+students, it might be incentivizing to compile such information to ease their
+lives later, when they will need to find errors in their compilers which will
+inevitably happen. This way they will also learn how and what information the
+compiler needs to embed for the debugger to work.
 
 \section{Goals of the thesis}
 The primary goal is to create a debugger for the T86 virtual machine which
@@ -262,9 +261,9 @@ that it is not discouraging for students to generate.
 \begin{enumerate}
     \item The \textit{Introduction} describes the motivation behind the thesis
         and basic terms with which should the reader be familiar.
-    \item \textit{Debuggers - On the Shoulders of Giants} describes how are
-        debuggers implemented and what support is needed on various levels (OS,
-        processors, compilers) for them to work.
+    \item \textit{Debugging support} describes how are debuggers implemented
+        and what support is provided on various levels (OS, processors,
+        compilers) for them to work.
     \item \textit{T86 Virtual Machine} describes the T86 architecture and how
         are some of the parts implemented.
     \item \textit{Implementation} describes how the implementation is done. It
