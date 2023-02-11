@@ -37,11 +37,12 @@ program in machine code. In general, ISA specifies the following:
     \item Addressing modes - Possible methods to refer to memory or register. 
 \end{itemize} There are other specifications,
 however, they are not relevant to this thesis. For each instruction and operand
-it is specified how they should be encoded into binary. CPU then \textit{implements} some ISA. If two
-different CPUs implement the same ISA then they should be able to run the same
-machine code program. For example, most PC use the \textit{x86} architecture
-\cite{aps-isa}, although the ARM architecture is also seeing use in personal
-computers, for example, the Apple Sillicon is of ARM architecture.
+it is specified how they should be encoded into binary. CPU then
+\textit{implements} some ISA. If two different CPUs implement the same ISA then
+they should be able to run the same machine code program. For example, most PC
+use the \textit{x86} architecture \cite{aps-isa}, although the ARM architecture
+is also seeing use in personal computers, for example, the Apple Sillicon is of
+ARM architecture.
 
 The x86 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
@@ -549,7 +550,28 @@ an extension to this thesis and can be found under \todo{\texttt{<path to the
 debugger>}}. The implementation was partially inspired by
 \cite{linux-debugger-blog} and \cite{lldb}.
 
+\subsubsection*{Hardware versus Software breakpoints}
+The breakpoints we have implemented here are called \textit{software
+breakpoints}. In section \todo{ref} we mentioned that CPU also supports
+breakpoints, these are called \textit{hardware breakpoints}. The difference
+between these two are mostly felt when doing reverse engineering, where people
+study compiled programs in machine code because they do not have an access to
+source code of the programs. This is done to find out what the program does,
+for example to find out if it is of malicious nature. The programs themselves
+however often try to defend from being debugged. Software breakpoints changes
+the actual code, so a checksum of instruction opcodes can detect them. Hardware
+breakpoints on the other hand do not touch the code, so they cannot be detected
+as easily. They can also be used to break on memory access, which is not
+possible with software breakpoints. However, we can only have limited number of
+hardware breakpoints (4 on x86).
+
 \todo{Describe how LLDB does things?}
+
+\subsection{UNIX systems}
+There are other systems based on UNIX, however the implementation is very similar to the Linux one.
+For example, MacOS, FreeBSD and OpenBSD also have the \texttt{ptrace} system call. The function is
+little different on each operating system but it can be used to achieve the same functionality as
+on the linux operating system.
 
 \subsection{Windows}
 \todo{WIP: Will be rewritten (probably shortened)}
