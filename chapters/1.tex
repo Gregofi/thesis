@@ -37,8 +37,7 @@ program in machine code. In general, ISA specifies the following:
     \item Addressing modes - Possible methods to refer to memory or register. 
 \end{itemize} There are other specifications,
 however, they are not relevant to this thesis. For each instruction and operand
-it is specified how they should be encoded into binary (remember, that's what
-the CPU can understand). CPU then \textit{implements} some ISA. If two
+it is specified how they should be encoded into binary. CPU then \textit{implements} some ISA. If two
 different CPUs implement the same ISA then they should be able to run the same
 machine code program. For example, most PC use the \textit{x86} architecture
 \cite{aps-isa}, although the ARM architecture is also seeing use in personal
@@ -180,7 +179,44 @@ There is a special flag called the trap flag. When it is set, the CPU will
 issue an interrupt after every executed instruction. This could be useful if we
 wanted to inspect execution instruction by instruction.
 
-\todo{Debugging embedded and hardware breakpoints}
+% Page ~3644 in intel manual
+The CPU may also contain special debug registers. The x86 has six of them,
+named DR0 to DR7, with DR4 and DR5 being synonyms for DR6 and DR7 on most CPUs,
+otherwise they are reserved anyway. CPU provides special breakpoints through
+these registers. The first four registers contain address of the breakpoints.
+The debug status register \texttt{DR6} contains debug conditions that were
+sampled at the last debug interrupt. Lastly, the debug control register
+\texttt{DR7} is used to enable and disable breakpoints and set breakpoint
+conditions. The CPU then issues an interrupt when these breakpoints are hit.
+They can be triggered on memory read and write, on only on instruction
+execution \cite{intel-manual}.
+
+\subsection{Superscalar CPUs}
+Modern CPUs do not execute instructions strictly one by one. They instead use
+\textit{pipelines} and \textit{out-of-order execution}. This means that they
+can execute several instructions at once and can execute them in non sequential
+order. The observable behaviour of the program has to be the same as if it was
+run sequentially. The CPU has to be careful about which instruction it can run
+in parallel and out of order. The execution of an instruction consist of
+several stages, which together form an \textit{execution pipeline}. The stages
+can be \textit{Fetch}, \textit{Decode}, \textit{Execute}, \textit{Memory}, and
+\textit{Writeback}, this may vary depending on architecture, but the general
+ideas behind it are the same. The instruction must pass all these stages to be
+successfully executed. To maximize efficiency, all stages are occupied by an
+instruction. This means that when instruction $x$ leaves fetch stage, it goes
+to the decode stage and instruction $y$ is put into the fetch stage.
+
+However, what if we received a conditional jump instruction? How to knoe which
+instruction will be next? Will it be the one at the jump destination, or the
+next one because the condition will not hold? CPUs deal with it in various ways
+and try to predict the right branch. Sometimes however, the prediction fails
+and the whole pipeline needs to be flushed. Same thing must happen when
+interrupt happens. The execution changes to the interrupt handler. This makes
+sense, because the instructions to now be executed are from the handler, so the
+pipeline must be flushed. Also, if we hit the breakpoint, we want to make sure
+that instructions before it were all executed and that none was executed after,
+otherwise it would be very confusing for the user that tries to debug the
+program.
 
 \section{Operating system support}
 Operating system is a layer between computer components (CPU, memory,
