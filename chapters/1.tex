@@ -518,27 +518,33 @@ debugger>}}. The implementation was partially inspired by
 \subsection{Windows}
 \todo{WIP: Will be rewritten (probably shortened)}
 Windows also has built-in support for debugging at the Win32API layer
-\cite{windows-msdn-debugging-api, windows-press-debugging-api}.
-It builds on \textit{debug events} and \textit{debug functions}. Summary of
-some of the functions that Win32 API offers which all help with debugging:
+\cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds on
+\textit{debug events} and \textit{debug functions}. Summary of some of the
+functions that Win32 API offers which all help with debugging:
 
 \begin{itemize}
-    \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an active process.
-    \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to occur in the specified process.
-                                          This passes control of the process to the debugger if there is one.
+    \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an
+        active process.
+    \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to
+        occur in the specified process. This passes control of the process to
+        the debugger if there is one.
     \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events.
-    \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution after processing debug event.
-    \item \mintinline{c}{OutputDebugString} - Sends a string to the debugger for display.
-    \item \mintinline{c}{ReadProcessMemory} and \mintinline{c}{WriteProcessMemory} - Read and modify
+    \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution
+        after processing debug event.
+    \item \mintinline{c}{OutputDebugString} - Sends a string to the debugger
+        for display.
+    \item \mintinline{c}{ReadProcessMemory} and
+        \mintinline{c}{WriteProcessMemory} - Read and modify
           process virtual address space.
-    \item \mintinline{c}{FlushInstructionCache} - Flushes instruction cache of the process.
+    \item \mintinline{c}{FlushInstructionCache} - Flushes instruction cache of
+        the process.
 \end{itemize}
 
-The general structure of Windows debugger can be seen in figure \ref{fig:win32debugger}.
-The debugger waits for debug events via function \mintinline{c}{WaitForDebugEvent}.
-This function has a timeout parameter, so the debugger can also do other things while it's waiting.
-These events are put in a queue, so the debugger will not miss any.
-
+The general structure of Windows debugger can be seen in figure
+\ref{fig:win32debugger}. The debugger waits for debug events via function
+\mintinline{c}{WaitForDebugEvent}. This function has a timeout parameter, so
+the debugger can also do other things while it's waiting, like react to GUI
+interaction.
 \begin{figure}
     \centering
     \scalebox{0.8}{
@@ -563,9 +569,6 @@ These events are put in a queue, so the debugger will not miss any.
     \caption{A sequence diagram for debugger using Windows api. Inspired by \todo{NI-REV 6. lecture}}
     \label{fig:win32debugger}
 \end{figure}
-
-The debug events are thoroughly described in subsection \ref{section:Debug Events}. The main point of interest is the exceptions.
-By these, we do not mean the standard C++ exceptions but rather Microsoft \textit{Structured Exception Handling}.
 
 \subsubsection*{Debug Events}\label{section:Debug Events}
 Debugging events are various incidents in the debuggee that causes the system
@@ -602,16 +605,15 @@ typedef struct _DEBUG_EVENT {
 \end{figure}
 
 \subsubsection*{Structured Exception Handling}
-This feature is specific to Windows only. For example, if division by zero was
-performed in a program on Linux, a signal would be sent to the process. Windows
-don't have signals, instead, it uses Structured Exception Handling
-\cite{windows-msdn-seh}. From now on, we will be using the abbreviation 'SEH'.
-An exception is an event that requires execution of code outside the normal
-flow of control. There are software exceptions, like throwing an exception
-explicitly or by OS, and hardware exceptions, like the division by zero we
-mentioned. Instruction with opcode \mintinline{c}{0xCC}, which is used for
-breakpoints, will also raise an exception. SEH unifies both of these things
-into one.
+On POSIX systems, abnormal conditions which need immediate attention are
+handled via signals \todo{ref signals}. Windows however is not a POSIX system.
+Instead, Windows uses \textit{Structured Exceptions} \cite{windows-msdn-seh}.
+From now on, we will be using the abbreviation 'SEH'. An exception is an event
+that requires execution of code outside the normal flow of control. There are
+software exceptions, like throwing an exception explicitly or by OS, and
+hardware exceptions, like the division by zero we mentioned. Instruction with
+opcode \mintinline{c}{0xCC}, which is used for breakpoints, will also raise an
+exception. SEH unifies both of these things into one just like signals do.
 
 When an exception is triggered, control is transferred to the system. It saves
 the state of the thread and some other information. This information can be
@@ -625,9 +627,15 @@ in this order:
 
 \begin{enumerate}
     \item If the process is debugged the debugger is notified.
-    \item If it is not or the debugger does not handle the exception, the frame-based exception handler is to be found\footnote{The handlers are not very important to us, see MSDN documentation if you're interested \cite{windows-msdn-seh}.}
-    \item If no frame-based handler can be found, or no handler handles the exception, but the process is being debugged then the debugger gets notified once again.
-    \item The system provides default handling, which is to terminate the program via \mintinline{c}{ExitProcess} most of the time.
+    \item If it is not or the debugger does not handle the exception, the
+        frame-based exception handler is to be found\footnote{The handlers are
+        not very important to us, see MSDN documentation if you're interested
+        \cite{windows-msdn-seh}.}
+    \item If no frame-based handler can be found, or no handler handles the
+        exception, but the process is being debugged then the debugger gets
+        notified once again.
+    \item The system provides default handling, which is to terminate the
+        program via \mintinline{c}{ExitProcess} most of the time.
 \end{enumerate}
 
 Here we see that every exception that occurs in the debuggee causes the
@@ -648,8 +656,11 @@ terminated. It gives the user a chance to debug why is his process terminating.
 
 Here are some exceptions that tie into debugging:
 \begin{itemize}
-    \item \mintinline{c}{STATUS_BREAKPOINT} - Raised when a hardware-defined breakpoint was encountered. This includes the mentioned \mintinline{c}{INT3} instruction.
-    \item \mintinline{c}{STATUS_SINGLE_STEP} - Raised when a single step was completed, ie. when instruction was executed and the trap flag is set.
+    \item \mintinline{c}{STATUS_BREAKPOINT} - Raised when a hardware-defined
+        breakpoint was encountered. This includes the mentioned
+        \mintinline{c}{INT3} instruction.
+    \item \mintinline{c}{STATUS_SINGLE_STEP} - Raised when a single step was
+        completed, ie. when instruction was executed and the trap flag is set.
 \end{itemize}
 
 \subsubsection*{Tying it all together}
@@ -729,7 +740,8 @@ C language one might use the GCC or Clang compilers. On figure
     \draw[->] (imc) -- node[below] {} (gen);
     \end{tikzpicture} 
     \par}
-    \caption{Simplified structure of a compiler. Some parts were left out, like optimizations.}
+    \caption{Simplified structure of a compiler. Some parts were left out, like
+    optimizations.}
     \label{fig:compiler_tikz}
 \end{figure}
 
