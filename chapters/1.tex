@@ -578,8 +578,8 @@ special \mintinline{c}{DEBUG_EVENT} structure, which is received in
 information about the event, the internals can be seen on figure
 \ref{fig:DebugEvent}. These events include loading and unloading a DLL,
 creating and exiting a process, sending debug strings via the
-\mintinline{c}{OutputDebugString} and so on. It also includes exceptions, those
-are probably the most important for us. 
+\mintinline{c}{OutputDebugString} and so on. One category of events
+are exceptions, lets look at them more closely.
 
 \begin{figure}
 \begin{minted}{c}
@@ -627,59 +627,45 @@ in this order:
 
 \begin{enumerate}
     \item If the process is debugged the debugger is notified.
-    \item If it is not or the debugger does not handle the exception, the
-        frame-based exception handler is to be found\footnote{The handlers are
-        not very important to us, see MSDN documentation if you're interested
-        \cite{windows-msdn-seh}.}
+    \item If the process is not debugged or the debugger does not handle the
+        exception, the frame-based exception handler is to be
+        found\footnote{The handlers are not very important to us, see MSDN
+        documentation if you're interested \cite{windows-msdn-seh}.}
     \item If no frame-based handler can be found, or no handler handles the
         exception, but the process is being debugged then the debugger gets
         notified once again.
-    \item The system provides default handling, which is to terminate the
-        program via \mintinline{c}{ExitProcess} most of the time.
+    \item The system provides default handler, which often is termination of
+        the program via \mintinline{c}{ExitProcess}.
 \end{enumerate}
 
-Here we see that every exception that occurs in the debuggee causes the
-debugger to be notified. Breakpoints are also caused by an exception, as was
-briefly mentioned before. There are two possible notifications to the debugger.
-The first is known as \textit{first-chance} notification
-\cite{windows-msdn-dbg-exc-handling}. The debugger can (and should) inspect the
-information about the exception and see if it was a breakpoint or single-step.
-These only occurs if the process is debugged (it wouldn't happen otherwise) and
-the debugger should handle them. If it is something else it can ignore the
-exceptions. When the program is continued via
-\mintinline{c}{ContinueDebugEvent}\footnote{This function has a special
-parameter, which is used to tell that the exception was or was not handled.},
-the debugger is notified once again if no appropriate exception handler was
-found for the exception. This is known as \textit{last-chance} notification
-because if the debugger does not handle the exception the debuggee will be
-terminated. It gives the user a chance to debug why is his process terminating.
+The debugger has two opportuinites to handle the exception. The
+\textit{first-chance} is before the exception gets to the debugee. This is
+intended for exceptions for which the debugger is responsible, for example
+breakpoint or single stepping. The debugger should handle these. The second
+opportunity, called \textit{last-chance}, is when a debugee doesn't have
+appropriate frame-based handler to handle the exception. If the debugger
+weren't in the way, system would have already used the default exception
+handler, which is often program termination. This gives us a last chance to
+look at the state of the program before it will be killed
+\cite{windows-msdn-dbg-exc-handling}.
 
-Here are some exceptions that tie into debugging:
+Examples of some exceptions that tie into debugging:
 \begin{itemize}
-    \item \mintinline{c}{STATUS_BREAKPOINT} - Raised when a hardware-defined
+    \item \mintinline{c}{EXCEPTION_BREAKPOINT} - Raised when a hardware-defined
         breakpoint was encountered. This includes the mentioned
         \mintinline{c}{INT3} instruction.
-    \item \mintinline{c}{STATUS_SINGLE_STEP} - Raised when a single step was
-        completed, ie. when instruction was executed and the trap flag is set.
+    \item \mintinline{c}{EXCEPTION_SINGLE_STEP} - Raised when a hardware supported
+        single step was completed.
 \end{itemize}
 
 \subsubsection*{Tying it all together}
-Now we have all necessary building block to build a simple proof of concept
-Windows debugger. On figure \ref{fig:windows-debugger-mainloop}, you can see a
-basic idea of a main loop of the debugger. It waits for debug events and
-branches depending of the type of event. It needs not only handle exceptions,
-but other events also. For example if the debugee creates a thread that is
-something the debugger should be aware of. Modern debuggers trace all threads
-of the program.
-
-\todo{Pridat dalsi figure kde je jak se hanndlujou tyhle blbosti} However,
-exceptions are the most interesting for us. There, breakpoint and single step
-handling should be done. On both of these, the debugger should handle the
-exception itself, so this is the \textit{first chance} notifications. There is
-also an \mintinline{DBG_CONTROL_C}, which happens on CTRL + C keyboard press.
-This should terminate the program. The debugger will pass the first chance and
-catch the last chance exception, so user has a final chance to look at the
-program state before it exits.
+We presented various functions that offer debugging support. The implementation
+itself would be very similar to the Linux one we presented in section
+\todo{ref}. For illustration, in figure \ref{fig:windows-debugger-mainloop} is
+shown an abbreviated main loop of the debugger. We not only need to handle
+exception debug events but others also if we want our debugger to be robust.
+For example thread creation might interest us too, so that we can trace all
+threads of the debugee.
 
 \begin{figure}
     \begin{minted}{c}
@@ -691,9 +677,12 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
       WaitForDebugEvent(DebugEv, INFINITE);
       switch (DebugEv->dwDebugEventCode)
       {
-         case EXCEPTION_DEBUG_EVENT:
+          case EXCEPTION_DEBUG_EVENT:{
             // Handle exception debug events
-         // Other debug events
+            ...
+          }
+          // Other debug events
+          ...
       }
    ContinueDebugEvent(DebugEv->dwProcessId,
                       DebugEv->dwThreadId,
@@ -701,7 +690,7 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
    }
 }
 \end{minted}
-\caption{Windows debugger main loop}
+\caption{Windows debugger main loop, abbreviated. \todo{citace}}
 \label{fig:windows-debugger-mainloop}
 \end{figure}
 
