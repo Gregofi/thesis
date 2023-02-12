@@ -752,23 +752,12 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 \label{fig:windows-debugger-mainloop}
 \end{figure}
 
-\section{Compiler support}
-\todo{WIP: Moved from introduction here for the time being}
-When we talked about evolution of programming from machine code to assembly to
-higher level languages, we haven't talked about how they are executed. Machine
-code can be directly executed by processor, as we said, it is a sequence of
-binary. Assembly is text, processors don't understand text. But assembly can be
-mapped to machine code almost 1:1\footnote{There are some exceptions, like
-labels. But translating them is not very difficult.}.
-
-However, high level programming languages do not map 1:1 to assembly. Some are
-close to it, like C, while others are miles away, like Haskell. But as was
-said, processors understand only machine code. To this end, programs that can
-translate source code into machine code, were created. They are called
-compilers and the translation process is called compiling. For example, for the
-C language one might use the GCC or Clang compilers. On figure
-\ref{fig:compiler-structure} can be seen basic structure of a compiler
-\cite{dragon-book}. 
+\section{Compilers}
+The compiler is a program which transforms the source code into some other
+form, most often into machine code or assembly. Compilers are very complicated
+piece of software. Often, they are made of several parts, the general structure
+can be seen in figure \ref{fig:compiler-structure} \cite{dragon-book}. We will
+briefly explore these stages.
 
 \tikzstyle{compilerblock} = [rectangle, draw, minimum width=6cm, minimum height=1cm] 
 \tikzstyle{tables} = [rectangle, draw, minimum width=4cm, minimum height=1cm] 
@@ -834,14 +823,14 @@ consistent. For example that used variable has been declared before.
 \end{figure}
  
 \subsection{Intermediate code generation}
-This part converts AST into some other representation, most commonly called
-IR\footnote{IR means intermediate representation. AST is also intermediate
-representation, but if we use IR we mean this one.}. IR is closer to machine
-code, to be easily translated, but retain some properties that makes it easier
-to work with it. There are many types of IR. One of the most popular compilers,
-LLVM, uses single static assignment (SSA) \cite{llvm}. Example of LLVM IR can
-be found on figure \ref{fig:llvm-ir-example}. Compilers perform most
-optimizations on this intermediate representation. 
+This part converts AST into some other representation, most commonly called IR,
+which means intermediate representation. IR is closer to machine code, to be
+easily translated, but retain some high level properties that makes it easier
+to work with it, like types and functions. There are many types of IR. One of
+the most popular compilers, LLVM, uses single static assignment (SSA)
+\cite{llvm}. Example of LLVM IR can be found on figure
+\ref{fig:llvm-ir-example}. Compilers perform most optimizations on this
+intermediate representation. 
 
 \begin{figure}\label{fig:llvm-ir-example}
     \begin{minted}{llvm}
@@ -884,24 +873,34 @@ and IR translation), the parts that are dependent on the target are called
 This is widely used in practice. The LLVM \cite{llvm} project is a compiler
 backend. It uses its own IR (as was mentioned on figure
 \ref{fig:llvm-ir-example}). It can compile this IR into many targets, including
-x86, ARM and Spark \todo{Ocitovat}. The \textit{Clang} project is a compiler
-frontend for C, C++ and Objective-C languages. It translates these languages to
-the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a
-Haskell compiler, or \textit{rustc}, which is a Rust compiler. With LLVM,
-creating new programming language comes down to parsing it into an AST and
-transforming that AST into the LLVM IR.
+x86, ARM and Spark. The \textit{Clang} project is a compiler frontend for C,
+C++ and Objective-C languages. It translates these languages to the LLVM IR.
+Other frontends for LLVM also include \textit{ghc}, which is a Haskell
+compiler, or \textit{rustc}, which is a Rust compiler. With LLVM, creating new
+programming language comes down to parsing it into an AST and transforming that
+AST into the LLVM IR.
 
 \subsection{Interpreting programs}
-Not all languages are compiled. Imagine a program which can evaluate arithmetic
-expressions, each phone nowadays has a program like this. We don't have to stop
-there. Moving this up a notch, we can create a program that reads source code
-and executes it. This is what interpreting means. Dynamically typed languages
-tend to be interpreted~\cite{python, lua, javascript}\todo{Instead of
-languages, cite some relevant source}, but it is not a rule~\cite{scala}. Since
-the interpreter is a program, it is another layer of abstraction. This can make
-the resulting languages sometimes more abstract then the compiled ones,
-sometimes at the cost of performance~\cite{jit}. Interpreters still
-\textit{compile} the code into some intermediate representation, but it's not
-compiled down to machine code, instead that IR is run by a
-program\footnote{Nowadays, interpreters use JIT compilation, which compiles
-some of the code some of the time into machine code~\cite{jit}}.
+\todo{Consider throwing away.}
+Not all languages are translated to machine code. Sometimes an interpreter is
+created, which is a program that reads the source code but instead of compiling
+it into machine code it just runs it\footnote{In reality those languages are
+often compiled into bytecode, which is interpreted.}. Dynamically typed
+languages tend to be interpreted, but it is not a rule. Some languages have
+both compiler and interpreter, like Haskells GHC. Since the interpreter is a
+program, it is another layer of abstraction. This can make the resulting
+languages sometimes more abstract then the compiled ones, sometimes at the cost
+of performance~\cite{jit}. 
+
+\subsection{Debug information}
+If we want to debug at the source code level, we need to give the debugger some
+information, because otherwise it can only work with the generated machine
+code. For example, we somehow need to provide information to the debugger that
+instruction at address $0xABCD$ belongs to line $x$ in the source code. Or we
+need to provide information where is some variable located. Before we get into
+that, we will take a look at the layout of executables and where are those
+informations stored.
+
+\subsubsection{ELF}
+ELF means Executable and Linkable format, it is a format used for binary applications.
+The executable contains ELF header, which specifies 
