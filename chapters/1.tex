@@ -987,6 +987,7 @@ instruction. Next, it skips all the way to \texttt{cmpl} at address
 \texttt{1148} instruction because that is the start of the \texttt{if}
 statement on line $4$ and saves that to the matrix. Since the opcodes take up
 one byte this technique is very efficient on space, that is why DWARF uses it.
+This information is stored in the section \texttt{.debug\_line}.
 
 \begin{figure}\label{fig:c-program-and-its-assembly}
     \begin{minted}{c}
@@ -1050,5 +1051,22 @@ Extended opcode 1: End of Sequence
     \caption{An DWARF description of mapping source lines to addresses for program in figure \ref{fig:c-program-and-its-assembly}.}
 \end{figure}
 
+\subsubsection{Debugging Information Entry}
+The \textit{Debugging Information Entries}, or DIEs, are the building block of
+debugging information in DWARF. Each DIE has a tag and series of attributes.
+The tag specifies the class to which entry it belongs, like
+\texttt{DW\_TAG\_subprogram}, which is used for functions, or
+\texttt{DW\_TAG\_variable}, which is used for variables. Complete list can be
+found in \cite{dwarf}. Those entries can be found in \texttt{.debug\_info}
+section \cite{dwarf}.
 
+The attributes themselves then convey some property of the DIE, like name and
+type of a variable or starting and ending address of a function. The DIEs form
+a tree like structure. Each DIE is owned by one parent (excluding the top DIE)
+and can own multiple DIEs. There are also other relations among the DIEs, not
+only ownership. With those relations in place the relation is a graph, not just
+a tree.
+
+\subsubsection{Locations of variables}
+\todo{todo.}
 
