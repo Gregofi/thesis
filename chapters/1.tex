@@ -492,7 +492,7 @@ the trap flag we mentioned in section \todo{ref}.
 
 The ptrace library contains a special \texttt{PTRACE\_SINGLESTEP} command. This
 executes one instruction in the tracee and then signal \texttt{SIGTRAP} will be
-sent to it. The Linux kernel (as of v6.1.8) uses the previously mentioned trap
+sent to it. The Linux kernel (as ofv6.1.8) uses the previously mentioned trap
 flag for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide
 a way to support single stepping then the call will return an error. If we are
 on an architecture that supports this command we can use it instead of the
@@ -709,10 +709,10 @@ look at the state of the program before it will be killed
 
 Examples of some exceptions that tie into debugging:
 \begin{itemize}
-    \item \mintinline{c}{EXCEPTION_BREAKPOINT} - Raised when a hardware-defined
+    \item \texttt{EXCEPTION\_BREAKPOINT} - Raised when a hardware-defined
         breakpoint was encountered. This includes the mentioned
-        \mintinline{c}{INT3} instruction.
-    \item \mintinline{c}{EXCEPTION_SINGLE_STEP} - Raised when a hardware supported
+        \texttt{INT3} instruction.
+    \item \texttt{EXCEPTION\_SINGLE\_STEP} - Raised when a hardware supported
         single step was completed.
 \end{itemize}
 
@@ -725,7 +725,7 @@ exception debug events but others also if we want our debugger to be robust.
 For example thread creation might interest us too, so that we can trace all
 threads of the debugee.
 
-\begin{figure}
+\begin{figure}\label{fig:windows-debugger-mainloop}
     \begin{minted}{c}
 void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 {
@@ -747,9 +747,9 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
                       dwContinueStatus);
    }
 }
-\end{minted}
-\caption{Windows debugger main loop, abbreviated. \todo{citace}}
-\label{fig:windows-debugger-mainloop}
+    \end{minted}
+    % Beware, this figure is cursed. Adding caption here will break the entire
+    % build for god knows what stupid reason.
 \end{figure}
 
 \section{Compilers}
@@ -889,10 +889,10 @@ often compiled into bytecode, which is interpreted.}. Dynamically typed
 languages tend to be interpreted, but it is not a rule. Some languages have
 both compiler and interpreter, like Haskells GHC. Since the interpreter is a
 program, it is another layer of abstraction. This can make the resulting
-languages sometimes more abstract then the compiled ones, sometimes at the cost
+language more abstract then the compiled ones, sometimes at the cost
 of performance~\cite{jit}. 
 
-\subsection{Debug information}
+\section{Debug information}
 If we want to debug at the source code level, we need to give the debugger some
 information, because otherwise it can only work with the generated machine
 code. For example, we somehow need to provide information to the debugger that
@@ -901,6 +901,154 @@ need to provide information where is some variable located. Before we get into
 that, we will take a look at the layout of executables and where are those
 informations stored.
 
-\subsubsection{ELF}
-ELF means Executable and Linkable format, it is a format used for binary applications.
-The executable contains ELF header, which specifies 
+\subsection{ELF}
+ELF means Executable and Linkable format, it is a format used for binary
+applications. The file itself consist of sections, some of these are
+\begin{itemize}
+    \item .text - the executable code,
+    \item .data - allocated space and values of initialized static\footnote{In
+        this context, static means that the variable exists for the entire
+        lifetime of the program} variables and other objects,
+    \item .bss - allocated space for unitialized static variables,
+    \item .rodata - data that doesn't change for the entirety of the program
+        lifetime, like strings literals in C.
+    \item various debug sections like .debug\_info, .debug\_line etc.
+\end{itemize}
+For inspecting the ELF files, commands \texttt{readelf} and \texttt{objdump}
+may be used on Linux systems. The ELF format also has a header, and all
+sections have their header too. This contains information like name of the
+section, size of the section etc. The ELF format are mainly used for
+\textit{relocatable} file, \textit{executable} file and \textit{shared object}
+file \cite{elf}. We will talk only about the executable, since that is most
+relevant to us. The sections themselves are often protected. For example, the .text section
+can only be read and executed, but cannot be written to. The .data section
+can be read and written to, but cannot be executed.
+
+\subsection{DWARF}
+DWARF\footnote{The name DWARF is a pun, since it was developed alongside ELF.}
+is a debugging format used to describe programs written in procedural
+languages. It is primarily associated with ELF. It aims to support all
+different information which may be needed while debugging. This makes it
+complex, we will not discuss everything DWARF has to offer but the most basic
+features that are useful for almost any language.
+
+\subsubsection{Line Number Information}
+Line number information needs to convey which line of code corresponds to an
+address of machine code instruction. The DWARF standard \cite{dwarf} mentions
+that encoding this information would be possible in a matrix, which would have
+one row for each instruction. The columns of the matrix would contain
+\begin{itemize}
+    \item the source file name,
+    \item the source line number,
+    \item the source column number,
+    \item whether this instruction is the beginning of a source statement,
+    \item whether this instruction is the beginning of a basic
+        block\footnote{Basic block is a sequence of instructions that is
+        entered only at the first instruction and exited only at the last
+        instruction \cite{dwarf}. In other words, all of the instructions in
+        the basic block are executed sequentially.}
+\end{itemize}
+They however argue that such a matrix would be very big. The matrix is then
+stripped of redundant information, for example instruction whose location is
+the same as the previous one is removed. Instead of a matrix, they provide a
+bytecode language which one has to interpret to gain this information. The
+bytecode program is then encoded in the executable and one can build the 
+matrix from this bytecode program.
+
+The virtual machine consists of registers \texttt{address}, \texttt{file},
+\texttt{line}, \texttt{column}, \texttt{is\_stmt}, \texttt{basic\_block}, and
+\texttt{end\_sequence}. The program itself begins with a prologue. This
+prologue contains length of the program, version, length of the prologue,
+length of instructions (so that it may be better compressed) and similar
+informations. Then \textit{Standard opcodes} are provided, which are
+instructions of the virtual machine. These are mostly used for manipulating the
+registers of the machine or to create a row from the values in the registers
+and append it to the matrix. 
+
+It also has \textit{Special opcodes}, they affect the virtual machine in the following way:
+\begin{itemize}
+    \item Add a signed integer to the \texttt{line} register.
+    \item Multiply an unsigned integer by the smallest length of an instruction and add the result to the \textit{address} register.
+    \item Append a row to the matrix consisting of the current values in registers.
+    \item Set the \texttt{basic\_block} register to false.
+\end{itemize}
+All of these opcodes do those four things, they only differ in what values they
+add to the \texttt{line} and \texttt{address} register \cite{dwarf}. Those
+values are calculated from the instruction opcode, which ranges from $10$ to
+$255$ in DWARF version 2. 
+
+Observe program in figure \ref{fig:c-program-and-its-assembly}. A simple
+greeter-like program which displays the name given to it as an argument. With
+the \texttt{readelf} utility program, we can inspect the DWARF bytecode
+language describing the locations, it is showed in figure
+\ref{fig:dwarf-locations}. It sets the address to the beginning of the
+\texttt{main} function and then saves it to the matrix with the special opcode
+instruction. Next, it skips all the way to \texttt{cmpl} at address
+\texttt{1148} instruction because that is the start of the \texttt{if}
+statement on line $4$ and saves that to the matrix. Since the opcodes take up
+one byte this technique is very efficient on space, that is why DWARF uses it.
+
+\begin{figure}\label{fig:c-program-and-its-assembly}
+    \begin{minted}{c}
+#include <stdio.h>
+
+int main(int argc, char* argv[]) {
+    if (argc < 1) {
+        return 1;
+    }
+
+    printf("Hello, %s\n!", argv[1]);
+    return 0;
+}
+    \end{minted}
+    \begin{lstlisting}
+0000000000001139 <main>:
+1139:	55                   	push   %rbp
+113a:	48 89 e5             	mov    %rsp,%rbp
+113d:	48 83 ec 10          	sub    $0x10,%rsp
+1141:	89 7d fc             	mov    %edi,-0x4(%rbp)
+1144:	48 89 75 f0          	mov    %rsi,-0x10(%rbp)
+1148:	83 7d fc 00          	cmpl   $0x0,-0x4(%rbp)
+114c:	7f 07                	jg     1155 <main+0x1c>
+114e:	b8 01 00 00 00       	mov    $0x1,%eax
+1153:	eb 27                	jmp    117c <main+0x43>
+1155:	48 8b 45 f0          	mov    -0x10(%rbp),%rax
+1159:	48 83 c0 08          	add    $0x8,%rax
+115d:	48 8b 00             	mov    (%rax),%rax
+1160:	48 89 c6             	mov    %rax,%rsi
+1163:	48 8d 05 9a 0e 00 00 	lea    0xe9a(%rip),%rax
+116a:	48 89 c7             	mov    %rax,%rdi
+116d:	b8 00 00 00 00       	mov    $0x0,%eax
+1172:	e8 b9 fe ff ff       	call   1030 <printf@plt>
+1177:	b8 00 00 00 00       	mov    $0x0,%eax
+117c:	c9                   	leave
+117d:	c3                   	ret
+    \end{lstlisting}
+    \caption{A program in C and corresponding program in assembly.}
+\end{figure}
+
+\begin{figure}\label{fig:dwarf-locations}
+    \begin{lstlisting}
+Extended opcode 2: set Address to 0x1139
+Special opcode 7: advance Address by 0 to 0x1139 and Line by 2 to 3
+Set column to 8
+Special opcode 216: advance Address by 15 to 0x1148 and Line by 1 to 4
+Set column to 16
+Special opcode 90: advance Address by 6 to 0x114e and Line by 1 to 5
+Set column to 32
+Special opcode 106: advance Address by 7 to 0x1155 and Line by 3 to 8
+Set column to 5
+Special opcode 117: advance Address by 8 to 0x115d and Line by 0 to 8
+Set column to 12
+Advance PC by constant 17 to 0x116e
+Special opcode 132: advance Address by 9 to 0x1177 and Line by 1 to 9
+Set column to 1
+Special opcode 76: advance Address by 5 to 0x117c and Line by 1 to 10
+Advance PC by 2 to 0x117e
+Extended opcode 1: End of Sequence
+    \end{lstlisting}
+    \caption{An DWARF description of mapping source lines to addresses for program in figure \ref{fig:c-program-and-its-assembly}.}
+\end{figure}
+
+
+
