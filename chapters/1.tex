@@ -928,9 +928,12 @@ can be read and written to, but cannot be executed.
 DWARF\footnote{The name DWARF is a pun, since it was developed alongside ELF.}
 is a debugging format used to describe programs written in procedural
 languages. It is primarily associated with ELF. It aims to support all
-different information which may be needed while debugging. This makes it
-complex, we will not discuss everything DWARF has to offer but the most basic
-features that are useful for almost any language.
+different information which may be needed while debugging and to encode them in
+as much space efficient manner as possible. This can make it very complex.
+Also, there are five versions of the standard, we will be mainly talking about
+the version 2, since the others mainly add features to accomodate newer
+language features. We will not get that far even in version 2. The complete
+changelog can be found in the text describing DWARF version 5 \cite{dwarf-5}.
 
 \subsubsection{Line Number Information}
 Line number information needs to convey which line of code corresponds to an
@@ -963,13 +966,16 @@ length of instructions (so that it may be better compressed) and similar
 informations. Then \textit{Standard opcodes} are provided, which are
 instructions of the virtual machine. These are mostly used for manipulating the
 registers of the machine or to create a row from the values in the registers
-and append it to the matrix. 
+and append it to the matrix \cite{dwarf}. 
 
-It also has \textit{Special opcodes}, they affect the virtual machine in the following way:
+It also has \textit{Special opcodes}, they affect the virtual machine in the
+following way:
 \begin{itemize}
     \item Add a signed integer to the \texttt{line} register.
-    \item Multiply an unsigned integer by the smallest length of an instruction and add the result to the \textit{address} register.
-    \item Append a row to the matrix consisting of the current values in registers.
+    \item Multiply an unsigned integer by the smallest length of an instruction
+        and add the result to the \textit{address} register.
+    \item Append a row to the matrix consisting of the current values in
+        registers.
     \item Set the \texttt{basic\_block} register to false.
 \end{itemize}
 All of these opcodes do those four things, they only differ in what values they
@@ -989,66 +995,69 @@ statement on line $4$ and saves that to the matrix. Since the opcodes take up
 one byte this technique is very efficient on space, that is why DWARF uses it.
 This information is stored in the section \texttt{.debug\_line}.
 
-\begin{figure}\label{fig:c-program-and-its-assembly}
+\begin{figure}
     \begin{minted}{c}
 #include <stdio.h>
-
 int main(int argc, char* argv[]) {
-    if (argc < 1) {
+    if (argc < 1)
         return 1;
-    }
-
-    printf("Hello, %s\n!", argv[1]);
+    const char* name = argv[1];
+    printf("Hello, %s\n!", name);
     return 0;
 }
     \end{minted}
     \begin{lstlisting}
 0000000000001139 <main>:
-1139:	55                   	push   %rbp
-113a:	48 89 e5             	mov    %rsp,%rbp
-113d:	48 83 ec 10          	sub    $0x10,%rsp
-1141:	89 7d fc             	mov    %edi,-0x4(%rbp)
-1144:	48 89 75 f0          	mov    %rsi,-0x10(%rbp)
-1148:	83 7d fc 00          	cmpl   $0x0,-0x4(%rbp)
-114c:	7f 07                	jg     1155 <main+0x1c>
-114e:	b8 01 00 00 00       	mov    $0x1,%eax
-1153:	eb 27                	jmp    117c <main+0x43>
-1155:	48 8b 45 f0          	mov    -0x10(%rbp),%rax
-1159:	48 83 c0 08          	add    $0x8,%rax
-115d:	48 8b 00             	mov    (%rax),%rax
-1160:	48 89 c6             	mov    %rax,%rsi
-1163:	48 8d 05 9a 0e 00 00 	lea    0xe9a(%rip),%rax
-116a:	48 89 c7             	mov    %rax,%rdi
-116d:	b8 00 00 00 00       	mov    $0x0,%eax
-1172:	e8 b9 fe ff ff       	call   1030 <printf@plt>
-1177:	b8 00 00 00 00       	mov    $0x0,%eax
-117c:	c9                   	leave
-117d:	c3                   	ret
+    1139:	55                   	push   %rbp
+    113a:	48 89 e5             	mov    %rsp,%rbp
+    113d:	48 83 ec 20          	sub    $0x20,%rsp
+    1141:	89 7d ec             	mov    %edi,-0x14(%rbp)
+    1144:	48 89 75 e0          	mov    %rsi,-0x20(%rbp)
+    1148:	83 7d ec 00          	cmpl   $0x0,-0x14(%rbp)
+    114c:	7f 07                	jg     1155 <main+0x1c>
+    114e:	b8 01 00 00 00       	mov    $0x1,%eax
+    1153:	eb 2c                	jmp    1181 <main+0x48>
+    1155:	48 8b 45 e0          	mov    -0x20(%rbp),%rax
+    1159:	48 8b 40 08          	mov    0x8(%rax),%rax
+    115d:	48 89 45 f8          	mov    %rax,-0x8(%rbp)
+    1161:	48 8b 45 f8          	mov    -0x8(%rbp),%rax
+    1165:	48 89 c6             	mov    %rax,%rsi
+    1168:	48 8d 05 95 0e 00 00 	lea    0xe95(%rip),%rax
+    116f:	48 89 c7             	mov    %rax,%rdi
+    1172:	b8 00 00 00 00       	mov    $0x0,%eax
+    1177:	e8 b4 fe ff ff       	call   1030 <printf@plt>
+    117c:	b8 00 00 00 00       	mov    \$0x0,%eax
+    1181:	c9                   	leave
+    1182:	c3                   	ret
     \end{lstlisting}
     \caption{A program in C and corresponding program in assembly.}
+    \label{fig:c-program-and-its-assembly}
 \end{figure}
 
-\begin{figure}\label{fig:dwarf-locations}
+\begin{figure}
     \begin{lstlisting}
-Extended opcode 2: set Address to 0x1139
-Special opcode 7: advance Address by 0 to 0x1139 and Line by 2 to 3
-Set column to 8
-Special opcode 216: advance Address by 15 to 0x1148 and Line by 1 to 4
-Set column to 16
-Special opcode 90: advance Address by 6 to 0x114e and Line by 1 to 5
-Set column to 32
-Special opcode 106: advance Address by 7 to 0x1155 and Line by 3 to 8
-Set column to 5
-Special opcode 117: advance Address by 8 to 0x115d and Line by 0 to 8
-Set column to 12
-Advance PC by constant 17 to 0x116e
-Special opcode 132: advance Address by 9 to 0x1177 and Line by 1 to 9
-Set column to 1
-Special opcode 76: advance Address by 5 to 0x117c and Line by 1 to 10
-Advance PC by 2 to 0x117e
-Extended opcode 1: End of Sequence
+[0x3f] Set column to 34
+[0x41] Extended opcode 2: set Address to 0x1139
+[0x4c] Special opcode 6: advance Address by 0 to 0x1139 and Line by 1 to 2
+[0x4d] Set column to 8
+[0x4f] Special opcode 216: advance Address by 15 to 0x1148 and Line by 1 to 3
+[0x50] Set column to 16
+[0x52] Special opcode 90: advance Address by 6 to 0x114e and Line by 1 to 4
+[0x53] Set column to 17
+[0x55] Special opcode 104: advance Address by 7 to 0x1155 and Line by 1 to 5
+[0x56] Set column to 5
+[0x58] Special opcode 174: advance Address by 12 to 0x1161 and Line by 1 to 6
+[0x59] Set column to 12
+[0x5b] Advance PC by constant 17 to 0x1172
+[0x5c] Special opcode 146: advance Address by 10 to 0x117c and Line by 1 to 7
+[0x5d] Set column to 1
+[0x5f] Special opcode 76: advance Address by 5 to 0x1181 and Line by 1 to 8
+[0x60] Advance PC by 2 to 0x1183
+[0x62] Extended opcode 1: End of Sequence
     \end{lstlisting}
-    \caption{An DWARF description of mapping source lines to addresses for program in figure \ref{fig:c-program-and-its-assembly}.}
+    \caption{A DWARF description of mapping source lines to addresses for
+    program in figure \ref{fig:c-program-and-its-assembly}.}
+    \label{fig:dwarf-locations}
 \end{figure}
 
 \subsubsection{Debugging Information Entry}
@@ -1067,6 +1076,106 @@ and can own multiple DIEs. There are also other relations among the DIEs, not
 only ownership. With those relations in place the relation is a graph, not just
 a tree.
 
+Example of DWARF DIEs can be seen on figure \ref{fig:dwarf-die}. The \texttt{DW\_TAG\_pointer\_type} is
+simple, its attributes are only the size of the type and which type it points to, this is encoded as an
+address to another DIE. That DIE is only an information that its a const, and has an attribute which
+again contains address of another DIE. The die at \texttt{0x6b} finally has a base type. It contains
+the size of the type, name and encoding. We also have the \texttt{DW\_TAG\_SUBPROGRAM}, which represents
+function. It has many attributes, like name, path to the file where it was declared, on which line
+and column it is, at which address the function begins and ends and so on. We can see that this DIE
+has children (by indentation). Here, the childs are the parameters and variables. Important
+information about variables is where they are stored, so that we may look up their value.
+
+\begin{figure}
+    \begin{lstlisting}
+0x6b: DW_TAG_base_type
+        DW_AT_byte_size (0x01)
+        DW_AT_encoding (DW_ATE_signed_char)
+        DW_AT_name ("char")
+
+0x72: DW_TAG_const_type
+        DW_AT_type (0x0000006b "char")
+
+0x8f: DW_TAG_pointer_type
+        DW_AT_byte_size	(8)
+        DW_AT_type (0x00000072 "const char")
+
+DW_TAG_subprogram
+  DW_AT_external	(true)
+  DW_AT_name	    ("main")
+  DW_AT_decl_file	("/home/gregofi1/tmp/main.c")
+  DW_AT_decl_line	(2)
+  DW_AT_decl_column	(0x05)
+  DW_AT_prototyped	(true)
+  DW_AT_type        (0x00000058 "int")
+  DW_AT_low_pc      (0x0000000000001139)
+  DW_AT_high_pc	    (0x0000000000001183)
+  DW_AT_frame_base	(DW_OP_call_frame_cfa)
+  DW_AT_call_all_tail_calls	(true)
+  DW_AT_sibling	    (0x000000e0)
+
+    DW_TAG_formal_parameter
+      DW_AT_name	    ("argc")
+      DW_AT_decl_file	("/home/gregofi1/tmp/main.c")
+      DW_AT_decl_line	(2)
+      DW_AT_decl_column	(0x0e)
+      DW_AT_type	    (0x00000058 "int")
+      DW_AT_location	(DW_OP_fbreg -36)
+
+    DW_TAG_formal_parameter
+      DW_AT_name	    ("argv")
+      ...
+
+    DW_TAG_variable
+      DW_AT_name	    ("name")
+      DW_AT_decl_file	("/home/gregofi1/tmp/main.c")
+      DW_AT_decl_line	(5)
+      DW_AT_decl_column	(0x11)
+      DW_AT_type	    (0x0000008f "const char *")
+      DW_AT_location	(DW_OP_fbreg -24)
+    \end{lstlisting}
+    \caption{A part of DWARFs DIEs for program in figure \ref{fig:c-program-and-its-assembly}}
+    \label{fig:dwarf-die}
+\end{figure}
+
 \subsubsection{Locations of variables}
-\todo{todo.}
+Locations are probably the most complicated thing in the DWARF standard. Like
+with locations, a virtual machine is needed to decode this information.
+Variables are generally stored in one place. This can be a memory, register or
+a stack. Sometimes however the location of object can change throughout its
+lifetime, it may not be present at all since it was optimized away, it can be
+split into several locations, or it might be an reference to some other object.
+The fact that object changes location throughout its lifetime seldom happens
+\cite{dwarf-intro}, but DWARF is nevertheless prepared for it \cite{dwarf}.
+
+Contrary to the virtual machine in line encoding, which was register based,
+this one is stack based. This means that most operations take their operands
+from the stack and pushes the result back onto the stack. More about stack
+based virtual machines can be discovered in \cite{crafting-interpreters}.DWARF
+calls those instructions \textit{expressions} \cite{dwarf}. The last value on
+the top of the stack after the VM runs is considered to be the value of the
+variable \cite{dwarf}. For example in the figure
+\ref{fig:c-program-and-its-assembly} there is the \texttt{DW\_OP\_fbreg -24},
+this pushes value at offset $-24$ by the register specified by descriptor in
+\texttt{DW\_AT\_frame\_base}, which often is a base pointer to the stack. And
+since there are no more expressions the computed value on the top of the stack
+is the resulting value of the variable that debugger will get.
+
+There are many types of expressions, like arithmetic operations, stack
+manipulation, control flow operations, and most importantly specifications of
+the location. We provided already the example with base pointer to the stack,
+lets look at some more examples, mostly taken from \cite{dwarf}:
+\begin{itemize}
+    \item \texttt{DW\_OP\_reg3} - The value is in register $3$.
+    \item \texttt{DW\_OP\_addr 0xABCD} - The value of a static variable is at address \texttt{0xABCD}.
+    \item \texttt{DW\_OP\_bregx 54 3; DW\_OP\_deref} - Computes an offset $54$ from register $3$. This should contain an address that is then dereferenced.
+    \item \texttt{DW\_OP\_reg3; DW\_OP\_dup; DW\_OP\_add} - Fetches value from register $3$ and pushes it onto the stack, duplicates that value and pushes it on the stack, and pops two values from the stack, adds them together, and pushes them back onto the stack\footnote{Artificial example just to show the power of the language.}.
+\end{itemize}
+With this computational power we can save any information we need. There are
+many more instructions, all of these can be found in \cite{dwarf}. The
+interpreter itself can be found in
+\texttt{source/Expression/DWARFExpression.cpp} in the LLDB source code.
+
+\subsubsection{Other informations}
+Section 3 and 4 of the DWARF standard.
 

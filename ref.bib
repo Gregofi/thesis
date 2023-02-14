@@ -1,8 +1,23 @@
 @misc{dwarf,
-    title        = {The DWARF Debugging Standard},
+    title        = {The DWARF Debugging Standard Version 2},
     url          = {https://dwarfstd.org/},
     howpublished = {online},
     citedate     = {2022/09/24}
+}
+
+% CHANGE THE LINK FFS
+@misc{dwarf-5,
+    title        = {The DWARF Debugging Standard Version 5},
+    url          = {https://dwarfstd.org/},
+    howpublished = {online},
+    citedate     = {2023/02/14}
+}
+
+@misc{dwarf-intro,
+    title        = {Introduction to the DWARF Debugging Format},
+    url          = {https://dwarfstd.org/doc/Debugging using DWARF-2012.pdf},
+    howpublished = {online},
+    citedate     = {2023/02/14}
 }
 
 @misc{ptrace,
@@ -23,28 +38,28 @@
     title        = {Linux Programmer's Manual - execve(7)},
     url          = {https://man7.org/linux/man-pages/man2/execve.2.html},
     howpublished = {online},
-    citedate     = {2022/02/04}
+    citedate     = {2023/02/04}
 }
 
 @misc{linux-debugger-blog,
     title        = {Writing a Linux Debugger},
     url          = {https://blog.tartanllama.xyz/writing-a-linux-debugger-setup/},
     howpublished = {online},
-    citedate     = {2022/02/07}
+    citedate     = {2023/02/07}
 }
 
 @misc{linuxkernel-trapflag,
     title        = {Linux Kernel source code - Trap flag usage},
     url          = {https://elixir.bootlin.com/linux/v6.1.8/source/arch/x86/kernel/step.c\#L133},
     howpublished = {online},
-    citedate     = {2022/02/05}
+    citedate     = {2023/02/05}
 }
 
 @misc{lldb,
     title        = {LLDB Homepage},
     url          = {https://lldb.llvm.org},
     howpublished = {online},
-    citedate     = {2022/02/05}
+    citedate     = {2023/02/05}
 }
 
 @article{software-debugging-testing-verification,
@@ -295,7 +310,27 @@ number = {1},
 issn = {0734-2071},
 url = {https://doi.org/10.1145/2699682},
 doi = {10.1145/2699682},
-abstract = {RISC versus CISC wars raged in the 1980s when chip area and processor design complexity were the primary constraints and desktops and servers exclusively dominated the computing landscape. Today, energy and power are the primary design constraints and the computing landscape is significantly different: Growth in tablets and smartphones running ARM (a RISC ISA) is surpassing that of desktops and laptops running x86 (a CISC ISA). Furthermore, the traditionally low-power ARM ISA is entering the high-performance server market, while the traditionally high-performance x86 ISA is entering the mobile low-power device market. Thus, the question of whether ISA plays an intrinsic role in performance or energy efficiency is becoming important again, and we seek to answer this question through a detailed measurement-based study on real hardware running real applications. We analyze measurements on seven platforms spanning three ISAs (MIPS, ARM, and x86) over workloads spanning mobile, desktop, and server computing. Our methodical investigation demonstrates the role of ISA in modern microprocessors’ performance and energy efficiency. We find that ARM, MIPS, and x86 processors are simply engineering design points optimized for different levels of performance, and there is nothing fundamentally more energy efficient in one ISA class or the other. The ISA being RISC or CISC seems irrelevant.},
+abstract = {RISC versus CISC wars raged in the 1980s when chip area and
+    processor design complexity were the primary constraints and desktops and
+        servers exclusively dominated the computing landscape. Today, energy
+        and power are the primary design constraints and the computing
+        landscape is significantly different: Growth in tablets and smartphones
+        running ARM (a RISC ISA) is surpassing that of desktops and laptops
+        running x86 (a CISC ISA). Furthermore, the traditionally low-power ARM
+        ISA is entering the high-performance server market, while the
+        traditionally high-performance x86 ISA is entering the mobile low-power
+        device market. Thus, the question of whether ISA plays an intrinsic
+        role in performance or energy efficiency is becoming important again,
+    and we seek to answer this question through a detailed measurement-based
+        study on real hardware running real applications. We analyze
+        measurements on seven platforms spanning three ISAs (MIPS, ARM, and
+                x86) over workloads spanning mobile, desktop, and server
+        computing. Our methodical investigation demonstrates the role of ISA in
+        modern microprocessors’ performance and energy efficiency. We find that
+        ARM, MIPS, and x86 processors are simply engineering design points
+        optimized for different levels of performance, and there is nothing
+        fundamentally more energy efficient in one ISA class or the other. The
+        ISA being RISC or CISC seems irrelevant.},
 journal = {ACM Trans. Comput. Syst.},
 month = {mar},
 articleno = {3},
@@ -315,4 +350,11 @@ keywords = {energy efficiency, Power, technology scaling}
   author={Lu, Hongjiu},
   year={1995},
   publisher={May}
+}
+
+@book{crafting-interpreters,
+  title={Crafting interpreters},
+  author={Nystrom, Robert},
+  year={2021},
+  publisher={Genever Benning}
 }
