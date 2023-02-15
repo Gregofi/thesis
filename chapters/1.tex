@@ -1167,15 +1167,98 @@ the location. We provided already the example with base pointer to the stack,
 lets look at some more examples, mostly taken from \cite{dwarf}:
 \begin{itemize}
     \item \texttt{DW\_OP\_reg3} - The value is in register $3$.
-    \item \texttt{DW\_OP\_addr 0xABCD} - The value of a static variable is at address \texttt{0xABCD}.
-    \item \texttt{DW\_OP\_bregx 54 3; DW\_OP\_deref} - Computes an offset $54$ from register $3$. This should contain an address that is then dereferenced.
-    \item \texttt{DW\_OP\_reg3; DW\_OP\_dup; DW\_OP\_add} - Fetches value from register $3$ and pushes it onto the stack, duplicates that value and pushes it on the stack, and pops two values from the stack, adds them together, and pushes them back onto the stack\footnote{Artificial example just to show the power of the language.}.
+    \item \texttt{DW\_OP\_addr 0xABCD} - The value of a static variable is at
+        address \texttt{0xABCD}.
+    \item \texttt{DW\_OP\_bregx 54 3; DW\_OP\_deref} - Computes an offset $54$
+        from register $3$. This should contain an address that is then
+        dereferenced.
+    \item \texttt{DW\_OP\_reg3; DW\_OP\_dup; DW\_OP\_add} - Fetches value from
+        register $3$ and pushes it onto the stack, duplicates that value and
+        pushes it on the stack, and pops two values from the stack, adds them
+        together, and pushes them back onto the stack\footnote{Artificial
+        example just to show the power of the language.}.
 \end{itemize}
 With this computational power we can save any information we need. There are
 many more instructions, all of these can be found in \cite{dwarf}. The
 interpreter itself can be found in
 \texttt{source/Expression/DWARFExpression.cpp} in the LLDB source code.
 
+\subsubsection{Call frames}
+Debuggers often need to know through which function call the program went
+\cite{dwarf}. Current function can be found through inspection of a stack frame
+(sometimes called activation record), stack frames are explained in
+\cite{dragon-book}. The beginning of stack index is often stored in base
+pointer. This is a fact we used in implementation of step out in \todo{ref}. We
+could get the information about the previous function, but without some more
+information we are not able to find the stack frame of the previous functions,
+since the base pointer contains stack frame of current function. However, base
+pointer needs to be preserved somewhere and restored at the end of function
+(called prologue and epilogue). DWARF encodes information about registers
+throughout all lines of the code, so that we may reconstruct the necessary
+information.
+
+This table would again be very big, so DWARF once again resorts to virtual machine.
+
+
 \subsubsection{Other informations}
-Section 3 and 4 of the DWARF standard.
+The DWARF standard has information about compilation units, since object file
+may be derived from multiple compilation units \cite{dwarf}. It also has 
+information about subroutines and inlined subroutines, lexical blocks, try and catch
+blocks, and many other constructs. These are not very interesting, we
+have seen a small example on figure \ref{fig:dwarf-die}.
+
+It also contains many type entries.
+Those are split into different categories, we present some of the most common:
+\begin{itemize}
+    \item Base types - Provided by the language, like \texttt{int}, \texttt{char}.
+    \item Modifier types - Modifies some existing type, like type qualifiers
+        from C (\texttt{const} and \texttt{volatile) or pointers.
+    \item Array types - A sequential storage space containing objects of the
+        same type. Interesting attribute that multidimensional array has is
+        ordering - either column or row wise. This is not relevant to C, since
+        it has no notion of multidimensional array.
+    \item Structure, Union and Class types - User defined types that packs
+        together number of different types. Information is provided about the
+        members, especially bit offset at which they reside in the structure
+        and in which order were they declared. It addition the size of the type
+        is specified - if it can be determined at compile time (In C, it cannot
+        be determined for forward declarations). For C++, an information about
+        inheritance, like deriving, accessibility and if the inheritance is
+        virtual, is provided.
+    \item Enumeration type.
+    \item Subroutine type - Used for types of functions in C. However, for the
+        functions themselves, their type is specified as return type. Types of
+        their parameters is specified in the parameters themselves, since they
+        are DIEs and are children of the function. We showed this in figure
+        \ref{fig:dwarf-die}. This subroutine type is for example used if one
+        would create a pointer to a function. Then the type of that is pointer
+        to the subroutine type. Abbreviated example can be seen on
+        \ref{fig:dwarf-ptr-to-fun}.
+\end{itemize}
+
+\begin{figure}
+    \begin{lstlisting}
+0x138:   DW_TAG_subroutine_type
+            DW_AT_type	(0x00000131 "int")
+            DW_AT_sibling	(0x14c)
+
+0x141:     DW_TAG_formal_parameter
+              DW_AT_type	(0x131 "int")
+
+0x146:     DW_TAG_formal_parameter
+              DW_AT_type	(0x14c "double")
+
+0x153:   DW_TAG_pointer_type
+            DW_AT_byte_size	(8)
+            DW_AT_type	(0x138 "int (int, double)")
+
+0x124:   DW_TAG_variable
+            DW_AT_name	("xx")
+            DW_AT_type	(0x153 "int (*)(int, double)")
+            ...
+    \end{lstlisting}
+    \caption{Example of subroutine type and pointer to function in DWARF, abbreviated.}
+    \label{fig:dwarf-ptr-to-fun}
+\end{figure}
+
 
