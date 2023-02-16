@@ -1193,12 +1193,61 @@ could get the information about the previous function, but without some more
 information we are not able to find the stack frame of the previous functions,
 since the base pointer contains stack frame of current function. However, base
 pointer needs to be preserved somewhere and restored at the end of function
-(called prologue and epilogue). DWARF encodes information about registers
-throughout all lines of the code, so that we may reconstruct the necessary
-information.
+(called prologue and epilogue)\footnote{This presumes that the function
+manipulated with base pointers. If the function is very short it may have not
+even touched the base pointer. DWARF standard lists possible cases like this
+\cite{dwarf}.}. 
 
-This table would again be very big, so DWARF once again resorts to virtual machine.
+DWARF encodes information about registers throughout all lines of the code, so
+that we may reconstruct the necessary information. One row of the table
+contains an address of a location in the code and unwinding rules. These rules
+are specified for each register. Also, an location to the current frame is
+specified. Unwinding essentially means to go back to previous stack frame. The
+debugger unwinds several times to find the stack frame it is interested in.
+This unwinding is done virtually, ie. it doesn't affect the debugged process.
 
+
+This table would be very big, so DWARF once again resorts to virtual machine.
+Many of the rows in the table would be the same, so it makes sense \cite{dwarf}.
+For example, the program in figure \ref{fig:prologue-and-epilogue}, after executing the instruction
+at address \texttt{1187}, the base pointer points to the beginning of the stack frame,
+and the old base pointer is just before the new stack frame.
+
+\begin{figure}
+    \begin{lstlisting}
+0000000000001183 <foo>:
+1183:	55                   	push   %rbp          ; Prologue
+1184:	48 89 e5             	mov    %rsp,%rbp
+1187:	48 83 ec 18          	sub    \$0x18,%rsp
+                                <body ...>
+11b1:	c9                   	leave                ; Epilogue
+11b2:	c3                   	ret
+    \end{lstlisting}
+    \caption{A prologue and epilogue of a function in assembly.}
+    \label{fig:prologue-and-epilogue}
+\end{figure}
+
+\begin{figure}
+    \begin{lstlisting}
+DW_CFA_advance_loc: 1
+DW_CFA_def_cfa_offset: +16
+DW_CFA_offset: RBP -16
+DW_CFA_advance_loc: 3
+DW_CFA_def_cfa_register: RBP
+DW_CFA_advance_loc: 43
+DW_CFA_def_cfa: RSP +8
+DW_CFA_nop:
+DW_CFA_nop:
+DW_CFA_nop:
+
+0x1183: CFA=RSP+8: RIP=[CFA-8]
+0x1184: CFA=RSP+16: RBP=[CFA-16], RIP=[CFA-8]
+0x1187: CFA=RBP+16: RBP=[CFA-16], RIP=[CFA-8]
+0x11b2: CFA=RSP+8: RBP=[CFA-16], RIP=[CFA-8]
+    \begin{lstlisting}
+    \caption{A DWARF stack frame information about program in \ref{fig:prologue-and-epilogue}.}
+    \label{fig:dwarf-stack-frames}
+\end{figure}
 
 \subsubsection{Other informations}
 The DWARF standard has information about compilation units, since object file
