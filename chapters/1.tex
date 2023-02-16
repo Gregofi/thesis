@@ -934,6 +934,11 @@ Also, there are five versions of the standard, we will be mainly talking about
 the version 2, since the others mainly add features to accomodate newer
 language features. We will not get that far even in version 2. The complete
 changelog can be found in the text describing DWARF version 5 \cite{dwarf-5}.
+We provide many examples of the information that DWARF encodes. For reading
+the DWARF information from object files, we used the \texttt{llvm-dwarfdump},
+\texttt{objdump}, and \texttt{readelf} tools. The information DWARF encodes
+is stored are stored in various debug headers if used in conjuction
+with the ELF standard.
 
 \subsubsection{Line Number Information}
 Line number information needs to convey which line of code corresponds to an
@@ -1184,40 +1189,63 @@ interpreter itself can be found in
 \texttt{source/Expression/DWARFExpression.cpp} in the LLDB source code.
 
 \subsubsection{Call frames}
-Debuggers often need to know through which function call the program went
-\cite{dwarf}. Current function can be found through inspection of a stack frame
-(sometimes called activation record), stack frames are explained in
-\cite{dragon-book}. The beginning of stack index is often stored in base
-pointer. This is a fact we used in implementation of step out in \todo{ref}. We
-could get the information about the previous function, but without some more
-information we are not able to find the stack frame of the previous functions,
-since the base pointer contains stack frame of current function. However, base
-pointer needs to be preserved somewhere and restored at the end of function
-(called prologue and epilogue)\footnote{This presumes that the function
-manipulated with base pointers. If the function is very short it may have not
-even touched the base pointer. DWARF standard lists possible cases like this
-\cite{dwarf}.}. 
+Debuggers often need to know through which function call the program went to
+arrive at the point the program is in now. For each function call there is a
+stack frame saved on the stack. This is a part of the stack that contains
+information relevant to the invocation. An example of two stack frames can be
+seen on figure \ref{fig:stack-frame}. In that example there is the stack frame
+of previous function and new stack frame, which mainly consist of the
+following:
+\begin{itemize}
+    \item Return address - This contains the location from which the program
+        was called so that after the function finishes it may properly return
+        to that location. This fact was also used in our step out
+        implementation in \todo{ref}.
+    \item Base pointer backup - Backup of the value in the base pointer which
+        was set by previous function. This register needs to be preserved
+        between calls, that's why backup is made. Other registers might need to
+        be saved for the exact same reason.
+    \item Allocated space for variables - A space for local variables.
+\end{itemize}
+Stack frames are described in more detail in \cite{dragon-book}, where they are
+called activation records. We also provide an example of how a function
+prologue and epilogue looks, so one may get a better feel about how such stack
+frame comes to fruition \cite{fig:prologue-and-epilogue}.
 
-DWARF encodes information about registers throughout all lines of the code, so
-that we may reconstruct the necessary information. One row of the table
-contains an address of a location in the code and unwinding rules. These rules
-are specified for each register. Also, an location to the current frame is
-specified. Unwinding essentially means to go back to previous stack frame. The
-debugger unwinds several times to find the stack frame it is interested in.
-This unwinding is done virtually, ie. it doesn't affect the debugged process.
+Debuggers need to do a so called stack unwinding. Unwinding essentially means
+to go to a state where previous stack frame is the most recent. This needs to
+be done several times to get the whole chain of function calls which led to
+current state of the program. We could relatively simple get to the previous
+stack frame. But to get to the previous one is not easy. We need to know
+exactly where was the base pointer saved so that we may simulate the unwinds.
 
-This table would be very big, so DWARF once again resorts to virtual machine.
-Many of the rows in the table would be the same, so it makes sense
-\cite{dwarf}. For example, the program in figure
-\ref{fig:prologue-and-epilogue}, after executing the instruction at address
-\texttt{0x1187}, the base pointer points to the beginning of the stack frame,
-and the old base pointer is just before the new stack frame. Figure
-\ref{fig:dwarf-stack-frames} depicts how dwarf would encode such an information
-in an abbreviated form and the information that can be decoded from it.
+DWARF proposes a table, in each row there is an address of a location in the
+program, a location of a stack frame and values of other registers for that
+location. However, such table would be very large, so DWARF again uses a
+virtual machine for the construction of the table, since many columns in one
+row would be the same for the next row \cite{dwarf}. 
 
-The \texttt{advance\_loc} creates a new row with the location value being
-updated by the operand, all other rows stay the same.
+The figure \ref{fig:dwarf-stack-frames} contains an example of the encoding of
+this information and also the decoded values for the program in figure
+\ref{fig:prologue-and-epilogue}. The \texttt{advance\_location} adds new row to
+the matrix, with the only thing changing from the previous row is the location
+value. The \texttt{def\_cfa\_offset} specifies that the cfa (current stack
+frame) is at the provided offset. The offset is to some register which is
+preserved from the previous row. We can see that in the example on line $2$ the
+offset changes from $8$ to $16$, but the register stays the same. This is
+apparent in the decoded information where on the address \texttt{0x1184} the
+\texttt{CFA} changed to \texttt{RSP+16}. On the contrary, the
+\texttt{def\_cfa\_register} changes the register but keeps the offset. This
+happends when the instruction \texttt{mov \%rsp, \%rbp} is done, the stack
+frame is now offseted by 16 from base pointer. This holds until epilogue, where
+the old stack pointer is restored. In the example, many more registers were
+missing. This is because their value didn't change accross the function, so
+there was no need to save information about them.
 
+The DWARF offers more instructions for manipulation, for a complete overview
+and another example consult \cite{dwarf}. With this information, DWARF is able
+to describe a way to simulate a stack unwinding without touching the state of
+the debugee.
 
 \begin{figure}
     \begin{lstlisting}
@@ -1263,8 +1291,8 @@ DW_CFA_nop:
 \begin{figure}
     \begin{tikzpicture}[
 node distance = 0pt,
-square/.style = {draw=blue!60, fill=blue!5, very thick, 
-                 minimum height=1cm, minimum width=3em,
+square/.style = {draw=black!60, fill=white!5, very thick, 
+                 minimum height=1.6cm,
                  outer sep=0pt,
                  trapezium stretches=true}, % To make all nodes of the same height
 ]
@@ -1272,10 +1300,15 @@ square/.style = {draw=blue!60, fill=blue!5, very thick,
         \node (pro2) [square,
                       right=of pro1] {Return address};
         \node (pro3) [square,
-                      right=of pro2] {Base pointer backup}; 
-        \node (pro4) [square, right=of pro3] {Potential backup of other registers}; 
-        \node (pro5) [square, right=of pro4] {Allocated space for variables}; 
+                      right=of pro2,
+                      text width=2cm] {Base pointer backup}; 
+        \node (pro4) [square, right=of pro3,
+                      text width=3cm] {Potential backup of other registers}; 
+        \node (pro5) [square, right=of pro4,
+                       text width=2cm] {Allocated space for variables}; 
     \end{tikzpicture}
+    \caption{Basic stack layout after function prologue, disproportional.}
+    \label{fig:stack-layout}
 \end{figure}
 
 \subsubsection{Other informations}
@@ -1283,12 +1316,16 @@ The DWARF standard has information about compilation units, since object file
 may be derived from multiple compilation units \cite{dwarf}. It also has
 information about subroutines and inlined subroutines, lexical blocks, try and
 catch blocks, and many other constructs. These are not special in any way, we
-have seen a small example on figure \ref{fig:dwarf-die}.
+have seen a small example on figure \ref{fig:dwarf-die}. They mainly store the
+beginning and end and some other information. They also contain various
+informations about macros, so that the debugger can work with the original code
+before the macro expansion.
 
 It also contains many type entries.
 Those are split into different categories, we present some of the most common:
 \begin{itemize}
-    \item Base types - Provided by the language, like \texttt{int}, \texttt{char}.
+    \item Base types - Provided by the language, like \texttt{int},
+        \texttt{char}.
     \item Modifier types - Modifies some existing type, like type qualifiers
         from C (\texttt{const}, \texttt{volatile} and \texttt{mutable}), or
         pointers.
@@ -1341,4 +1378,58 @@ Those are split into different categories, we present some of the most common:
     \label{fig:dwarf-ptr-to-fun}
 \end{figure}
 
+\section{Existing debuggers}
+In this section, we will focus on existing debugger implementations and what
+each of them brings to the table. We will not be discussing every feature of
+said debuggers, since even some of the manuals are longer that this
+thesis\footnote{Most notably GDB manual \cite{gdb-manual}, which has whooping
+930 pages!}, but point out ones that were interesting to this thesis.
 
+\subsection{LLDB}
+LLDB \cite{lldb} is a part of the LLVM tools collection \cite{llvm}. It is a
+debugger for C, Objective-C and C++ (same languages as the whole LLVM
+ecosystem) on the desktop and iOS devices. It works closely with the Clang
+compiler, which is also part of LLVM, and the LLVM disassembler. Thanks to
+this, it stays very up to date with current C++ standard. The source code is
+kept modular with plug-in architecture. LLDB is both source and instruction
+level debugger.
+
+LLDB offers an API through which one can interact with the whole debugger. For
+example, the command line application through which one can use LLDB uses this
+API. LLDB is written in modern C++, but a bridging interface to the API is
+provided for Python. Thanks to this, one can use LLDB not only for debugging,
+but also for example disassembling \cite{lldb}.
+
+LLDB provides a command line interface (CLI) through which one can use the debugger
+directly. The CLI provides a variety of commands that one can use, some examples include
+\begin{itemize}
+    \item \texttt{run} - Starts the debugee.
+    \item \texttt{process attach --pid 123} - Attaches to the process with PID
+        123.
+    \item \texttt{step} - Source level single step.
+    \item \texttt{si} - Instruction level single step.
+    \item \texttt{thread until 12} - Run until line $12$ is hit or the current
+        function returns.
+    \item \texttt{breakpoint set --name main} - Set breakpoint on all functions
+        named \texttt{main}.
+    \item \texttt{breakpoint enable 1} - Enable breakpoint $1$.
+    \item \texttt{watchpoint set variable x} - Watch a variable \texttt{x} for
+        any writes.
+\end{itemize}
+
+The LLDB debugger has an expression parser. While debugging, one can write an
+expression and the debugger interprets that expression and prints the result
+back. Example of usage can be to look at some value in an \texttt{std::map}
+structure, which can be achieved by using the \texttt{frame variable
+map\_var["Value"]} command. Since the debugger uses Clang, it can parse
+any C++ expression.
+
+\subsection{GDB}
+The GNU Project debugger (GDB) is an another source and instruction level
+debugger. It supports languages like C, C++, D, Fortran, Go, Objective-C,
+Pascal, Rust and some others. In this regard, it beats the LLDB debugger. GDB
+is written in C++. Feature wise, it is similar to LLDB. Because of that, we
+will not talk about GDB as much. One may consult the GDB manual
+\cite{gdb-manual} to find out all features of this debugger.
+
+\subsection{IDA}
