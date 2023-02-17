@@ -1376,7 +1376,7 @@ Those are split into different categories, we present some of the most common:
     \label{fig:dwarf-ptr-to-fun}
 \end{figure}
 
-\section{Existing debuggers}
+\section{Existing debuggers and disassemblers}
 In this section, we will focus on existing debugger implementations and what
 each of them brings to the table. We will not be discussing every feature of
 said debuggers, since even some of the manuals are longer that this
@@ -1430,4 +1430,24 @@ is written in C++. Feature wise, it is similar to LLDB. Because of that, we
 will not talk about GDB as much. One may consult the GDB manual
 \cite{gdb-manual} to find out all features of this debugger.
 
-\subsection{IDA}
+\subsection{IDA Free}
+First and foremost, IDA has several versions, we will be mainly talking about
+the free version. It is a tool that is mainly used for reverse engineering. It
+works at the assembly level. A part of it is an assembly level debugger. It
+also offers various interactive functionality. For example, one can rename a
+location like \texttt{[RBP + 4]} to \texttt{counter} to make the assembly more
+readable. It also somewhat works with references, can create a control flow
+graph from the assembly and much more. All this makes it an invaluable asset in
+reverse engineer toolkit.
+
+\subsection{x64Dbg}
+Windows only, az budu doma u widli.
+
+\subsection{Microsoft Visual Studio Debugger}
+Windows only, az budu doma u widli.
+
+\subsection{WinDBG}
+Windows only, az budu doma u widli.
+
+\subsection{Compiler explorer}
+\todo{Check if visual studio can do the same, if ye then throw this guy away.}
