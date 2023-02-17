@@ -8,25 +8,25 @@
   \end{flushright}
 \end{quote}
 
-We mentioned in the first chapter that to debug programs written in a high
-level programming languages, we need the compiler to emit debugging
-information. However, we can still debug programs at the assembly level. This
-can still be useful, for example for reverse engineering. And, as was already
-hinted, source level debugging is built upon assembly debugging. In this
-chapter, we will describe at which level and what kind of debugging support is
-provided. First, we will mention which kind of mechanism the CPU itself offers.
-Going one step higher, we will talk about the API that various operating
-systems provide. Finally, we'll discuss how are compilers and debuggers able to
-allow us to debug source code although the programs are still machine code
-programs. 
+To debug programs written in a high level programming languages, we need the
+compiler to emit debugging information. Without this information, we can still
+debug programs at the assembly level. This can still be useful, for example for
+reverse engineering. And, as was already hinted, source level debugging is
+built upon assembly debugging. In this chapter, we describe at which level and
+what kind of debugging support is provided. First, we will mention which kind
+of mechanism the CPU itself offers. Going one step higher, we will talk about
+the API that various operating systems provide. Finally, we'll discuss how are
+compilers and debuggers able to allow us to debug source code although the
+programs are still machine code programs. 
 
-\section{Support on CPU level} In the first chapter it was said that the CPU
-can only execute machine code which is made of instructions and that it has
-certain registers. Which instructions and registers the CPU has can differ from
-CPU to CPU. This is specified by \textit{Instruction Set Architecture} (ISA)
-\cite{aps-isa}. It is an abstract interface between the hardware and the lowest
-level software (machine code). It contains all information needed to write a
-program in machine code. In general, ISA specifies the following: 
+\section{CPU level support}
+The CPU can only execute machine code which is made of instructions. It also
+has several registers to help with computations. Which instructions and
+registers the CPU has can differ from CPU to CPU. This is specified by
+\textit{Instruction Set Architecture} (ISA) \cite{aps-isa}. It is an abstract
+interface between the hardware and the lowest level software (machine code). It
+contains all information needed to write a program in machine code. In general,
+ISA specifies the following: 
 \begin{itemize}
     \item Set of machine code instructions - Specifies instructions the ISA has
         and what operands each instruction has.
@@ -35,14 +35,14 @@ program in machine code. In general, ISA specifies the following:
         accumulator, but most used ISAs use registers, so we'll ignore those
         architectures. }.   
     \item Addressing modes - Possible methods to refer to memory or register. 
-\end{itemize} There are other specifications,
-however, they are not relevant to this thesis. For each instruction and operand
-it is specified how they should be encoded into binary. CPU then
-\textit{implements} some ISA. If two different CPUs implement the same ISA then
-they should be able to run the same machine code program. For example, most PC
-use the \textit{x86} architecture \cite{aps-isa}, although the ARM architecture
-is also seeing use in personal computers, for example, the Apple Sillicon is of
-ARM architecture.
+\end{itemize}
+This list is not exhaustive, for our purposes it is however enough. For each
+instruction and operand it is specified how they should be encoded into binary.
+CPU then \textit{implements} some ISA. If two different CPUs implement the same
+ISA then they should be able to run the same machine code program. For example,
+most PC use the \textit{x86} architecture \cite{aps-isa}, although the ARM
+architecture is also seeing use in personal computers, for example, the Apple
+Sillicon is of ARM architecture.
 
 The x86 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
@@ -106,7 +106,7 @@ max:
 
 \subsection{Registers}\label{subsection:registers}
 
-The x86 architecture has a set of general purpose registers.
+The x86\_64 architecture has a set of general purpose registers.
 Some of these are
 \begin{itemize}
     \item RAX - Accumulator for operands and results data,
@@ -114,30 +114,27 @@ Some of these are
     \item RSP - Stack pointer,
     \item RBP - Pointer to data on the stack.
 \end{itemize}
-The names and number of general purpose registers change based on bit mode.
-64-bit (also named x86-64) mode has 16 of them, while 32-bit has 8. The names
-are more of a convention. It is not necessary to use RCX only for loop
-operations. Although the \texttt{RSP} and \texttt{RBP} are called general
-purpose they are often only used for pointing at the top of the stack, resp. to
-the base of the stack. Stack is a special part of program memory, it mostly has
-LIFO semantics\footnote{For example the \texttt{mov eax, DWORD PTR [rbp - 4]}
-does not respect LIFO semantics, because it reads directly from the stack and
-not from the top.} It can be used to store the intermediate result, arguments
-to functions, return address, etc. This register is weird in a sense that it
-has this very special purpose but is still considered part of the general
-purpose registers~\cite{intel-manual}. One might use it for storing
-calculations, but it would make the rest of the instructions that work with
-stack behave unexpectedly.
+Although there is a special role for each register, it is more of a convention.
+It is not necessary to use RCX only for loop operations. Although the
+\texttt{RSP} and \texttt{RBP} are called general purpose they are often only
+used for pointing at the top of the stack, resp. to the base of the stack.
+Stack is a special part of program memory with LIFO semantics. It can be used
+to store the intermediate result, arguments to functions, return address, etc.
+The \texttt{RBP} register is weird in a sense that it has this very special
+purpose but is still considered part of the general purpose
+registers~\cite{intel-manual}. One might use it for storing calculations, but
+it would make the rest of the instructions that work with stack behave
+unexpectedly.
 
-The instruction pointer register (RIP on x86-64, EIP on x86) contains the
-address of the current instruction to be executed. As we mentioned in
-Introduction \todo{ref}, programs are executed sequentially from top to bottom,
-with certain instructions having the ability to change the control flow. When
-an instruction gets executed, the size of the instruction will be added to the
-value in RIP register. This will advance the instruction pointer to the next
-instruction. Or, if the instruction changes the control flow, the value in the
-instruction pointer will be changed to the destination of the instruction. The
-register can also be changed directly.
+The instruction pointer register (RIP on x86-64) contains the address of the
+current instruction to be executed. As we mentioned in Introduction \todo{ref},
+programs are executed sequentially from top to bottom, with certain
+instructions having the ability to change the control flow. When an instruction
+gets executed, the size of the instruction will be added to the value in RIP
+register. This will advance the instruction pointer to the next instruction.
+Or, if the instruction changes the control flow, the value in the instruction
+pointer will be changed to the destination of the instruction. The register can
+also be changed directly.
 
 Another interesting register is the \texttt{EFLAGS} register. The register
 contains a group of flags, which can alter various behavior of the CPU, or the
@@ -156,24 +153,27 @@ error in a program (division by zero). There are two main categories
         interrupt may happen when another instruction is being processed (not
         on the CPU clock edge).} event that is typically triggered by an
         Input/Output (IO) device.
-    \item An \textbf{exception}\footnote{Unfortunately, this term will become
-        quite overloaded in this thesis.} is a synchronous event that is
+    \item An \textbf{exception} is a synchronous event that is
         generated when the processor detects one or more predefined conditions
         when executing an instruction. These are further divided into three
         classes: faults, traps, and aborts.
 \end{itemize}
 
-When an interrupt or exception happens, the processor halts the execution of a
-current program and switches to a specific interrupt handler. An interrupt
-handler is just another sequence of instructions that gets executed when the
-interrupt happens. It is supposed to handle the interrupt. An example of an
-exception is the \texttt{INT3} instruction. When this instruction is executed
-an interrupt is generated. This instruction is specifically meant to be used as
-a breakpoint. We can supply code that will be responsible for handling the
-breakpoint as the interrupt handler. However, on modern PCs, an Operating
-System (OS) is governing the PC. Alas, we cannot touch the interrupt handler
-directly. Instead, an OS is going to have to provide another layer of support
-for debugging.
+For the rest of this thesis, we will use the word interrupt interchargebly for
+both interrupt and exception although we will be mainly talking about
+exceptions. This is to disambigous the exceptions which are at a programming
+language level (like C++) and Microsoft structured exceptions about which we
+will talk later. When an interrupt or exception happens, the processor halts
+the execution of a current program and switches to a specific interrupt
+handler. An interrupt handler is just another sequence of instructions that
+gets executed when the interrupt happens. It is supposed to handle the
+interrupt. An example of an exception is the \texttt{INT3} instruction. When
+this instruction is executed an interrupt is generated. This instruction is
+specifically meant to be used as a breakpoint. We can supply code that will be
+responsible for handling the breakpoint as the interrupt handler. However, on
+modern PCs, an Operating System (OS) is governing the PC. Alas, we cannot touch
+the interrupt handler directly. Instead, an OS is going to have to provide
+another layer of support for debugging.
 
 Recall the EFLAGS register mentioned in section \ref{subsection:registers}.
 There is a special flag called the trap flag. When it is set, the CPU will
@@ -207,30 +207,29 @@ successfully executed. To maximize efficiency, all stages are occupied by an
 instruction. This means that when instruction $x$ leaves fetch stage, it goes
 to the decode stage and instruction $y$ is put into the fetch stage.
 
-However, what if we received a conditional jump instruction? How to knoe which
-instruction will be next? Will it be the one at the jump destination, or the
-next one because the condition will not hold? CPUs deal with it in various ways
-and try to predict the right branch. Sometimes however, the prediction fails
-and the whole pipeline needs to be flushed. Same thing must happen when
-interrupt happens. The execution changes to the interrupt handler. This makes
-sense, because the instructions to now be executed are from the handler, so the
-pipeline must be flushed. Also, if we hit the breakpoint, we want to make sure
-that instructions before it were all executed and that none was executed after,
-otherwise it would be very confusing for the user that tries to debug the
-program.
+However, when the next instruction is a conditional jump, there may be no way
+to be sure if the jump will be taken.  CPUs deal with it in various ways and
+try to predict the right branch. Sometimes however, the prediction fails and
+the whole pipeline needs to be flushed. Same thing must happen when interrupt
+occurs. The execution changes to the interrupt handler, the pipeline must
+therefore be flushed because it contains instructions from the previous
+location before the control flow was switched to the handler. Also, if we hit
+the breakpoint, we want to make sure that instructions before it were all
+executed and that none was executed after, otherwise it would be very confusing
+for the user that tries to debug the program.
 
 \section{Operating system support}
 Operating system is a layer between computer components (CPU, memory,
 input/output devices, \dots) and software. It is responsible for handling all
-those resources so programmers do not have to think about it \cite{modern-os,
+the resources so programmers do not have to think about it \cite{modern-os,
 os-concepts}. Managing resources is not only to make writing programs easier
-but to make sure that they are safe from each other. Modern operating system
-allows to run multiple programs at once (or at least offer the illusion that it
-can) and they make sure that one program cannot overwrite data or otherwise
-interfere with other programs. Normal programs run in so-called \textit{user
-space}, which has limited capabilities. The kernel on the other hand runs in
-\textit{kernel space}. It has full access to the hardware of the computer, can
-use all instructions, can permit or mask interrupts, and so on.
+but to make sure that the programs are safe from each other. Modern operating
+system allows to run multiple programs at once (or at least offer the illusion
+that it can) and they make sure that one program cannot overwrite data or
+otherwise interfere with other programs. Normal programs run in so-called
+\textit{user space}, which has limited capabilities. The kernel on the other
+hand runs in \textit{kernel space}. It has full access to the hardware of the
+computer, can use all instructions, can permit or mask interrupts, and so on.
 
 However, if programs were limited to user space all the time they would be very
 limited. Sometimes, they need to escape the confinement of the OS, for example,
@@ -249,15 +248,15 @@ Linux and MacOS systems are somewhat similar, but Windows is very different.
 \subsection{Linux}
 Linux offers a special system call which is very handy for debugging. It is
 called \texttt{ptrace} \cite{ptrace} - process trace. It has following
-signature: \texttt{ptrace(PTRACE\_<COMMAND>, pid, ...)}. It takes a
-\texttt{PTRACE\_COMMAND}, which specifies the behavior of the function (for
-example \texttt{PTRACE\_SINGLESTEP}), pid of some process (presumably the
-debugee) and some other parameters, depending on the \texttt{PTRACE\_COMMAND}
-that was chosen\footnote{Peak API design!}. It allows to observe and control
-the execution of another process, this process will be the debugee. In the
-context of \texttt{ptrace}, we will instead use the word tracee for the
-debugee, and tracer for the debugger, to be consistent with ptrace
-documentation.
+signature: \texttt{ptrace(request, pid, void* addr, void* data)}. The request
+is a \texttt{PTRACE\_COMMAND}, which specifies the behavior of the function
+(for example \texttt{PTRACE\_SINGLESTEP}), pid of some process (presumably the
+debugee) and two other parameters, whose meaning change depending on the
+\texttt{PTRACE\_COMMAND} that was chosen\footnote{Peak API design!}. It allows
+to observe and control the execution of another process, this process will be
+the debugee. In the context of \texttt{ptrace}, we will instead use the word
+tracee for the debugee, and tracer for the debugger, to be consistent with
+ptrace documentation.
 
 \texttt{ptrace} has many commands, here are some of the most important:
 \begin{itemize}
@@ -288,17 +287,16 @@ defined by the process. If no handler is defined then a default one is provided
 by the OS. However, handlers for \texttt{SIGKILL} and \texttt{SIGSTOP} cannot
 be changed \cite{signals}.
 
-The reason for rising a signal can be \todo{Tady toho asi bude vic}
+The reason for sending a signal to a process can be \todo{Tady toho asi bude vic}
 \begin{itemize}
     \item CPU Interrupt (Division by zero, Breakpoint hit),
     \item System call (\texttt{kill(pid, signal)}).
 \end{itemize}
 
-For example, the signal \texttt{SIGTERM} can be sent to a process to ask it
-nicely to exit. The process can handle this request, for example, to save some
-state before exiting. It can also however be completely ignored. For this, a
-signal \texttt{SIGKILL} can be used, which cannot be handled, ignored, or
-blocked.
+For instance, the signal \texttt{SIGTERM} can be sent to a process to "ask it"
+to exit. The process can handle this request, for example to save some state
+before exiting. It can also however be completely ignored. For this, a signal
+\texttt{SIGKILL} can be used, which cannot be handled, ignored, or blocked.
 
 To begin tracing a command \texttt{PTRACE\_ATTACH} may be used for an already
 existing process, or a \texttt{fork} followed with a child calling
