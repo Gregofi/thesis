@@ -1,0 +1,38 @@
+\chapter{The T86 Virtual machine}
+At the FIT CTU, in the NI-GEN course students have to write their own compiler.
+To ease the code generation part, the T86 architecture was created and a
+virtual machine was written as a way to execute programs in that architecture.
+The architecture was made as part of a masters thesis \cite{ivo2021tiny}.
+This chapter explores the T86 architecture, the virtual machine that was made
+for it and explains which parts of the virtual machine will have to be extended
+or added to support debugging.
+\subsection{T86 ISA}
+The name is an abbreviation for Tiny x86, but in some aspects the architecture
+is more similar to other architectures like ARM. It is an educational ISA, so
+some properties are configurable, like the number of available registers.
+
+The T86 uses a harvard architecture, this means that the data and instructions
+are separated from each other. The author doesn't specify the reason for this,
+put presumably it to ease the implementation of the virtual machine, since
+the memory and instructions can be represented as two separate array-like
+members of the virtual machine.
+
+It has the registers we saw on x86\_64, ie. \texttt{PC}, \texttt{SP},
+\texttt{BP} and the flags register. The intended roles for these registers are
+the same os on x86\_64. It also has other general purpose registers. The number
+of these is configurable.
+
+The addressing modes, or what kind of operands instructions can have, include
+immediate values, registers and memory accesses. These accesses are not only
+immediate or register offsets, but can be combined in various way, like
+\texttt{[R0 + R1 * 2]}, or \texttt{[R0 + 10 + R1 * 2]}. The addressing modes
+are however not arbitrary, \texttt{[R0 + R1 + R2]} is not correct addressing
+mode for T86. For full list refer to \cite{ivo2021tiny}.
+
+The instructions the ISA provides are very similar to what we have already seen
+when examining various real world examples. Interesting exceptions to that are
+the IO instructions - \texttt{PUTCHAR} and \texttt{GETCHAR}, which allow for
+very basic input and output. Also, an \texttt{DBG} and \texttt{BREAK} are
+defined. These are used for debugging, but in a very different way that we have
+seen in previous sections. We will touch upon them when discussing the virtual
+machine implementation, since they are very much tied to it.
