@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := compile
 
 clean:
-	rm out -rd
+	rm -rd out
 
 compile: main.tex chapters/0.tex chapters/1.tex
 	mkdir -p out/text
