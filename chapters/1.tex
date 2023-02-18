@@ -1327,9 +1327,10 @@ Those are split into different categories, we present some of the most common:
         from C (\texttt{const}, \texttt{volatile} and \texttt{mutable}), or
         pointers.
     \item Array types - A sequential storage space containing objects of the
-        same type. Interesting attribute that multidimensional array has is
-        ordering - either column or row wise. This is not relevant to C, since
-        it has no notion of multidimensional array.
+        same type. Multidimensional arrays are considered a special type.
+        Interesting attribute that multidimensional array has is ordering -
+        either column or row wise. This is not relevant to C, since it has no
+        notion of multidimensional array.
     \item Structure, Union and Class types - User defined types that packs
         together number of different types. Information is provided about the
         members, especially bit offset at which they reside in the structure
@@ -1384,8 +1385,8 @@ thesis\footnote{Most notably GDB manual \cite{gdb-manual}, which has whooping
 
 \subsection{LLDB}
 LLDB \cite{lldb} is a part of the LLVM tools collection \cite{llvm}. It is a
-debugger for C, Objective-C and C++ (same languages as the whole LLVM
-ecosystem) on the desktop and iOS devices. It works closely with the Clang
+debugger for C, Objective-C and C++ (LLVM tools supports mainly those three
+languages) on the desktop and iOS devices. It works closely with the Clang
 compiler, which is also part of LLVM, and the LLVM disassembler. Thanks to
 this, it stays very up to date with current C++ standard. The source code is
 kept modular with plug-in architecture. LLDB is both source and instruction
@@ -1395,7 +1396,7 @@ LLDB offers an API through which one can interact with the whole debugger. For
 example, the command line application through which one can use LLDB uses this
 API. LLDB is written in modern C++, but a bridging interface to the API is
 provided for Python. Thanks to this, one can use LLDB not only for debugging,
-but also for example disassembling \cite{lldb}.
+but for example as a library to disassemble machine code \cite{lldb}.
 
 LLDB provides a command line interface (CLI) through which one can use the debugger
 directly. The CLI provides a variety of commands that one can use, some examples include

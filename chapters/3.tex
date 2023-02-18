@@ -5,7 +5,7 @@ Also, we describe which part of the virtual machine were
 modified or added for the benefit of the debugger or in
 general for the greater good.
 
-\section{T86 ISA extensions}
+\section{T86 ISA extensions}\label{section:parser}
 In chapter \todo{ref} we showed how to build a program for the T86 VM. It was
 necessary to use the builder the T86 VM provides. There is currently no other
 way. We remedied this with a hand-made parser of the T86 assembly language. An
@@ -78,25 +78,41 @@ of the communication will be a text one, merely because of the ease of use
 as opposed to binary format. The commands that the virtual machine API
 will offer are
 \begin{itemize}
-    \item \texttt{READREG} $x$ - Return value in register $x$.
-    \item \texttt{WRITEREG} $x$ $y$ - Sets the value in register $x$ to $y$.
-    \item \texttt{READMEM} $x$ - Return value in memory at address $x$.
-    \item \texttt{WRITEMEM} $x$ $y$ - Writes a value $y$ into a memory at address $x$.
-    \item \texttt{GETINS} $x$ - Returns instruction at address $x$.
-    \item \texttt{WRITEINS} $x$ \texttt{INS} - Rewrite the instruction at address
-    $x$ with the newly supplied instruction.
+    \item \texttt{READREG x} - Return value in register \texttt{x}.
+    \item \texttt{WRITEREG x y} - Sets the value in register \texttt{x} to \texttt{y}.
+    \item \texttt{READDATA x} - Return value in memory at address \texttt{x}.
+    \item \texttt{WRITEDATA x y} - Writes a value \texttt{y} into a memory at address \texttt{x}.
+    \item \texttt{GETTEXT x} - Returns instruction at address \texttt{x}.
+    \item \texttt{WRITETEXT x} \texttt{INS} - Rewrite the instruction at address
+        \texttt{x} with the newly supplied instruction.
     \item \texttt{CONTINUE} - Continue the execution.
     \item \texttt{REASON} - Get the reason why the program stopped (breakpoint, singlestep, halt).
     \item \texttt{SINGLESTEP} - Does native level single step.
 \end{itemize}
 Example of how those commands can be used for communication between the virtual
-machine and the debugger is shown in figure \ref{fig:dbg-vm-seq}.
+machine and the debugger is shown in figure \ref{fig:dbg-vm-seq}. The interface
+is similar to basic ptrace commands. We separate the memory and instruction
+writing because T86 use harvard architecture, whereas Linux doesn't separate
+text and data address spaces, so the two requests were equivalent there.
+
+Currently, the class that runs the program is the \texttt{Cpu}. We will add
+another manager-like class. This class will take care of running the program
+via the \texttt{Cpu} class and it will also manage said debugger requests. The
+\texttt{Cpu} class will return control to the manager when a reason for
+stopping happens. We will call these reasons \textit{interrupts} because they
+are somewhat similar to real world CPUs interrupts. The manager is then
+responsible for dealing with the interrupt and handling control back to the
+\texttt{Cpu} or terminating the program.
+
+The \texttt{Cpu} does not have a way to modify the instruction vector.
+However, we can leverage our previously implemented parser from section
+\todo{section:parser}and create the instruction on the fly.
 
 \begin{figure}
     \centering
     \scalebox{0.8} {
     \begin{tikzpicture}
-        \draw (0,0) -- (0,-16) (7,0) -- (7,-16);
+        \draw (0,0) -- (0,-17.2) (7,0) -- (7,-17.2);
         \node at (7,.3) {Debugger};
         \node at (0,.3) {Virtual machine};
         \draw[<-] (0,-1) -- node[midway,above] {Initializes connection} (7,-1);
@@ -107,13 +123,13 @@ machine and the debugger is shown in figure \ref{fig:dbg-vm-seq}.
         \draw[->] (0,-6) -- node[midway,above] {Ok} (7,-6);
         \draw[<-] (0,-7) -- node[midway,above] {\texttt{CONTINUE}} (7,-7);
         \draw[->] (0,-8) -- node[midway,above] {Ok} (7,-8);
-        \draw[->] (0,-9) -- node[midway,above] {Program stopped} (7,-9);
-        \draw[<-] (0,-10) -- node[midway,above] {\texttt{REASON}} (7,-10);
-        \draw[->] (0,-11) -- node[midway,above] {Reason: \texttt{BKPT} instruction} (7,-11);
-        \draw[<-] (0,-12) -- node[midway,above] {\texttt{CONTINUE}} (7,-12);
-        \draw[->] (0,-13) -- node[midway,above] {Program stopped} (7,-13);
-        \draw[<-] (0,-14) -- node[midway,above] {\texttt{REASON}} (7,-14);
-        \draw[->] (0,-15) -- node[midway,above] {Reason: \texttt{HALT} instruction} (7,-15);
+        \draw[->] (0,-10) -- node[midway,above] {Program stopped} (7,-10);
+        \draw[<-] (0,-11) -- node[midway,above] {\texttt{REASON}} (7,-11);
+        \draw[->] (0,-12) -- node[midway,above] {Reason: \texttt{BKPT} instruction} (7,-12);
+        \draw[<-] (0,-13) -- node[midway,above] {\texttt{CONTINUE}} (7,-13);
+        \draw[->] (0,-15) -- node[midway,above] {Program stopped} (7,-15);
+        \draw[<-] (0,-16) -- node[midway,above] {\texttt{REASON}} (7,-16);
+        \draw[->] (0,-17) -- node[midway,above] {Reason: \texttt{HALT} instruction} (7,-17);
     \end{tikzpicture}
     }
     \caption{A sequence diagram for the virtual machine and debugger communication.}
