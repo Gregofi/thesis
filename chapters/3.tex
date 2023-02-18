@@ -1,2 +1,80 @@
 \chapter{Implementation}
+In this chapter, we describe how we went about the implementation
+of the debugger and reason about the design choices we made.
+Also, we describe which part of the virtual machine were
+modified or added for the benefit of the debugger or in
+general for the greater good.
+
+\section{T86 Virtual machine code format}
+In chapter \todo{ref} we showed how to build a program for the T86 VM. It was
+necessary to use the builder the T86 VM provides. There is currently no other
+way. We remedied this with a hand-made parser of the T86 assembly language. An
+example of a program for T86 is shown in figure \ref{fig:t86-program}. It is
+very similar to assembly we have shown in previous sections. Thanks to this,
+students can choose any language they want to implement their compiler and just
+emit this assembly at the end. An unfortunate side effect is that we are no
+longer able to use the \texttt{DBG} instruction. This will however be remedied
+by the very debugger we are implementing here. 
+
+Notice the \texttt{.text}, this is a section, same as the ELF format uses. We
+will carry some of this over from the ELF format. Mainly, the \texttt{.text}
+and \texttt{.data} sections. For debugging purposes, we will also include some
+debug headers. The exact nature of this debugging headers is specified in
+section \todo{ref} where the debugging information format for our debugger is
+defined.
+
+\begin{figure}
+    \begin{lstlisting}
+        .text
+
+        0 MOV R0, 49
+        1 PUTCHAR R0
+        # Put newline
+        2 MOV R0, 10
+        3 PUTCHAR R0
+        4 HALT
+    \end{minted}
+    \caption{Example of an T86 program.}
+    \label{fig:t86-program}
+\end{figure}
+
 \section{Design of the native T86 debugger}
+We could simply bake the debugger into the virtual machine itself. This would
+probably prove to be simplest to implement. However, the main point of the
+debugger is not only to ease the code generation part, but to be a learning
+point so that students might grasp how a real debugger is
+implemented\footnote{The VM followed the same philosophy.}. Because of this, we
+aim to simulate the real world debuggers as close as possible. The compilers
+themselves may also have more targets in the future, not just the T86 VM. If we
+made the debugger as part of T86 we couldn't use it for a possibly new virtual
+machine. In conclusion, the virtual machine and the debugger will be two
+entirely different programs, and as such, two completely different processes.
+
+In the implementation of debugger for Linux, which was the subject of section
+\todo{ref}, we described how the kernel of an operating system helps with the
+implementation of the debugger via specific API. There is no operating system
+between the virtual machine and the program. Still, we will strife to make the
+API similar on the virtual machine part. The debugger and the VM will have to
+communicate together somehow. For the interprocess comunnication, there are
+several possibilities.
+
+One of those are signals. Those however are POSIX specific. Other possibilities
+are shared pipes or sockets. We choose sockets, purely because \todo{we do not
+known how to use anything else :)}. Both the virtual machine and the debugger
+will have an opened port through which they will communicate. The format
+of the communication will be a text one, merely because of the ease of use
+as opposed to binary format. The commands that the virtual machine API
+will accept are
+\begin{itemize}
+    \item \texttt{READREG} $x$ - Return value in register $x$.
+    \item \texttt{WRITEREG} $x$ $y$ - Sets the value in register $x$ to $y$.
+    \item \texttt{READMEM} $x$ - Return value in memory at address $x$.
+    \item \texttt{WRITEMEM} $x$ $y$ - Writes a value $y$ into a memory at address $x$.
+    \item \texttt{GETINS} $x$ - Returns instruction at address $x$.
+    \item \texttt{WRITEINS} $x$ \texttt{INS} - Rewrite the instruction at address
+    $x$ with the newly supplied instruction.
+    \item \texttt{CONTINUE} - Continue the execution.
+    \item \texttt{REASON} - Get the reason why the program stopped (breakpoint, singlestep, halt).
+    \item \texttt{SINGLESTEP} - Does native level single step.
+\end{itemize}
+
