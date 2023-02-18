@@ -5,7 +5,7 @@ Also, we describe which part of the virtual machine were
 modified or added for the benefit of the debugger or in
 general for the greater good.
 
-\section{T86 Virtual machine code format}
+\section{T86 ISA extensions}
 In chapter \todo{ref} we showed how to build a program for the T86 VM. It was
 necessary to use the builder the T86 VM provides. There is currently no other
 way. We remedied this with a hand-made parser of the T86 assembly language. An
@@ -33,10 +33,22 @@ defined.
         2 MOV R0, 10
         3 PUTCHAR R0
         4 HALT
-    \end{minted}
+    \end{lstlisting}
     \caption{Example of an T86 program.}
     \label{fig:t86-program}
 \end{figure}
+
+We will also add a few new instructions. One is \texttt{PUTNUM}, which prints
+the numerical value with a newline. This is intended as a simple debug instruction
+and to ease the automated testing of the compiler. Only other way of output was
+to print a char which was represented by the ascii value. If students wants
+to have an automated test that his factorial program translates successfully
+it is very much easier with this instruction.
+
+Another one is the \texttt{BKPT} instruction. This instruction is similar to
+\texttt{INT3} from x86\_64 or \texttt{BKPT} from ARM. It is an software
+breakpoint. When the instruction is hit, a control will be passed to the
+connected debugger. This is thoroughly described in the next section. 
 
 \section{Design of the native T86 debugger}
 We could simply bake the debugger into the virtual machine itself. This would
@@ -64,7 +76,7 @@ known how to use anything else :)}. Both the virtual machine and the debugger
 will have an opened port through which they will communicate. The format
 of the communication will be a text one, merely because of the ease of use
 as opposed to binary format. The commands that the virtual machine API
-will accept are
+will offer are
 \begin{itemize}
     \item \texttt{READREG} $x$ - Return value in register $x$.
     \item \texttt{WRITEREG} $x$ $y$ - Sets the value in register $x$ to $y$.
@@ -77,4 +89,34 @@ will accept are
     \item \texttt{REASON} - Get the reason why the program stopped (breakpoint, singlestep, halt).
     \item \texttt{SINGLESTEP} - Does native level single step.
 \end{itemize}
+Example of how those commands can be used for communication between the virtual
+machine and the debugger is shown in figure \ref{fig:dbg-vm-seq}.
+
+\begin{figure}
+    \centering
+    \scalebox{0.8} {
+    \begin{tikzpicture}
+        \draw (0,0) -- (0,-16) (7,0) -- (7,-16);
+        \node at (7,.3) {Debugger};
+        \node at (0,.3) {Virtual machine};
+        \draw[<-] (0,-1) -- node[midway,above] {Initializes connection} (7,-1);
+        \draw[->] (0,-2) -- node[midway,above] {Accepts connection} (7,-2);
+        \draw[<-] (0,-3) -- node[midway,above] {\texttt{READINS 5}} (7,-3);
+        \draw[->] (0,-4) -- node[midway,above] {Ok} (7,-4);
+        \draw[<-] (0,-5) -- node[midway,above] {\texttt{WRITEINS 5 BRKPT}} (7,-5);
+        \draw[->] (0,-6) -- node[midway,above] {Ok} (7,-6);
+        \draw[<-] (0,-7) -- node[midway,above] {\texttt{CONTINUE}} (7,-7);
+        \draw[->] (0,-8) -- node[midway,above] {Ok} (7,-8);
+        \draw[->] (0,-9) -- node[midway,above] {Program stopped} (7,-9);
+        \draw[<-] (0,-10) -- node[midway,above] {\texttt{REASON}} (7,-10);
+        \draw[->] (0,-11) -- node[midway,above] {Reason: \texttt{BKPT} instruction} (7,-11);
+        \draw[<-] (0,-12) -- node[midway,above] {\texttt{CONTINUE}} (7,-12);
+        \draw[->] (0,-13) -- node[midway,above] {Program stopped} (7,-13);
+        \draw[<-] (0,-14) -- node[midway,above] {\texttt{REASON}} (7,-14);
+        \draw[->] (0,-15) -- node[midway,above] {Reason: \texttt{HALT} instruction} (7,-15);
+    \end{tikzpicture}
+    }
+    \caption{A sequence diagram for the virtual machine and debugger communication.}
+    \label{fig:dbg-vm-seq}
+\end{figure}
 
