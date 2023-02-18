@@ -2,25 +2,26 @@
 At the FIT CTU, in the NI-GEN course students have to write their own compiler.
 To ease the code generation part, the T86 architecture was created and a
 virtual machine was written as a way to execute programs in that architecture.
-The architecture was made as part of a masters thesis \cite{ivo2021tiny}.
-This chapter explores the T86 architecture, the virtual machine that was made
-for it and explains which parts of the virtual machine will have to be extended
-or added to support debugging.
+The architecture was made as part of a masters thesis \cite{ivo2021tiny}. This
+chapter explores the T86 architecture and the virtual machine that was made for
+it and delves into the existing debugging capabilites of said virtual machine.
+
 \subsection{T86 ISA}
 The name is an abbreviation for Tiny x86, but in some aspects the architecture
-is more similar to other architectures like ARM. It is an educational ISA, so
-some properties are configurable, like the number of available registers.
+is more similar to other architectures like ARM, for example it is a RISC
+architecture. It is an educational ISA, so some properties are configurable,
+like the number of available registers.
 
 The T86 uses a harvard architecture, this means that the data and instructions
 are separated from each other. The author doesn't specify the reason for this,
-put presumably it to ease the implementation of the virtual machine, since
+put presumably it is to ease the implementation of the virtual machine, since
 the memory and instructions can be represented as two separate array-like
-members of the virtual machine.
+members of the virtual machine. Memory is addressable by 64-bit blocks.
 
 It has the registers we saw on x86\_64, ie. \texttt{PC}, \texttt{SP},
 \texttt{BP} and the flags register. The intended roles for these registers are
 the same os on x86\_64. It also has other general purpose registers. The number
-of these is configurable.
+of these is configurable. The registers stores 64-bit value.
 
 The addressing modes, or what kind of operands instructions can have, include
 immediate values, registers and memory accesses. These accesses are not only
@@ -36,3 +37,97 @@ very basic input and output. Also, an \texttt{DBG} and \texttt{BREAK} are
 defined. These are used for debugging, but in a very different way that we have
 seen in previous sections. We will touch upon them when discussing the virtual
 machine implementation, since they are very much tied to it.
+
+\subsection{T86 Virtual machine}
+The goal of the virtual machine was to simulate the execution as close as
+possible to the real world CPUs. Speed of the execution was not a main focus.
+For example, the CPU simulates the whole out-of-order execution briefly
+described in section \todo{ref}. In fact, if the virtual machine just
+interpreted the instructions one by one it would be significantly faster. But
+the main point of the machine is for the students to learn of the impact that
+pipelining, hazards and out of order execution has on the speed of their
+programs. The virtual machine has statistics that can be exported to view how
+much the generated program works with these properties that are present on real
+world CPUs.
+
+The virtual machine implemented in C++, using the newer standards up to C++17.
+The VM offers only a single interface, and that is \texttt{ProgramBuilder}.
+This is a class through which one may construct a program for the T86 VM.
+An example of how to use this class is in figure \ref{fig:t86-intro}.
+Currently, there is no other way for users to run programs in the VM.
+This means that the students are tied to the C++ language, or use
+some bindings if they want to use other language.
+
+\begin{figure}
+    \begin{minted}{cpp}
+        ProgramBuilder pb;
+        pb.add(MOV{Reg(0), 50);
+        pb.add(PUTCHAR{Reg(0)});
+        pb.add(HALT{});
+        auto program = pb.program();
+        Cpu cpu;
+        cpu.start(std::move(program));
+        while (!cpu.halted())
+        cpu.tick();
+    \end{minted}
+    \caption{Simple example of how to create and run a simple program in the T86 VM.}
+    \label{fig:t86-intro}
+\end{figure}
+
+\subsubsection*{Debug instructions}
+The VM offers some limited debug capabilities. It has the \texttt{DBG} and
+\texttt{BRK} instructions. The \texttt{DBG} instruction takes as an operand a
+function. The function has the following signature: \texttt{void fun(Cpu\&)}.
+This function then gets executed when the instruction is hit. This can prove
+useful to inspect the internal state of the Cpu. In figure \ref{fig:t86-debug}
+we show a possible usage of this instruction. The \texttt{BRK} instruction
+works in a similar way. It however has no operand. Instead, a function must be
+provided before execution to the CPU itself. \texttt{BRK} then always runs this
+function when hit.
+
+\begin{figure}
+    \begin{minted}{cpp}
+    pb.add(DBG{[](Cpu& cpu) {
+        if (cpu.getRegister(Reg{0}) == 0) {
+            std::cerr << "Register 0 is set to zero!\n";
+        }
+    });
+    \end{minted}
+    \caption{Example of an debug instruction in T86 VM.}
+    \label{fig:t86-debug}
+\end{figure}
+
+Such debugging capabilites can be helpful. It however proves insufficient
+when a step by step inspection is sought. To achieve this, a debug instruction
+would have to placed at every second line of the program. Also, interactivity is
+not much present. This function however can accept input, so one could create a
+function robust enough to handle register and memory writing. An idea of how
+this could be done is illustrated in \ref{fig:t86-pocket-debugger} via the
+\texttt{BRK} instruction.
+\begin{figure}
+    \begin{minted}{cpp}
+    cpu.connectBreakHandler([](Cpu& cpu) {
+        char command;
+        std::cin >> command;
+        if (command == 'c') return; // continue
+        else if (command == 'r') { // Read register
+            int num;
+            std::cin >> num;
+            int regval = cpu.getRegister(num);
+            std::cerr << std::format("Register {} = {}\n",
+                                     num, regval);
+        } else if (command == 'w') { // Write register
+            int num;
+            int val;
+            std::cin >> num >> val;
+            cpu.setRegister(Reg{num}, Reg{val});
+        }
+        ... // Other commands
+    });
+    \end{minted}
+    \caption{Small debugger implementation using T86 BRK instruction, abbreviated.}
+    \label{fig:t86-pocket-debugger}
+\end{figure}
+This however still does not come close to using a real debugger.
+For example, setting something like a breakpoint is impossible since
+the instruction vector is not writable.
