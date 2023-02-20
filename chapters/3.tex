@@ -72,28 +72,33 @@ several possibilities.
 
 One of those are signals. Those however are POSIX specific. Other possibilities
 are shared pipes or sockets. We choose sockets, purely because \todo{we do not
-known how to use anything else :)}. Both the virtual machine and the debugger
+know how to use anything else :)}. Both the virtual machine and the debugger
 will have an opened port through which they will communicate. The format
 of the communication will be a text one, merely because of the ease of use
 as opposed to binary format. The commands that the virtual machine API
 will offer are
 \begin{itemize}
-    \item \texttt{READREG x} - Return value in register \texttt{x}.
-    \item \texttt{WRITEREG x y} - Sets the value in register \texttt{x} to \texttt{y}.
-    \item \texttt{READDATA x} - Return value in memory at address \texttt{x}.
-    \item \texttt{WRITEDATA x y} - Writes a value \texttt{y} into a memory at address \texttt{x}.
-    \item \texttt{GETTEXT x} - Returns instruction at address \texttt{x}.
-    \item \texttt{WRITETEXT x} \texttt{INS} - Rewrite the instruction at address
+    \item \texttt{PEEKREG x} - Return value in register \texttt{x}.
+    \item \texttt{POKEREG x y} - Sets the value in register \texttt{x} to
+        \texttt{y}.
+    \item \texttt{PEEKDATA x} - Return value in memory at address \texttt{x}.
+    \item \texttt{POKEDATA x y} - Writes a value \texttt{y} into a memory at
+        address \texttt{x}.
+    \item \texttt{PEEKTEXT x} - Returns instruction at address \texttt{x}.
+    \item \texttt{POKETEXT x} \texttt{INS} - Rewrite the instruction at
+        address
         \texttt{x} with the newly supplied instruction.
     \item \texttt{CONTINUE} - Continue the execution.
-    \item \texttt{REASON} - Get the reason why the program stopped (breakpoint, singlestep, halt).
+    \item \texttt{REASON} - Get the reason why the program stopped (breakpoint,
+        singlestep, halt).
     \item \texttt{SINGLESTEP} - Does native level single step.
 \end{itemize}
 Example of how those commands can be used for communication between the virtual
 machine and the debugger is shown in figure \ref{fig:dbg-vm-seq}. The interface
 is similar to basic ptrace commands. We separate the memory and instruction
-writing because T86 use harvard architecture, whereas Linux doesn't separate
-text and data address spaces, so the two requests were equivalent there.
+writing because T86 uses harvard architecture, whereas Linux doesn't separate
+text and data address spaces\cite{ptrace}, so the two requests were equivalent
+there.
 
 Currently, the class that runs the program is the \texttt{Cpu}. We will add
 another manager-like class. This class will take care of running the program
@@ -102,11 +107,15 @@ via the \texttt{Cpu} class and it will also manage said debugger requests. The
 stopping happens. We will call these reasons \textit{interrupts} because they
 are somewhat similar to real world CPUs interrupts. The manager is then
 responsible for dealing with the interrupt and handling control back to the
-\texttt{Cpu} or terminating the program.
+\texttt{Cpu} or terminating the program. When such interrupt happens, its
+important that the \texttt{Cpu} flushes the pipeline, as was disscussed in
+section \todo{ref}. Fortunately, the \texttt{Cpu} class contains an already
+implemented function exactly for this purpose, so it is only a matter of
+calling it.
 
 The \texttt{Cpu} does not have a way to modify the instruction vector.
 However, we can leverage our previously implemented parser from section
-\todo{section:parser}and create the instruction on the fly.
+\ref{section:parser} and create the instruction on the fly.
 
 \begin{figure}
     \centering
@@ -117,9 +126,9 @@ However, we can leverage our previously implemented parser from section
         \node at (0,.3) {Virtual machine};
         \draw[<-] (0,-1) -- node[midway,above] {Initializes connection} (7,-1);
         \draw[->] (0,-2) -- node[midway,above] {Accepts connection} (7,-2);
-        \draw[<-] (0,-3) -- node[midway,above] {\texttt{READINS 5}} (7,-3);
+        \draw[<-] (0,-3) -- node[midway,above] {\texttt{PEEKTEXT 5}} (7,-3);
         \draw[->] (0,-4) -- node[midway,above] {Ok} (7,-4);
-        \draw[<-] (0,-5) -- node[midway,above] {\texttt{WRITEINS 5 BRKPT}} (7,-5);
+        \draw[<-] (0,-5) -- node[midway,above] {\texttt{POKETEXT 5 BRKPT}} (7,-5);
         \draw[->] (0,-6) -- node[midway,above] {Ok} (7,-6);
         \draw[<-] (0,-7) -- node[midway,above] {\texttt{CONTINUE}} (7,-7);
         \draw[->] (0,-8) -- node[midway,above] {Ok} (7,-8);

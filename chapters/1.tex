@@ -693,7 +693,7 @@ in this order:
         the program via \mintinline{c}{ExitProcess}.
 \end{enumerate}
 
-The debugger has two opportuinites to handle the exception. The
+The debugger has two opportunities to handle the exception. The
 \textit{first-chance} is before the exception gets to the debugee. This is
 intended for exceptions for which the debugger is responsible, for example
 breakpoint or single stepping. The debugger should handle these. The second
@@ -1190,7 +1190,7 @@ Debuggers often need to know through which function call the program went to
 arrive at the point the program is in now. For each function call there is a
 stack frame saved on the stack. This is a part of the stack that contains
 information relevant to the invocation. An example of two stack frames can be
-seen on figure \ref{fig:stack-frame}. In that example there is the stack frame
+seen on figure \ref{fig:stack-layout}. In that example there is the stack frame
 of previous function and new stack frame, which mainly consist of the
 following:
 \begin{itemize}
