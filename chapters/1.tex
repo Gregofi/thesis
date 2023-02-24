@@ -566,10 +566,11 @@ hardware breakpoints (4 on x86).
 \todo{Describe how LLDB does things?}
 
 \subsection{UNIX systems}
-There are other systems based on UNIX, however the implementation is very similar to the Linux one.
-For example, MacOS, FreeBSD and OpenBSD also have the \texttt{ptrace} system call. The function is
-little different on each operating system but it can be used to achieve the same functionality as
-on the linux operating system.
+There are other systems based on UNIX, however, the implementation is very
+similar to the Linux one. For example, MacOS, FreeBSD, and OpenBSD also have
+the \texttt{ptrace} system call. The function is a little different on each
+operating system but it can be used to achieve the same functionality as on the
+Linux operating system.
 
 \subsection{Windows}
 Windows also has built-in support for debugging at the Win32API layer
@@ -621,7 +622,8 @@ interaction.
         \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
     \end{tikzpicture}
     }
-    \caption{A sequence diagram for debugger using Windows api. Inspired by \todo{NI-REV 6. lecture}}
+    \caption{A sequence diagram for debugger using Windows API. Inspired by
+             \todo{NI-REV 6. lecture}}
     \label{fig:win32debugger}
 \end{figure}
 
@@ -629,12 +631,12 @@ interaction.
 Debugging events are various incidents in the debuggee that causes the system
 to notify the debugger \cite{windows-msdn-debug-events}. These are stored in
 special \mintinline{c}{DEBUG_EVENT} structure, which is received in
-\texttt{WaitForDebugEvent} call from debugger. This structure contains various
-information about the event, the internals can be seen on figure
-\ref{fig:DebugEvent}. These events include loading and unloading a DLL,
+\texttt{WaitForDebugEvent} call initiated from the debugger. This structure
+contains various information about the event, the internals can be seen in
+figure \ref{fig:DebugEvent}. These events include loading and unloading a DLL,
 creating and exiting a process, sending debug strings via the
-\mintinline{c}{OutputDebugString} and so on. One category of events
-are exceptions, lets look at them more closely.
+\mintinline{c}{OutputDebugString}, and so on. One category of events are
+exceptions, let us look at them more closely.
 
 \begin{figure}
 \begin{minted}{c}
@@ -664,8 +666,8 @@ On POSIX systems, abnormal conditions which need immediate attention are
 handled via signals \todo{ref signals}. Windows however is not a POSIX system.
 Instead, Windows uses \textit{Structured Exceptions} \cite{windows-msdn-seh}.
 From now on, we will be using the abbreviation 'SEH'. An exception is an event
-that requires execution of code outside the normal flow of control. There are
-software exceptions, like throwing an exception explicitly or by OS, and
+that requires the execution of code outside the normal flow of control. There
+are software exceptions, like throwing an exception explicitly or by OS, and
 hardware exceptions, like the division by zero we mentioned. Instruction with
 opcode \mintinline{c}{0xCC}, which is used for breakpoints, will also raise an
 exception. SEH unifies both of these things into one just like signals do.
@@ -674,11 +676,11 @@ When an exception is triggered, control is transferred to the system. It saves
 the state of the thread and some other information. This information can be
 used to continue execution from the point where the exception was thrown when
 it is resolved. It also contains information about which type of exception was
-thrown, if execution can continue after handling the exception, address where
-the exception occured and some others\footnote{See MSDN documentation
+thrown, if the execution can continue after handling the exception, the address
+where the exception occurred and some others\footnote{See MSDN documentation
 \cite{windows-msdn-seh} for full detailed list}. The system then searches for
-an exception handler which will handle the exception. The search is performed
-in this order:
+an exception handler that will handle the exception. The search is performed in
+this order:
 
 \begin{enumerate}
     \item If the process is debugged the debugger is notified.
@@ -689,17 +691,17 @@ in this order:
     \item If no frame-based handler can be found, or no handler handles the
         exception, but the process is being debugged then the debugger gets
         notified once again.
-    \item The system provides default handler, which often is termination of
+    \item The system provides a default handler, which often is the termination of
         the program via \mintinline{c}{ExitProcess}.
 \end{enumerate}
 
 The debugger has two opportunities to handle the exception. The
 \textit{first-chance} is before the exception gets to the debugee. This is
-intended for exceptions for which the debugger is responsible, for example
+intended for exceptions for which the debugger is responsible, for example,
 breakpoint or single stepping. The debugger should handle these. The second
-opportunity, called \textit{last-chance}, is when a debugee doesn't have
+opportunity, called \textit{last-chance}, is when a debugee doesn't have an
 appropriate frame-based handler to handle the exception. If the debugger
-weren't in the way, system would have already used the default exception
+weren't in the way, the system would have already used the default exception
 handler, which is often program termination. This gives us a last chance to
 look at the state of the program before it will be killed
 \cite{windows-msdn-dbg-exc-handling}.
@@ -709,17 +711,17 @@ Examples of some exceptions that tie into debugging:
     \item \texttt{EXCEPTION\_BREAKPOINT} - Raised when a hardware-defined
         breakpoint was encountered. This includes the mentioned
         \texttt{INT3} instruction.
-    \item \texttt{EXCEPTION\_SINGLE\_STEP} - Raised when a hardware supported
+    \item \texttt{EXCEPTION\_SINGLE\_STEP} - Raised when a hardware-supported
         single step was completed.
 \end{itemize}
 
 \subsubsection*{Tying it all together}
 We presented various functions that offer debugging support. The implementation
 itself would be very similar to the Linux one we presented in section
-\todo{ref}. For illustration, in figure \ref{fig:windows-debugger-mainloop} is
-shown an abbreviated main loop of the debugger. We not only need to handle
+\todo{ref}. For illustration, figure \ref{fig:windows-debugger-mainloop}
+contains an abbreviated main loop of the debugger. We not only need to handle
 exception debug events but others also if we want our debugger to be robust.
-For example thread creation might interest us too, so that we can trace all
+For example, thread creation might interest us too, so that we can trace all
 threads of the debugee.
 
 \begin{figure}\label{fig:windows-debugger-mainloop}
@@ -750,10 +752,10 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 \end{figure}
 
 \section{Compilers}
-The compiler is a program which transforms the source code into some other
-form, most often into machine code or assembly. Compilers are very complicated
-piece of software. Often, they are made of several parts, the general structure
-can be seen in figure \ref{fig:compiler-structure} \cite{dragon-book}. We will
+The compiler is a program that transforms the source code into some other form,
+most often into machine code or assembly. Compilers are very complicated pieces
+of software. Often, they are made of several parts, the general structure can
+be seen in figure \ref{fig:compiler-structure} \cite{dragon-book}. We will
 briefly explore these stages.
 
 \tikzstyle{compilerblock} = [rectangle, draw, minimum width=6cm, minimum height=1cm] 
@@ -794,9 +796,10 @@ The Syntactic analyzer then works with these tokens.
 \subsection{Syntantic and semantic analyzer}
 Syntactic analysis accepts tokens and processes them into other intermediate
 representation. This is most often an abstract syntax tree (abbr. AST, figure
-\ref{fig:ast}). It also checks that the source code complies to the grammar of
-the language. Semantic analysis then checks that the program is semantically
-consistent. For example that used variable has been declared before.
+\ref{fig:ast}). It also checks that the source code complies with the grammar
+of the language. The semantic analysis then checks that the program is
+semantically consistent. For example that used variable has been declared
+before.
 
 \begin{figure}\label{fig:ast}
     \centering
@@ -822,10 +825,10 @@ consistent. For example that used variable has been declared before.
 \subsection{Intermediate code generation}
 This part converts AST into some other representation, most commonly called IR,
 which means intermediate representation. IR is closer to machine code, to be
-easily translated, but retain some high level properties that makes it easier
+easily translated, but retains some high-level properties that make it easier
 to work with it, like types and functions. There are many types of IR. One of
 the most popular compilers, LLVM, uses single static assignment (SSA)
-\cite{llvm}. Example of LLVM IR can be found on figure
+\cite{llvm}. An example of LLVM IR can be found in figure
 \ref{fig:llvm-ir-example}. Compilers perform most optimizations on this
 intermediate representation. 
 
@@ -846,10 +849,10 @@ intermediate representation.
 \subsection{Code generation}
 Here, IR is translated directly to the target machine code or possibly
 assembly. Even though IR can seem very similar to assembly, there are still
-some things to take care of. For example SSA IR doesn't have registers, it uses
-unlimited number of variables. Other architectures might have some other traits
-that differ it from the IR and they all have to be accounted for when
-generating code.
+some things to take care of. For example, SSA IR doesn't have registers, it
+uses an unlimited number of variables. Other architectures might have some
+other traits that differentiate them from the IR and they all have to be
+accounted for when generating code.
 
 \subsection{Modularity of compilers}
 The main advantage of using an IR is that there is a common ground for every
@@ -860,82 +863,81 @@ up to the IR translation. Once we can translate Haskell into the IR, we can
 reuse the previous part of the compiler to compile to machine code! This also
 works the other way around. If we compiled IR to the machine code that works
 with the x86 architecture, and we want to compile to ARM, we just need to
-create the code generation part for the ARM architecture, no need to write
-whole compiler. Also, most of the optimizations are done on the IR level, this
+create the code generation part for the ARM architecture, no need to write the
+whole compiler. Also, most of the optimizations are done on the IR level, which
 also saves a lot of development time. The parts of the compiler which are
-dependent on the source language are called \textbf{frontend} (Syntax, Semantic
-and IR translation), the parts that are dependent on the target are called
-\textbf{backend} (Code generation).
+dependent on the source language are called \textbf{frontend} (Syntax,
+Semantic, and IR translation), and the parts that are dependent on the target
+are called \textbf{backend} (Code generation).
 
 This is widely used in practice. The LLVM \cite{llvm} project is a compiler
-backend. It uses its own IR (as was mentioned on figure
+backend. It uses its own IR (as was mentioned in figure
 \ref{fig:llvm-ir-example}). It can compile this IR into many targets, including
-x86, ARM and Spark. The \textit{Clang} project is a compiler frontend for C,
+x86, ARM, and Spark. The \textit{Clang} project is a compiler frontend for C,
 C++ and Objective-C languages. It translates these languages to the LLVM IR.
 Other frontends for LLVM also include \textit{ghc}, which is a Haskell
-compiler, or \textit{rustc}, which is a Rust compiler. With LLVM, creating new
-programming language comes down to parsing it into an AST and transforming that
-AST into the LLVM IR.
+compiler, or \textit{rustc}, which is a Rust compiler. With LLVM, creating a
+new programming language comes down to parsing it into an AST and transforming
+that AST into the LLVM IR.
 
 \subsection{Interpreting programs}
 \todo{Consider throwing away.}
-Not all languages are translated to machine code. Sometimes an interpreter is
+Not all languages are translated into machine code. Sometimes an interpreter is
 created, which is a program that reads the source code but instead of compiling
 it into machine code it just runs it\footnote{In reality those languages are
 often compiled into bytecode, which is interpreted.}. Dynamically typed
 languages tend to be interpreted, but it is not a rule. Some languages have
-both compiler and interpreter, like Haskells GHC. Since the interpreter is a
-program, it is another layer of abstraction. This can make the resulting
-language more abstract then the compiled ones, sometimes at the cost
-of performance~\cite{jit}. 
+both a compiler and an interpreter, like Haskell GHC. Since the interpreter is
+a program, it is another layer of abstraction. This can make the resulting
+language more abstract than the compiled ones, sometimes at the cost of
+performance~\cite{jit}. 
 
 \section{Debug information}
 If we want to debug at the source code level, we need to give the debugger some
-information, because otherwise it can only work with the generated machine
+information, because otherwise, it can only work with the generated machine
 code. For example, we somehow need to provide information to the debugger that
-instruction at address $0xABCD$ belongs to line $x$ in the source code. Or we
-need to provide information where is some variable located. Before we get into
-that, we will take a look at the layout of executables and where are those
-informations stored.
+the instruction at address $0xABCD$ belongs to line $x$ in the source code. Or
+we need to provide information about where is some variable located. Before we
+get into that, we will take a look at the layout of executables and where are
+those pieces of information stored.
 
 \subsection{ELF}
 ELF means Executable and Linkable format, it is a format used for binary
-applications. The file itself consist of sections, some of these are
+applications. The file itself consists of sections, some of which are
 \begin{itemize}
     \item .text - the executable code,
     \item .data - allocated space and values of initialized static\footnote{In
         this context, static means that the variable exists for the entire
         lifetime of the program} variables and other objects,
-    \item .bss - allocated space for unitialized static variables,
+    \item .bss - allocated space for uninitialized static variables,
     \item .rodata - data that doesn't change for the entirety of the program
         lifetime, like strings literals in C.
     \item various debug sections like .debug\_info, .debug\_line etc.
 \end{itemize}
 For inspecting the ELF files, commands \texttt{readelf} and \texttt{objdump}
 may be used on Linux systems. The ELF format also has a header, and all
-sections have their header too. This contains information like name of the
-section, size of the section etc. The ELF format are mainly used for
+sections have their header too. This contains information like the name of the
+section, the size of the section, etc. The ELF format are mainly used for
 \textit{relocatable} file, \textit{executable} file and \textit{shared object}
-file \cite{elf}. We will talk only about the executable, since that is most
-relevant to us. The sections themselves are often protected. For example, the .text section
-can only be read and executed, but cannot be written to. The .data section
-can be read and written to, but cannot be executed.
+file \cite{elf}. We will talk only about executables since that is most
+relevant to us. The sections themselves are often protected. For example, the
+.text section can only be read and executed, but cannot be written into. The
+.data section can be read and written, but cannot be executed.
 
 \subsection{DWARF}
-DWARF\footnote{The name DWARF is a pun, since it was developed alongside ELF.}
+DWARF\footnote{The name DWARF is a pun since it was developed alongside ELF.}
 is a debugging format used to describe programs written in procedural
 languages. It is primarily associated with ELF. It aims to support all
-different information which may be needed while debugging and to encode them in
+different information that may be needed while debugging and to encode them in
 as much space efficient manner as possible. This can make it very complex.
 Also, there are five versions of the standard, we will be mainly talking about
-the version 2, since the others mainly add features to accomodate newer
-language features. We will not get that far even in version 2. The complete
-changelog can be found in the text describing DWARF version 5 \cite{dwarf-5}.
-We provide many examples of the information that DWARF encodes. For reading
-the DWARF information from object files, we used the \texttt{llvm-dwarfdump},
-\texttt{objdump}, and \texttt{readelf} tools. The information DWARF encodes
-is stored are stored in various debug headers if used in conjuction
-with the ELF standard.
+version 2, since the others mainly add features to accommodate newer language
+features. We will not get that far even in version 2. The complete changelog
+can be found in the text describing DWARF version 5 \cite{dwarf-5}. We provide
+many examples of the information that DWARF encodes. For reading the DWARF
+information from object files, we used the \texttt{llvm-dwarfdump},
+\texttt{objdump}, and \texttt{readelf} tools. The information DWARF encodes is
+stored in various debug headers if used in conjunction with the ELF standard.
 
 \subsubsection{Line Number Information}
 Line number information needs to convey which line of code corresponds to an
@@ -954,27 +956,27 @@ one row for each instruction. The columns of the matrix would contain
         the basic block are executed sequentially.}
 \end{itemize}
 They however argue that such a matrix would be very big. The matrix is then
-stripped of redundant information, for example instruction whose location is
+stripped of redundant information, for example, instruction whose location is
 the same as the previous one is removed. Instead of a matrix, they provide a
-bytecode language which one has to interpret to gain this information. The
-bytecode program is then encoded in the executable and one can build the 
-matrix from this bytecode program.
+bytecode language that one has to interpret to gain this information. The
+bytecode program is then encoded in the executable and one can build the matrix
+from this bytecode program.
 
 The virtual machine consists of registers \texttt{address}, \texttt{file},
 \texttt{line}, \texttt{column}, \texttt{is\_stmt}, \texttt{basic\_block}, and
 \texttt{end\_sequence}. The program itself begins with a prologue. This
-prologue contains length of the program, version, length of the prologue,
-length of instructions (so that it may be better compressed) and similar
-informations. Then \textit{Standard opcodes} are provided, which are
+prologue contains the length of the program, version, length of the prologue,
+length of instructions (so that it may be better compressed), and similar
+pieces of information. Then \textit{Standard opcodes} are provided, which are
 instructions of the virtual machine. These are mostly used for manipulating the
 registers of the machine or to create a row from the values in the registers
 and append it to the matrix \cite{dwarf}. 
 
-It also has \textit{Special opcodes}, they affect the virtual machine in the
+It also has \textit{Special opcodes}, which affect the virtual machine in the
 following way:
 \begin{itemize}
     \item Add a signed integer to the \texttt{line} register.
-    \item Multiply an unsigned integer by the smallest length of an instruction
+    \item Multiply an unsigned integer by the smallest length of instruction
         and add the result to the \textit{address} register.
     \item Append a row to the matrix consisting of the current values in
         registers.
@@ -985,8 +987,8 @@ add to the \texttt{line} and \texttt{address} register \cite{dwarf}. Those
 values are calculated from the instruction opcode, which ranges from $10$ to
 $255$ in DWARF version 2. 
 
-Observe program in figure \ref{fig:c-program-and-its-assembly}. A simple
-greeter-like program which displays the name given to it as an argument. With
+Observe the program in figure \ref{fig:c-program-and-its-assembly}. A simple
+greeter-like program that displays the name given to it as an argument. With
 the \texttt{readelf} utility program, we can inspect the DWARF bytecode
 language describing the locations, it is showed in figure
 \ref{fig:dwarf-locations}. It sets the address to the beginning of the
@@ -994,7 +996,7 @@ language describing the locations, it is showed in figure
 instruction. Next, it skips all the way to \texttt{cmpl} at address
 \texttt{1148} instruction because that is the start of the \texttt{if}
 statement on line $4$ and saves that to the matrix. Since the opcodes take up
-one byte this technique is very efficient on space, that is why DWARF uses it.
+one byte this technique is very efficient on space, which is why DWARF uses it.
 This information is stored in the section \texttt{.debug\_line}.
 
 \begin{figure}
@@ -1064,29 +1066,32 @@ int main(int argc, char* argv[]) {
 
 \subsubsection{Debugging Information Entry}
 The \textit{Debugging Information Entries}, or DIEs, are the building block of
-debugging information in DWARF. Each DIE has a tag and series of attributes.
+debugging information in DWARF. Each DIE has a tag and a series of attributes.
 The tag specifies the class to which entry it belongs, like
 \texttt{DW\_TAG\_subprogram}, which is used for functions, or
-\texttt{DW\_TAG\_variable}, which is used for variables. Complete list can be
+\texttt{DW\_TAG\_variable}, which is used for variables. A complete list can be
 found in \cite{dwarf}. Those entries can be found in \texttt{.debug\_info}
 section \cite{dwarf}.
 
-The attributes themselves then convey some property of the DIE, like name and
-type of a variable or starting and ending address of a function. The DIEs form
-a tree like structure. Each DIE is owned by one parent (excluding the top DIE)
-and can own multiple DIEs. There are also other relations among the DIEs, not
-only ownership. With those relations in place the relation is a graph, not just
-a tree.
+The attributes themselves then convey some property of the DIE, like the name
+and type of a variable or starting and ending address of a function. The DIEs
+form a tree-like structure. Each DIE is owned by one parent (excluding the top
+DIE) and can own multiple DIEs. There are also other relations among the DIEs,
+not only ownership. With those relations in place, the relation is a graph, not
+just a tree.
 
-Example of DWARF DIEs can be seen on figure \ref{fig:dwarf-die}. The \texttt{DW\_TAG\_pointer\_type} is
-simple, its attributes are only the size of the type and which type it points to, this is encoded as an
-address to another DIE. That DIE is only an information that its a const, and has an attribute which
-again contains address of another DIE. The die at \texttt{0x6b} finally has a base type. It contains
-the size of the type, name and encoding. We also have the \texttt{DW\_TAG\_SUBPROGRAM}, which represents
-function. It has many attributes, like name, path to the file where it was declared, on which line
-and column it is, at which address the function begins and ends and so on. We can see that this DIE
-has children (by indentation). Here, the childs are the parameters and variables. Important
-information about variables is where they are stored, so that we may look up their value.
+An example of DWARF DIEs can be seen in figure \ref{fig:dwarf-die}. The
+\texttt{DW\_TAG\_pointer\_type} is simple, its attributes are only the size of
+the type and which type it points to, this is encoded as an address to another
+DIE. That DIE only contains information that its a const, and has an attribute
+that again contains the address of another DIE. The die at \texttt{0x6b}
+finally has a base type. It contains the size of the type, name, and encoding.
+We also have the \texttt{DW\_TAG\_SUBPROGRAM}, which represents a function. It
+has many attributes, like name, path to the file where it was declared, on
+which line and column it is, at which address the function begins and ends, and
+so on. We can see that this DIE has children (by indentation). Here, the
+children are the parameters and variables. Important information about
+variables is where they are stored, so that we may look up their value.
 
 \begin{figure}
     \begin{lstlisting}
@@ -1143,30 +1148,31 @@ DW_TAG_subprogram
 \subsubsection{Locations of variables}
 Locations are probably the most complicated thing in the DWARF standard. Like
 with locations, a virtual machine is needed to decode this information.
-Variables are generally stored in one place. This can be a memory, register or
-a stack. Sometimes however the location of object can change throughout its
+Variables are generally stored in one place. This can be a memory, register, or
+stack. Sometimes however the location of an object can change throughout its
 lifetime, it may not be present at all since it was optimized away, it can be
-split into several locations, or it might be an reference to some other object.
-The fact that object changes location throughout its lifetime seldom happens
+split into several locations, or it might be a reference to some other object.
+The fact that an object changes location throughout its lifetime seldom happens
 \cite{dwarf-intro}, but DWARF is nevertheless prepared for it \cite{dwarf}.
 
-Contrary to the virtual machine in line encoding, which was register based,
-this one is stack based. This means that most operations take their operands
-from the stack and pushes the result back onto the stack. More about stack
-based virtual machines can be discovered in \cite{crafting-interpreters}.DWARF
-calls those instructions \textit{expressions} \cite{dwarf}. The last value on
-the top of the stack after the VM runs is considered to be the value of the
-variable \cite{dwarf}. For example in the figure
-\ref{fig:c-program-and-its-assembly} there is the \texttt{DW\_OP\_fbreg -24},
-this pushes value at offset $-24$ by the register specified by descriptor in
-\texttt{DW\_AT\_frame\_base}, which often is a base pointer to the stack. And
-since there are no more expressions the computed value on the top of the stack
-is the resulting value of the variable that debugger will get.
+Contrary to the virtual machine in-line encoding, which was register-based,
+this one is stack-based. This means that most operations take their operands
+from the stack and push the result back onto the stack. More about stack-based
+virtual machines can be discovered in \cite{crafting-interpreters}.DWARF calls
+those instructions \textit{expressions} \cite{dwarf}. The last value on the top
+of the stack after the VM runs is considered to be the value of the variable
+\cite{dwarf}. For example in the figure \ref{fig:c-program-and-its-assembly}
+there is the \texttt{DW\_OP\_fbreg -24}, this pushes value at offset $-24$ by
+the register specified by a descriptor in \texttt{DW\_AT\_frame\_base}, which
+often is a base pointer to the stack. And since there are no more expressions
+the computed value on the top of the stack is the resulting value of the
+variable that the debugger will get.
 
 There are many types of expressions, like arithmetic operations, stack
-manipulation, control flow operations, and most importantly specifications of
-the location. We provided already the example with base pointer to the stack,
-lets look at some more examples, mostly taken from \cite{dwarf}:
+manipulation, control flow operations, and last but not least, the
+specifications of the location. We provided already the example with the base
+pointer to the stack, let us look at some more examples, mostly taken from
+\cite{dwarf}:
 \begin{itemize}
     \item \texttt{DW\_OP\_reg3} - The value is in register $3$.
     \item \texttt{DW\_OP\_addr 0xABCD} - The value of a static variable is at
@@ -1180,69 +1186,70 @@ lets look at some more examples, mostly taken from \cite{dwarf}:
         together, and pushes them back onto the stack\footnote{Artificial
         example just to show the power of the language.}.
 \end{itemize}
-With this computational power we can save any information we need. There are
-many more instructions, all of these can be found in \cite{dwarf}. The
+With this computational power, we can save any information we need. There are
+many more instructions, all of which can be found in \cite{dwarf}. The
 interpreter itself can be found in
 \texttt{source/Expression/DWARFExpression.cpp} in the LLDB source code.
 
 \subsubsection{Call frames}
 Debuggers often need to know through which function call the program went to
-arrive at the point the program is in now. For each function call there is a
+arrive at the point the program is in now. For each function call, there is a
 stack frame saved on the stack. This is a part of the stack that contains
 information relevant to the invocation. An example of two stack frames can be
-seen on figure \ref{fig:stack-layout}. In that example there is the stack frame
-of previous function and new stack frame, which mainly consist of the
+seen in figure \ref{fig:stack-layout}. In that example there is the stack frame
+of the previous function and the new stack frame, which mainly consist of the
 following:
 \begin{itemize}
     \item Return address - This contains the location from which the program
         was called so that after the function finishes it may properly return
-        to that location. This fact was also used in our step out
+        to that location. This fact was also used in our step-out
         implementation in \todo{ref}.
     \item Base pointer backup - Backup of the value in the base pointer which
-        was set by previous function. This register needs to be preserved
-        between calls, that's why backup is made. Other registers might need to
-        be saved for the exact same reason.
+        was set by the previous function. This register needs to be preserved
+        between calls, that's why a backup is made. Other registers might need
+        to be saved for the same reason.
     \item Allocated space for variables - A space for local variables.
 \end{itemize}
 Stack frames are described in more detail in \cite{dragon-book}, where they are
 called activation records. We also provide an example of how a function
-prologue and epilogue looks, so one may get a better feel about how such stack
+prologue and epilogue look, so one may get a better feel about how such stack
 frame comes to fruition \cite{fig:prologue-and-epilogue}.
 
-Debuggers need to do a so called stack unwinding. Unwinding essentially means
-to go to a state where previous stack frame is the most recent. This needs to
-be done several times to get the whole chain of function calls which led to
-current state of the program. We could relatively simple get to the previous
-stack frame. But to get to the previous one is not easy. We need to know
-exactly where was the base pointer saved so that we may simulate the unwinds.
+Debuggers need to do a so-called stack unwinding. Unwinding essentially means
+going to a state where the previous stack frame is the most recent. This needs
+to be done several times to get the whole chain of function calls which led to
+the current state of the program. We could relatively simply get to the
+previous stack frame. But to get to the previous one is not easy. We need to
+know exactly where was the base pointer saved so that we may simulate the
+unwinds.
 
-DWARF proposes a table, in each row there is an address of a location in the
-program, a location of a stack frame and values of other registers for that
+DWARF proposes a table, in each row, there is an address of a location in the
+program, a location of a stack frame, and values of other registers for that
 location. However, such table would be very large, so DWARF again uses a
 virtual machine for the construction of the table, since many columns in one
 row would be the same for the next row \cite{dwarf}. 
 
-The figure \ref{fig:dwarf-stack-frames} contains an example of the encoding of
-this information and also the decoded values for the program in figure
-\ref{fig:prologue-and-epilogue}. The \texttt{advance\_location} adds new row to
-the matrix, with the only thing changing from the previous row is the location
-value. The \texttt{def\_cfa\_offset} specifies that the cfa (current stack
-frame) is at the provided offset. The offset is to some register which is
+Figure \ref{fig:dwarf-stack-frames} contains an example of the encoding of this
+information and also the decoded values for the program in figure
+\ref{fig:prologue-and-epilogue}. The \texttt{advance\_location} adds a new row
+to the matrix, with the only thing changing from the previous row being the
+location value. The \texttt{def\_cfa\_offset} specifies that the CFA (current
+stack frame) is at the provided offset. The offset is to some register that is
 preserved from the previous row. We can see that in the example on line $2$ the
 offset changes from $8$ to $16$, but the register stays the same. This is
 apparent in the decoded information where on the address \texttt{0x1184} the
 \texttt{CFA} changed to \texttt{RSP+16}. On the contrary, the
 \texttt{def\_cfa\_register} changes the register but keeps the offset. This
-happends when the instruction \texttt{mov \%rsp, \%rbp} is done, the stack
-frame is now offseted by 16 from base pointer. This holds until epilogue, where
+happens when the instruction \texttt{mov \%rsp, \%rbp} is done, the stack frame
+is now offset by 16 from the base pointer. This holds until the epilogue, where
 the old stack pointer is restored. In the example, many more registers were
-missing. This is because their value didn't change accross the function, so
+missing. This is because their value didn't change across the function, so
 there was no need to save information about them.
 
 The DWARF offers more instructions for manipulation, for a complete overview
-and another example consult \cite{dwarf}. With this information, DWARF is able
-to describe a way to simulate a stack unwinding without touching the state of
-the debugee.
+and another example consult \cite{dwarf}. With this information, DWARF can
+describe a way to simulate a stack unwinding without touching the state of the
+debugee.
 
 \begin{figure}
     \begin{lstlisting}
@@ -1277,7 +1284,7 @@ DW_CFA_nop:
 0x1187: CFA=RBP+16: RBP=[CFA-16], RIP=[CFA-8]
 0x11b2: CFA=RSP+8: RBP=[CFA-16], RIP=[CFA-8]
     \end{lstlisting}
-    \caption{A DWARF stack frame information about program in
+    \caption{A DWARF stack frame information about the program in
              \ref{fig:prologue-and-epilogue}, abbreviated.}
     \label{fig:dwarf-stack-frames}
 \end{figure}
@@ -1309,14 +1316,14 @@ square/.style = {draw=black!60, fill=white!5, very thick,
 \end{figure}
 
 \subsubsection{Other informations}
-The DWARF standard has information about compilation units, since object file
+The DWARF standard has information about compilation units, since object files
 may be derived from multiple compilation units \cite{dwarf}. It also has
-information about subroutines and inlined subroutines, lexical blocks, try and
-catch blocks, and many other constructs. These are not special in any way, we
-have seen a small example on figure \ref{fig:dwarf-die}. They mainly store the
-beginning and end and some other information. They also contain various
-informations about macros, so that the debugger can work with the original code
-before the macro expansion.
+information about subroutines and inlined subroutines, lexical blocks,
+try-and-catch blocks, and many other constructs. These are not special in any
+way, we have seen a small example in figure \ref{fig:dwarf-die}. They mainly
+store the beginning and end and some other information. They also contain
+various information about macros, so that the debugger can work with the
+original code before the macro expansion.
 
 It also contains many type entries.
 Those are split into different categories, we present some of the most common:
@@ -1328,25 +1335,25 @@ Those are split into different categories, we present some of the most common:
         pointers.
     \item Array types - A sequential storage space containing objects of the
         same type. Multidimensional arrays are considered a special type.
-        Interesting attribute that multidimensional array has is ordering -
-        either column or row wise. This is not relevant to C, since it has no
-        notion of multidimensional array.
-    \item Structure, Union and Class types - User defined types that packs
-        together number of different types. Information is provided about the
-        members, especially bit offset at which they reside in the structure
-        and in which order were they declared. It addition the size of the type
+        An interesting attribute that a multidimensional array has is ordering -
+        either column-wise or row-wise. This is not relevant to C, since it has no
+        notion of a multidimensional array.
+    \item Structure, Union, and Class types - User-defined types that pack
+        together several different types. Information is provided about the
+        members, especially the bit offset at which they reside in the structure
+        and in which order were they declared. In addition, the size of the type
         is specified - if it can be determined at compile time (In C, it cannot
-        be determined for forward declarations). For C++, an information about
-        inheritance, like deriving, accessibility and if the inheritance is
+        be determined for forward declarations). For C++, information about
+        inheritance, like deriving, accessibility, and if the inheritance is
         virtual, is provided.
     \item Enumeration type.
     \item Subroutine type - Used for types of functions in C. However, for the
         functions themselves, their type is specified as return type. Types of
-        their parameters is specified in the parameters themselves, since they
-        are DIEs and are children of the function. We showed this in figure
+        their parameters are specified in the parameters themselves since they
+        are DIEs and are children of the function. We showed this in the figure
         \ref{fig:dwarf-die}. This subroutine type is for example used if one
-        would create a pointer to a function. Then the type of that is pointer
-        to the subroutine type. Abbreviated example can be seen on
+        would create a pointer to a function. Then the type of that is a pointer
+        to the subroutine type. An abbreviated example can be seen on
         \ref{fig:dwarf-ptr-to-fun}.
 \end{itemize}
 
@@ -1379,23 +1386,23 @@ Those are split into different categories, we present some of the most common:
 \section{Existing debuggers and disassemblers}
 In this section, we will focus on existing debugger implementations and what
 each of them brings to the table. We will not be discussing every feature of
-said debuggers, since even some of the manuals are longer that this
+said debuggers, since even some of the manuals are longer than this
 thesis\footnote{Most notably GDB manual \cite{gdb-manual}, which has whooping
-930 pages!}, but point out ones that were interesting to this thesis.
+930 pages!}, but point out the ones that were interesting to this thesis.
 
 \subsection{LLDB}
 LLDB \cite{lldb} is a part of the LLVM tools collection \cite{llvm}. It is a
-debugger for C, Objective-C and C++ (LLVM tools supports mainly those three
-languages) on the desktop and iOS devices. It works closely with the Clang
+debugger for C, Objective-C, and C++ (LLVM tools support mainly those three
+languages) on desktop and iOS devices. It works closely with the Clang
 compiler, which is also part of LLVM, and the LLVM disassembler. Thanks to
-this, it stays very up to date with current C++ standard. The source code is
-kept modular with plug-in architecture. LLDB is both source and instruction
-level debugger.
+this, it stays very up-to-date with current C++ standard. The source code is
+kept modular with a plug-in architecture. LLDB is both a source and
+instruction-level debugger.
 
 LLDB offers an API through which one can interact with the whole debugger. For
 example, the command line application through which one can use LLDB uses this
 API. LLDB is written in modern C++, but a bridging interface to the API is
-provided for Python. Thanks to this, one can use LLDB not only for debugging,
+provided for Python. Thanks to this, one can use LLDB not only for debugging
 but for example as a library to disassemble machine code \cite{lldb}.
 
 LLDB provides a command line interface (CLI) through which one can use the debugger
@@ -1417,28 +1424,28 @@ directly. The CLI provides a variety of commands that one can use, some examples
 
 The LLDB debugger has an expression parser. While debugging, one can write an
 expression and the debugger interprets that expression and prints the result
-back. Example of usage can be to look at some value in an \texttt{std::map}
+back. An example of usage can be to look at some value in an \texttt{std::map}
 structure, which can be achieved by using the \texttt{frame variable
 map\_var["Value"]} command. Since the debugger uses Clang, it can parse
 any C++ expression.
 
 \subsection{GDB}
-The GNU Project debugger (GDB) is an another source and instruction level
+The GNU Project debugger (GDB) is another source and instruction-level
 debugger. It supports languages like C, C++, D, Fortran, Go, Objective-C,
-Pascal, Rust and some others. In this regard, it beats the LLDB debugger. GDB
-is written in C++. Feature wise, it is similar to LLDB. Because of that, we
+Pascal, Rust, and some others. In this regard, it beats the LLDB debugger. GDB
+is written in C++. Feature-wise, it is similar to LLDB. Because of that, we
 will not talk about GDB as much. One may consult the GDB manual
 \cite{gdb-manual} to find out all features of this debugger.
 
 \subsection{IDA Free}
 First and foremost, IDA has several versions, we will be mainly talking about
 the free version. It is a tool that is mainly used for reverse engineering. It
-works at the assembly level. A part of it is an assembly level debugger. It
+works at the assembly level. A part of it is an assembly-level debugger. It
 also offers various interactive functionality. For example, one can rename a
 location like \texttt{[RBP + 4]} to \texttt{counter} to make the assembly more
 readable. It also somewhat works with references, can create a control flow
-graph from the assembly and much more. All this makes it an invaluable asset in
-reverse engineer toolkit.
+graph from the assembly, and much more. All this makes it an invaluable asset
+in reverse engineer's toolkit.
 
 \subsection{x64Dbg}
 Windows only, az budu doma u widli.
@@ -1450,4 +1457,3 @@ Windows only, az budu doma u widli.
 Windows only, az budu doma u widli.
 
 \subsection{Compiler explorer}
-\todo{Check if visual studio can do the same, if ye then throw this guy away.}
