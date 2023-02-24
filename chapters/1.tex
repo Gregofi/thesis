@@ -245,7 +245,7 @@ it will be executed in kernel space with full access.
 The most used operating systems today are Microsoft Windows, Linux, and MacOS.
 Linux and MacOS systems are somewhat similar, but Windows is very different.
 
-\subsection{Linux}
+\subsection{Linux}\label{section:linux-dbg}
 Linux offers a special system call which is very handy for debugging. It is
 called \texttt{ptrace} \cite{ptrace} - process trace. It has following
 signature: \texttt{ptrace(request, pid, void* addr, void* data)}. The request
@@ -573,10 +573,74 @@ operating system but it can be used to achieve the same functionality as on the
 Linux operating system.
 
 \subsection{Windows}
-Windows also has built-in support for debugging at the Win32API layer
+The Microsoft Windows operating system also offers built-in support for
+debugging. It is provided at the Win32 API layer
 \cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds on
-\textit{debug events} and \textit{debug functions}. Summary of some of the
-functions that Win32 API offers which all help with debugging:
+\textit{debug events} and \textit{debug functions}. Before we get to that
+however, there is a need to signal and handle abnormal conditions which needs
+to be immediately addressed, such as hitting a breakpoint or just interrupts in
+general. The Linux and other POSIX compliant operating system use signals,
+which we have described in section \ref{section:linux-dbg}. Windows, however,
+is not a POSIX system, and as such it uses a different strategy.
+
+\subsubsection*{Structured Exception Handling}
+Instead of signals, Windows uses \textit{Structured Exceptions}
+\cite{windows-msdn-seh}. From now on, we will be using the abbreviation 'SEH'.
+An exception is an event that requires the execution of code outside the normal
+flow of control. There are software exceptions, like throwing an exception
+explicitly or by the operating system, and hardware exceptions, which are
+caused by interrupts. SEH unifies both of these things into one just like
+signals do.
+
+When an exception is triggered, control is transferred to the system. It saves
+all necessary information that can later be used to continue execution from the
+point where the exception was thrown. It also contains information about which
+type of exception was thrown, if the execution can continue after handling the
+exception, the address where the exception occurred and some other bits of
+information\footnote{See MSDN documentation \cite{windows-msdn-seh} for full
+detailed list}. The system then searches for an exception handler that will
+handle the exception. The search is performed in this order:
+
+\begin{enumerate}
+    \item If the process is debugged the debugger is notified.
+    \item If the process is not debugged or the debugger does not handle the
+        exception, the frame-based exception handler is to be
+        found\footnote{The handlers are not very important to us, see MSDN
+        documentation if you're interested \cite{windows-msdn-seh}.}
+    \item If no frame-based handler can be found, or no handler handles the
+        exception, but the process is being debugged then the debugger gets
+        notified once again.
+    \item The system provides a default handler, which often is the termination of
+        the program via \mintinline{c}{ExitProcess}.
+\end{enumerate}
+
+The debugger has two opportunities to handle the exception. The
+\textit{first-chance} is before the exception gets to the debugee. This is
+intended for exceptions for which the debugger is responsible, for example,
+breakpoint or single stepping. The debugger should handle these because the
+debuggee is not responsible for them. The second opportunity, called
+\textit{last-chance}, is when a debugee doesn't have an appropriate frame-based
+handler to handle the exception. If the debugger weren't in the way, the system
+would have already used the default exception handler, which is often program
+termination. An example of an exception the debugger shouldn't handle on
+first-chance is \texttt{EXCEPTION\_INT\_DIVIDE\_BY\_ZERO}. It should pass it
+along to the debuggee. If however the debuggee does not have any appropriate
+handler the debugger will get a last chance to look at the state of the program
+before it will be killed \cite{windows-msdn-dbg-exc-handling}.
+
+Two important exception types for debugging, both of which should be handled on
+first-chance:
+\begin{itemize}
+    \item \texttt{EXCEPTION\_BREAKPOINT} - Raised when a breakpoint was encountered.
+    \item \texttt{EXCEPTION\_SINGLE\_STEP} - Raised when a hardware-supported
+        single step was completed.
+\end{itemize}
+
+\subsubsection{Debug events and functions}
+Now that we have a tool through which breakpoints and singlestepping may be implemented,
+lets look at other tools that the Windows API gives us. On Linux, we had a single function
+called \texttt{ptrace} which behavior changed based on arguments. Windows on the other hand
+provides us with many functions, some of which are:
 
 \begin{itemize}
     \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an
@@ -584,23 +648,26 @@ functions that Win32 API offers which all help with debugging:
     \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to
         occur in the specified process. This passes control of the process to
         the debugger if there is one.
-    \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events.
+    \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events (on
+        Linux, we used \texttt{waitpid}, which is more general purpose).
     \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution
-        after processing debug event.
-    \item \mintinline{c}{OutputDebugString} - Sends a string to the debugger
-        for display.
+        after processing debug event (on Linux, we used the \texttt{PTRACE\_CONT}).
+    \item \mintinline{c}{OutputDebugString} - Sends a string from the debuggee
+        to the debugger.
     \item \mintinline{c}{ReadProcessMemory} and
-        \mintinline{c}{WriteProcessMemory} - Read and modify
-          process virtual address space.
+    \mintinline{c}{WriteProcessMemory} - Read and modify process virtual
+        address space. On linux we used \texttt{PTRACE\_PEEKTEXT} and
+        \texttt{PTRACE\_POKETEXT}.
     \item \mintinline{c}{FlushInstructionCache} - Flushes instruction cache of
-        the process.
+        the process. This should be used when modifying process text section,
+        because the old instructions may still be cached.
 \end{itemize}
 
-The general structure of Windows debugger can be seen in figure
-\ref{fig:win32debugger}. The debugger waits for debug events via function
-\mintinline{c}{WaitForDebugEvent}. This function has a timeout parameter, so
-the debugger can also do other things while it's waiting, like react to GUI
-interaction.
+The figure \ref{fig:win32debugger} depicts how a communication between
+debugger, Windows and debugee can look. The debugger waits for debug events via
+function \mintinline{c}{WaitForDebugEvent}. This function has a timeout
+parameter, so the debugger can also do other things while it's waiting.
+
 \begin{figure}
     \centering
     \scalebox{0.8}{
@@ -626,7 +693,7 @@ interaction.
              \todo{NI-REV 6. lecture}}
     \label{fig:win32debugger}
 \end{figure}
-
+ 
 \subsubsection*{Debug Events}\label{section:Debug Events}
 Debugging events are various incidents in the debuggee that causes the system
 to notify the debugger \cite{windows-msdn-debug-events}. These are stored in
@@ -635,8 +702,10 @@ special \mintinline{c}{DEBUG_EVENT} structure, which is received in
 contains various information about the event, the internals can be seen in
 figure \ref{fig:DebugEvent}. These events include loading and unloading a DLL,
 creating and exiting a process, sending debug strings via the
-\mintinline{c}{OutputDebugString}, and so on. One category of events are
-exceptions, let us look at them more closely.
+\mintinline{c}{OutputDebugString}, and last but not least, exception occurence.
+Exceptions include the \texttt{EXCEPTION\_BREAKPOINT} and
+\texttt{EXCEPTION\_SINGLESTEP} mentioned previously, which are vital to the
+debugger.
 
 \begin{figure}
 \begin{minted}{c}
@@ -661,65 +730,12 @@ typedef struct _DEBUG_EVENT {
 \label{fig:DebugEvent}
 \end{figure}
 
-\subsubsection*{Structured Exception Handling}
-On POSIX systems, abnormal conditions which need immediate attention are
-handled via signals \todo{ref signals}. Windows however is not a POSIX system.
-Instead, Windows uses \textit{Structured Exceptions} \cite{windows-msdn-seh}.
-From now on, we will be using the abbreviation 'SEH'. An exception is an event
-that requires the execution of code outside the normal flow of control. There
-are software exceptions, like throwing an exception explicitly or by OS, and
-hardware exceptions, like the division by zero we mentioned. Instruction with
-opcode \mintinline{c}{0xCC}, which is used for breakpoints, will also raise an
-exception. SEH unifies both of these things into one just like signals do.
-
-When an exception is triggered, control is transferred to the system. It saves
-the state of the thread and some other information. This information can be
-used to continue execution from the point where the exception was thrown when
-it is resolved. It also contains information about which type of exception was
-thrown, if the execution can continue after handling the exception, the address
-where the exception occurred and some others\footnote{See MSDN documentation
-\cite{windows-msdn-seh} for full detailed list}. The system then searches for
-an exception handler that will handle the exception. The search is performed in
-this order:
-
-\begin{enumerate}
-    \item If the process is debugged the debugger is notified.
-    \item If the process is not debugged or the debugger does not handle the
-        exception, the frame-based exception handler is to be
-        found\footnote{The handlers are not very important to us, see MSDN
-        documentation if you're interested \cite{windows-msdn-seh}.}
-    \item If no frame-based handler can be found, or no handler handles the
-        exception, but the process is being debugged then the debugger gets
-        notified once again.
-    \item The system provides a default handler, which often is the termination of
-        the program via \mintinline{c}{ExitProcess}.
-\end{enumerate}
-
-The debugger has two opportunities to handle the exception. The
-\textit{first-chance} is before the exception gets to the debugee. This is
-intended for exceptions for which the debugger is responsible, for example,
-breakpoint or single stepping. The debugger should handle these. The second
-opportunity, called \textit{last-chance}, is when a debugee doesn't have an
-appropriate frame-based handler to handle the exception. If the debugger
-weren't in the way, the system would have already used the default exception
-handler, which is often program termination. This gives us a last chance to
-look at the state of the program before it will be killed
-\cite{windows-msdn-dbg-exc-handling}.
-
-Examples of some exceptions that tie into debugging:
-\begin{itemize}
-    \item \texttt{EXCEPTION\_BREAKPOINT} - Raised when a hardware-defined
-        breakpoint was encountered. This includes the mentioned
-        \texttt{INT3} instruction.
-    \item \texttt{EXCEPTION\_SINGLE\_STEP} - Raised when a hardware-supported
-        single step was completed.
-\end{itemize}
-
 \subsubsection*{Tying it all together}
-We presented various functions that offer debugging support. The implementation
-itself would be very similar to the Linux one we presented in section
-\todo{ref}. For illustration, figure \ref{fig:windows-debugger-mainloop}
-contains an abbreviated main loop of the debugger. We not only need to handle
+Now we have all necessary building blocks to create ourselves a tiny Windows
+compiler. The implementation itself would be very similar to the Linux one we
+presented in section \ref{section:linux-dbg}. To provide at least some idea,
+figure \ref{fig:windows-debugger-mainloop} contains an abbreviated main loop of
+the debugger \cite{windows-msdn-dbg-main-loop}. We not only need to handle
 exception debug events but others also if we want our debugger to be robust.
 For example, thread creation might interest us too, so that we can trace all
 threads of the debugee.
