@@ -773,6 +773,7 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
    }
 }
     \end{minted}
+    \caption{An abbreviated example of a Windows Debugger loop, taken from \cite{windows-msdn-dbg-main-loop}}
     % Beware, this figure is cursed. Adding caption here will break the entire
     % build for god knows what stupid reason. If it works add citation
     % to Writing main debugger loop.
@@ -1240,7 +1241,7 @@ following:
 Stack frames are described in more detail in \cite{dragon-book}, where they are
 called activation records. We also provide an example of how a function
 prologue and epilogue look, so one may get a better feel about how such stack
-frame comes to fruition \cite{fig:prologue-and-epilogue}.
+frame comes to fruition \ref{fig:prologue-and-epilogue}.
 
 Debuggers need to do a so-called stack unwinding. Unwinding essentially means
 going to a state where the previous stack frame is the most recent. This needs
