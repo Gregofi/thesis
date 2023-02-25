@@ -579,7 +579,7 @@ debugging. It is provided at the Win32 API layer
 \textit{debug events} and \textit{debug functions}. Before we get to that
 however, there is a need to signal and handle abnormal conditions which needs
 to be immediately addressed, such as hitting a breakpoint or just interrupts in
-general. The Linux and other POSIX compliant operating system use signals,
+general. The Linux and other POSIX compliant operating systems use signals,
 which we have described in section \ref{section:linux-dbg}. Windows, however,
 is not a POSIX system, and as such it uses a different strategy.
 
@@ -589,8 +589,8 @@ Instead of signals, Windows uses \textit{Structured Exceptions}
 An exception is an event that requires the execution of code outside the normal
 flow of control. There are software exceptions, like throwing an exception
 explicitly or by the operating system, and hardware exceptions, which are
-caused by interrupts. SEH unifies both of these things into one just like
-signals do.
+caused by the CPU (eg. interrupts). SEH unifies both of these things into one
+just like signals do.
 
 When an exception is triggered, control is transferred to the system. It saves
 all necessary information that can later be used to continue execution from the
@@ -605,8 +605,8 @@ handle the exception. The search is performed in this order:
     \item If the process is debugged the debugger is notified.
     \item If the process is not debugged or the debugger does not handle the
         exception, the frame-based exception handler is to be
-        found\footnote{The handlers are not very important to us, see MSDN
-        documentation if you're interested \cite{windows-msdn-seh}.}
+        found\footnote{For detailed information about the handlers see
+        \cite{windows-msdn-seh}.}
     \item If no frame-based handler can be found, or no handler handles the
         exception, but the process is being debugged then the debugger gets
         notified once again.
@@ -637,10 +637,11 @@ first-chance:
 \end{itemize}
 
 \subsubsection{Debug events and functions}
-Now that we have a tool through which breakpoints and singlestepping may be implemented,
-lets look at other tools that the Windows API gives us. On Linux, we had a single function
-called \texttt{ptrace} which behavior changed based on arguments. Windows on the other hand
-provides us with many functions, some of which are:
+Now that we have explained how a breakpoint may be signaled, let us look at
+other tools that the Windows API gives us to allow for debugger implementation.
+On Linux, we had a single function called \texttt{ptrace} which behavior
+changed based on arguments. Windows on the other hand provides us with many
+functions, some of which are:
 
 \begin{itemize}
     \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an
@@ -750,9 +751,18 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
       WaitForDebugEvent(DebugEv, INFINITE);
       switch (DebugEv->dwDebugEventCode)
       {
-          case EXCEPTION_DEBUG_EVENT:{
-            // Handle exception debug events
-            ...
+            case EXCEPTION_ACCESS_VIOLATION: 
+               // First chance: Pass this on to the system.
+               // Last chance: Display an appropriate error.
+                  break;
+
+               case EXCEPTION_BREAKPOINT:
+               // First chance: Display the current
+               // instruction and register values.
+                  break;
+
+              // Other exception types like singlestep ...
+              ...
           }
           // Other debug events
           ...
@@ -764,7 +774,8 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 }
     \end{minted}
     % Beware, this figure is cursed. Adding caption here will break the entire
-    % build for god knows what stupid reason.
+    % build for god knows what stupid reason. If it works add citation
+    % to Writing main debugger loop.
 \end{figure}
 
 \section{Compilers}
