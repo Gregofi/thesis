@@ -251,11 +251,11 @@ called \texttt{ptrace} \cite{ptrace} - process trace. It has following
 signature: \texttt{ptrace(request, pid, void* addr, void* data)}. The request
 is a \texttt{PTRACE\_COMMAND}, which specifies the behavior of the function
 (for example \texttt{PTRACE\_SINGLESTEP}), pid of some process (presumably the
-debugee) and two other parameters, whose meaning change depending on the
+debuggee) and two other parameters, whose meaning change depending on the
 \texttt{PTRACE\_COMMAND} that was chosen\footnote{Peak API design!}. It allows
 to observe and control the execution of another process, this process will be
-the debugee. In the context of \texttt{ptrace}, we will instead use the word
-tracee for the debugee, and tracer for the debugger, to be consistent with
+the debuggee. In the context of \texttt{ptrace}, we will instead use the word
+tracee for the debuggee, and tracer for the debugger, to be consistent with
 ptrace documentation.
 
 \texttt{ptrace} has many commands, here are some of the most important:
@@ -515,8 +515,8 @@ void step_over_bp(pid_t pid) {
 
     disable(pid, bp);
     ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
-    // Waits until debugee finishes singlestepping
-    wait_for_debugee(pid);
+    // Waits until debuggee finishes singlestepping
+    wait_for_debuggee(pid);
     enable(pid, bp);
 }
     \end{minted}
@@ -536,7 +536,7 @@ immediately after the call instruction is put onto the stack. Then, on entry to
 the function, \texttt{rbp} register is pushed onto the stack and then the value
 of it is set to the current value of the stack pointer. So the return address
 is located at \texttt{rbp + 8}. We can set a breakpoint at that address and
-then continue execution, wait for the debugee to hit the breakpoint, and then
+then continue execution, wait for the debuggee to hit the breakpoint, and then
 disable and remove it. This has its flaws, for example, it won't work if the
 step out is used before the rbp is set. Or if some library completely bypasses
 the call instruction.
@@ -614,11 +614,11 @@ handle the exception. The search is performed in this order:
 \end{enumerate}
 
 The debugger has two opportunities to handle the exception. The
-\textit{first-chance} is before the exception gets to the debugee. This is
+\textit{first-chance} is before the exception gets to the debuggee. This is
 intended for exceptions for which the debugger is responsible, for example,
 breakpoint or single stepping. The debugger should handle these because the
 debuggee is not responsible for them. The second opportunity, called
-\textit{last-chance}, is when a debugee doesn't have an appropriate frame-based
+\textit{last-chance}, is when a debuggee doesn't have an appropriate frame-based
 handler to handle the exception. If the debugger weren't in the way, the system
 would have already used the default exception handler, which is often program
 termination. An example of an exception the debugger shouldn't handle on
@@ -664,7 +664,7 @@ functions, some of which are:
 \end{itemize}
 
 The figure \ref{fig:win32debugger} depicts how a communication between
-debugger, Windows and debugee can look. The debugger waits for debug events via
+debugger, Windows and debuggee can look. The debugger waits for debug events via
 function \mintinline{c}{WaitForDebugEvent}. This function has a timeout
 parameter, so the debugger can also do other things while it's waiting.
 
@@ -738,7 +738,7 @@ figure \ref{fig:windows-debugger-mainloop} contains an abbreviated main loop of
 the debugger \cite{windows-msdn-dbg-main-loop}. We not only need to handle
 exception debug events but others also if we want our debugger to be robust.
 For example, thread creation might interest us too, so that we can trace all
-threads of the debugee.
+threads of the debuggee.
 
 \begin{figure}\label{fig:windows-debugger-mainloop}
     \begin{minted}{c}
@@ -1179,7 +1179,7 @@ there was no need to save information about them.
 The DWARF offers more instructions for manipulation, for a complete overview
 and another example consult \cite{dwarf}. With this information, DWARF can
 describe a way to simulate a stack unwinding without touching the state of the
-debugee.
+debuggee.
 
 \begin{figure}
     % In case supervisor will want the opcodes in binary then just use git
@@ -1654,7 +1654,7 @@ but for example as a library to disassemble machine code \cite{lldb}.
 LLDB provides a command line interface (CLI) through which one can use the debugger
 directly. The CLI provides a variety of commands that one can use, some examples include
 \begin{itemize}
-    \item \texttt{process launch} - Starts the debugee.
+    \item \texttt{process launch} - Starts the debuggee.
     \item \texttt{process attach --pid 123} - Attaches to the process with PID
         123.
     \item \texttt{thread step-in} - Source level single step in currently selected thread.
