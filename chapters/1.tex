@@ -4,7 +4,7 @@
   \textit{Debugging is twice as hard as writing the code in the first place.
     Therefore, if you write the code as cleverly as possible, you are, by
     definition, not smart enough to debug it.}\begin{flushright}
-    \tiny{Brian W. Kernighan}
+    \scriptsize{Brian W. Kernighan}
   \end{flushright}
 \end{quote}
 
@@ -907,7 +907,7 @@ is only used for the location to be precise.
         the special opcode occupies only one.
     \item \texttt{0x4f} - Special opcode - Increment line by 2 to 3 and advance address by 15 to \texttt{0x1148}.
         This essentialy skips the function prologue and advances to instruction \texttt{cmpl}, which represents
-        line \mintinline{c}{if(argc < 1)} of the program.
+        line \mintinline{c}{if (argc < 2)} of the program.
     \item \texttt{0x52} - Special opcode - advance line by 1 to 4 and advance address by 6 to \texttt{0x114e}.
         This is the \mintinline{c}{return 1;} line of the program.
 \end{itemize}
@@ -919,10 +919,10 @@ in section \texttt{.debug\_line}.
     \begin{minted}{c}
 #include <stdio.h>
 int main(int argc, char* argv[]) {
-    if (argc < 1)
+    if (argc < 2)
         return 1;
     const char* name = argv[1];
-    printf("Hello, %s\n!", name);
+    printf("Hello, %s!\n", name);
     return 0;
 }
     \end{minted}
@@ -933,7 +933,7 @@ int main(int argc, char* argv[]) {
     113d:	48 83 ec 20          	sub    $0x20,%rsp
     1141:	89 7d ec             	mov    %edi,-0x14(%rbp)
     1144:	48 89 75 e0          	mov    %rsi,-0x20(%rbp)
-    1148:	83 7d ec 00          	cmpl   $0x0,-0x14(%rbp)
+    1148:	83 7d ec 00          	cmpl   $0x1,-0x14(%rbp)
     114c:	7f 07                	jg     1155 <main+0x1c>
     114e:	b8 01 00 00 00       	mov    $0x1,%eax
     1153:	eb 2c                	jmp    1181 <main+0x48>
@@ -1068,7 +1068,7 @@ DW_TAG_subprogram
     \label{fig:dwarf-die}
 \end{figure}
 
-\subsubsection{Locations of variables}
+\subsubsection{Locations of variables}\label{section:dwarf-location}
 Locations are probably the most complicated thing in the DWARF standard. Like
 with locations, a virtual machine is needed to decode this information.
 Variables are generally stored in one place. This can be a memory, register, or
@@ -1392,13 +1392,14 @@ consistent. For example that used variable has been declared before.
  
 \subsection{Intermediate code generation}
 This part converts AST into some other representation, most commonly called IR,
-which means intermediate representation. IR is closer to the machine code, to
-be easily translated, but retains some high-level properties that make it
-easier to work with it, like types and functions. There are many types of IR.
-One of the most popular compilers, LLVM, uses single static assignment (SSA)
-\cite{llvm}. An example of LLVM IR can be found in figure
-\ref{fig:llvm-ir-example}. Compilers perform most optimizations on this
-intermediate representation. 
+which means intermediate representation. IR should be closer to the machine
+code, to be easily translated but is still machine independent. It also should
+retain some high-level properties that make it easier to work with it, like
+types and functions, but should be language-independent. There are many types
+of IR. One of the most popular compilers, LLVM, uses single static assignment
+(SSA) and satisfies all of the above \cite{llvm}. An example of LLVM IR can be
+found in figure \ref{fig:llvm-ir-example}. Compilers perform most optimizations
+on this intermediate representation. 
 
 \begin{figure}\label{fig:llvm-ir-example}
     \begin{minted}{llvm}
@@ -1451,33 +1452,114 @@ that AST into the LLVM IR.
 \subsection{IR Debugging information}
 With IR translation, some of the information from the AST is stripped away.
 The IR must encode how some of the properties of the AST maps onto the IR.
-We will describe how LLVM IR does this.
+We will give a glimpse of how LLVM IR handle this.
 
 Since the LLVM IR is transformed into many existing architectures and many,
 very different existing programming languages are compiled into it, LLVM debug
 information does not put any restrictions on the flavor of the programming
 language. High priority of the LLVM debug information (abbr. LDI) is to make it
-interact well with optimizations \cite{llvm-debug-info}.
-The LDI guarantees following:
+interact well with optimizations \cite{llvm-debug-info}. The LDI guarantees
+following:
 \begin{enumerate}
     \item LDI always provides information to accurately \textbf{read} the
         source-level state of the program regardless of which LLVM
         optimizations have been run \cite{llvm-debug-info}. Emphasis has been
         put on the word read, because it is not always possible to, for
-        example, change value of a variable because it might have been
+        example, change the value of a variable because it might have been
         completely optimized away.
-    \item LDI does not prevent optimizations from happening
+    \item LDI does not prevent optimizations from happening.
     \item LLVM optimizations may be upgraded to be aware of debugging
-        information. This may be helpful, especially if the optimizations are
-        aggresive. But even if not aware they will never break the first
-        guarantee (for example non-aware tail call optimization will never
-        break call stack for reading) \cite{llvm-debug-info}.
+        information. This is sometimes necessary, especially if the
+        optimizations are aggresive \cite{llvm-debug-info}. LLVM provides a
+        guide to developers of optimization passes specifiying how to handle
+        certain situations \cite{llvm-debug-optimizations}. For example,
+        an accurate stack trace is desired even though inlining or tail call
+        optimization was applied \cite{llvm-debug-info}.
     \item The LDI is optimized with the rest of the program (ie. unused
         information is removed).
 \end{enumerate}
-The design of the LDI permits that the optimizations do not have to known about
-the debugging information at all. The LDI is designed to be agnostic of the
-debugging information target (ie. DWARF).
+So, if one compiles the code with optimizations and with debugging information,
+the same optimizations must be applied that would be applied if no debugging
+information was generated (running \texttt{clang -O3 -g} and \texttt{clang -O3}
+must result in the same optimizations applied). The code must also be
+debuggable with optimizations enabled and provide correct information.
+Sometimes, if a variable is completely optimized out, the debugger may present
+the message \texttt{optimized out}, which reduces the amount of debug
+information available to the developer, but the information is still reliable
+\cite{llvm-debug-info}.
+
+In figure \ref{fig:llvm-ir-debug} we provide an example of LLVM IR with
+debugging information. It is encoded in form of metadata, starting with an
+exclamation mark. LLVM IR also provides intrinsic functions to register debug
+information about variables. The function from the example
+\texttt{llvm.dbg.declare} receives the address of the variable, the description
+of the variable , and its location in form of complex expression. This is
+similar to the Dwarf expressions used for locations described in section
+\ref{section:dwarf-location}. There is also the \texttt{llvm.dbg.address},
+which has the same role but can be used multiple times for one variable. This
+is primarily used after optimizations to describe how the address of a variable
+changed thorough the program.
+
+The debugging information in the figure is otherwise mostly self explanatory.
+The variables and locations also have their scope included, because LLVM IR
+does not have any notion about scoping. LLVM provides \textit{consumers}, which
+are able to transform the LLVM IR debugging information into some other format,
+like DWARF.
+
+There are some more nuances that needs to be dealt with, especially considering
+optimizations like instruction scheduling, and register selection. This is
+beyond the scope of this thesis and is described in \cite{llvm-debug-info}.
+
+\begin{figure}
+    \begin{minted}{llvm}
+define dso_local i32 @main() #0 !dbg !10 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  store i32 0, ptr %1, align 4
+  call void @llvm.dbg.declare(metadata ptr %2,
+        metadata !15, metadata !DIExpression()), !dbg !16
+  store i32 2, ptr %2, align 4, !dbg !16
+  call void @llvm.dbg.declare(metadata ptr %3,
+        metadata !17, metadata !DIExpression()), !dbg !19
+  store i32 1, ptr %3, align 4, !dbg !19
+  %4 = load i32, ptr %2, align 4, !dbg !20
+  %5 = load i32, ptr %3, align 4, !dbg !21
+  %6 = add nsw i32 %4, %5, !dbg !22
+  ret i32 %6, !dbg !23
+}
+
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, 
+        file: !1, producer: "clang version 15.0.7", 
+        isOptimized: false, runtimeVersion: 0, 
+        emissionKind: FullDebug, splitDebugInlining: false, 
+        nameTableKind: None)
+!1 = !DIFile(filename: "main.c", directory: "/home/gregofi1/dev",
+        checksumkind: CSK_MD5,
+        checksum: "408b866a5672c0f12dbc2c9bf3baaa58")
+!2 = !{i32 7, !"Dwarf Version", i32 5}
+!3 = !{i32 2, !"Debug Info Version", i32 3}
+!10 = distinct !DISubprogram(name: "main", scope: !1,
+        file: !1, line: 1, type: !11,
+        scopeLine: 1, spFlags: DISPFlagDefinition,
+        unit: !0, retainedNodes: !14)
+!11 = !DISubroutineType(types: !12)
+!13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+!15 = !DILocalVariable(name: "x", scope: !10, file: !1, line: 2, type: !13)
+!16 = !DILocation(line: 2, column: 9, scope: !10)
+!17 = !DILocalVariable(name: "y", scope: !18, file: !1, line: 4, type: !13)
+!18 = distinct !DILexicalBlock(scope: !10, file: !1, line: 3, column: 5)
+!19 = !DILocation(line: 4, column: 13, scope: !18)
+!20 = !DILocation(line: 5, column: 16, scope: !18)
+!21 = !DILocation(line: 5, column: 20, scope: !18)
+!22 = !DILocation(line: 5, column: 18, scope: !18)
+!23 = !DILocation(line: 5, column: 9, scope: !18)
+    \end{minted}
+    \caption{An example of LLVM IR with debugging information, abbreviated.}
+    \label{fig:llvm-ir-debug}
+\end{figure}
 
 \section{Existing debuggers and disassemblers}
 In this section, we will focus on existing debugger implementations and what
@@ -1485,15 +1567,84 @@ each of them brings to the table. We will not be discussing every feature of
 said debuggers, since even some of the manuals are longer than this
 thesis\footnote{Most notably GDB manual \cite{gdb-manual}, which has whooping
 930 pages!}, but point out the ones that were interesting to this thesis.
+Each debugger discussed here implements at the very least breakpoints,
+singlestepping, reading and writing into program memory and registers.
+
+\subsection{GDB}
+The GNU Project debugger (GDB) \cite{gdb-manual} is a source and instruction-level
+debugger. It supports languages like C, C++, D, Fortran, Go, Objective-C,
+Pascal, Rust, and some others. GDB is written in C/C++. It offers a CLI
+application, through which one might interact with the debugger. It also
+has an API for Python.
+
+Interesting feature GDB offers is \textit{reverse debugging}. This allows to go
+back in the execution flow. For example, the command \textit{reverse-next}
+returns to previous line. A command to record executed instructions must
+explicitly be invoked. GDB then sets the state of the program depending on the
+record. It still isn't fully supported, and from our limited testing cannot
+handle even some basic statements, like the usage of \texttt{printf} in C.
 
 \subsection{LLDB}
-LLDB \cite{lldb} is a part of the LLVM tools collection \cite{llvm}. It is a
-debugger for C, Objective-C, and C++ (LLVM tools support mainly those three
-languages) on desktop and iOS devices. It works closely with the Clang
-compiler, which is also part of LLVM, and the LLVM disassembler. Thanks to
-this, it stays very up-to-date with current C++ standard. The source code is
-kept modular with a plug-in architecture. LLDB is both a source and
-instruction-level debugger.
+LLDB is similar to GDB, it also is a source and instruction-level debugger
+written in modern (post C++11 standard) C++. It also offers CLI and Python
+interface. We will dive deeper into LLDB in section \ref{section:case-study}.
+
+\subsection{IDA Free}
+IDA is mostly an interactive disassembler, but also offers some
+instruction-lvel debugging capabilities. It is a tool that is mainly used for
+reverse engineering. An example of the interactivity is that it is possible to
+rename a location like \texttt{[RBP + 4]} to \texttt{counter} to make the
+assembly more readable. It can also follow references (like jumps or calls),
+create control flow graph from the assembly, and much more. We show an example
+of iterative factorial function disassembled via IDA in figure \ref{fig:ida}.
+In the figure, the variable location were renamed to represent semantic meaning
+of them. This has to be done by hand, IDA itself can sometimes know the fact
+that it is a variable, but not its exact purpose. For static analysis, IDA is
+an invaluable asset in reverse engineer's toolkit.
+
+\begin{figure}
+    \centering{
+    \includegraphics[height=\textwidth,keepaspectratio]{./media/ida}
+}
+    \caption{An example of a factorial program disassembled with IDA.}
+    \label{fig:ida}
+\end{figure}
+
+\subsection{Microsoft Visual Studio Debugger}
+Microsoft Visual Studio is an Integrated Development Environment. It packs
+together many tools that are helpful for developing programs for the Windows
+Operating System. It mainly supports the C\# and C++ languages. The debugger
+that is part of Visual Studio is a GUI application, as is the whole Visual
+Studio IDE. It is a both source and assembly level debugger.
+
+In figure \ref{fig:msvc} we show an example of how the GUI looks. On the left
+side, we can see the source code of the program. The red points are the
+breakpoints, arrow signalizes current point in the execution. On the right
+side, we can see the corresponding assembly. The assembly contains the lines
+from the source code to make the mapping between it more apparent. On the
+bottom left, a value and type of every variables in scope is displayed. In the
+middle, a call stack is shown, currently only having main and factorial calls
+annd locations from where those calls happened. On the right side, values in
+registers can be seen. This is basic overview of the features, there are many
+more.
+
+\begin{figure}
+    \centering{
+    \includegraphics[width=\textwidth,keepaspectratio]{./media/msvc-debugger}
+    }
+    \caption{An example of debugging factorial program with MSVC debugger.}
+    \label{fig:msvc}
+\end{figure}
+
+\subsection{Case study - LLDB}\label{section:case-study}
+In this section, we go into greater details about the LLDB \cite{lldb}
+debugger. It is a part of the LLVM tools collection \cite{llvm}. Supported
+languages for debugging are the C, Objective-C, and C++ languages (LLVM tools
+support mainly those three languages) on desktop and iOS devices. It works
+closely with the Clang compiler, which is also part of LLVM, and the LLVM
+disassembler. Thanks to this, it stays very up-to-date with current C++
+standard. The source code is kept modular with a plug-in architecture. LLDB is
+both a source and instruction-level debugger.
 
 LLDB offers an API through which one can interact with the whole debugger. For
 example, the command line application through which one can use LLDB uses this
@@ -1504,52 +1655,33 @@ but for example as a library to disassemble machine code \cite{lldb}.
 LLDB provides a command line interface (CLI) through which one can use the debugger
 directly. The CLI provides a variety of commands that one can use, some examples include
 \begin{itemize}
-    \item \texttt{run} - Starts the debugee.
+    \item \texttt{process launch} - Starts the debugee.
     \item \texttt{process attach --pid 123} - Attaches to the process with PID
         123.
-    \item \texttt{step} - Source level single step.
-    \item \texttt{si} - Instruction level single step.
+    \item \texttt{thread step-in} - Source level single step in currently selected thread.
+    \item \texttt{thread step-inst} - Instruction level single step in currently selected thread.
     \item \texttt{thread until 12} - Run until line $12$ is hit or the current
-        function returns.
-    \item \texttt{breakpoint set --name main} - Set breakpoint on all functions
-        named \texttt{main}.
+        function returns in currently selected thread.
+    \item \texttt{breakpoint set --name foo} - Set breakpoint on all functions
+        named \texttt{foo}.
     \item \texttt{breakpoint enable 1} - Enable breakpoint $1$.
     \item \texttt{watchpoint set variable x} - Watch a variable \texttt{x} for
         any writes.
 \end{itemize}
+All commands are of the following structure:
+\begin{lstlisting}
+<noun> <verb> [-options [option-value]] [argument [argument...]]
+\end{lstlisting}
+Some of the commands have shorter form, like \texttt{step} for \texttt{thread
+step-in}. Also, using ani unambiguous prefix works too, like \texttt{br s -M
+foo} for \texttt{breakpoint set --name foo}.
 
 The LLDB debugger has an expression parser. While debugging, one can write an
 expression and the debugger interprets that expression and prints the result
 back. An example of usage can be to look at some value in an \texttt{std::map}
 structure, which can be achieved by using the \texttt{frame variable
 map\_var["Value"]} command. Since the debugger uses Clang, it can parse
-any C++ expression.
+any C++ expression. This can be used in conjuction with backticks in commands
+for example the \texttt{register write rax `loc`} command will write the
+value of variable \texttt{loc} into the register \texttt{rax}.
 
-\subsection{GDB}
-The GNU Project debugger (GDB) is another source and instruction-level
-debugger. It supports languages like C, C++, D, Fortran, Go, Objective-C,
-Pascal, Rust, and some others. In this regard, it beats the LLDB debugger. GDB
-is written in C++. Feature-wise, it is similar to LLDB. Because of that, we
-will not talk about GDB as much. One may consult the GDB manual
-\cite{gdb-manual} to find out all features of this debugger.
-
-\subsection{IDA Free}
-First and foremost, IDA has several versions, we will be mainly talking about
-the free version. It is a tool that is mainly used for reverse engineering. It
-works at the assembly level. A part of it is an assembly-level debugger. It
-also offers various interactive functionality. For example, one can rename a
-location like \texttt{[RBP + 4]} to \texttt{counter} to make the assembly more
-readable. It also somewhat works with references, can create a control flow
-graph from the assembly, and much more. All this makes it an invaluable asset
-in reverse engineer's toolkit.
-
-\subsection{x64Dbg}
-Windows only, az budu doma u widli.
-
-\subsection{Microsoft Visual Studio Debugger}
-Windows only, az budu doma u widli.
-
-\subsection{WinDBG}
-Windows only, az budu doma u widli.
-
-\subsection{Compiler explorer}
