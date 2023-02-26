@@ -40,11 +40,11 @@ This list is not exhaustive, for our purposes it is however enough. For each
 instruction and operand it is specified how they should be encoded into binary.
 CPU then \textit{implements} some ISA. If two different CPUs implement the same
 ISA then they should be able to run the same machine code program. For example,
-most PC use the \textit{x86} architecture \cite{aps-isa}, although the ARM
+most PC use the \textit{x86-64} architecture \cite{aps-isa}, although the ARM
 architecture is also seeing use in personal computers, for example, the Apple
 Sillicon is of ARM architecture.
 
-The x86 architecture is so called \textit{Complex Instruction Set Architecture}
+The x86-64 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
 lengths, and take multiple clock cycles to complete \cite{intel-manual}. On the
 other hand, the ARM architecture is \textit{Reduced Instruction Set
@@ -54,20 +54,20 @@ using many of them. Each instruction in RISC also has the same length. Both
 architectures have their pros and cons, although some literature suggests that
 in modern days the choice of architecture is irrelevant if one is only
 considering performance and power consumption \cite{riscvscisc1, riscvscisc2}.
-Unless specified otherwise the rest of this chapter will be talking about x86.
-This is because T86 \todo{ref} is loosely based on x86, so it is most relevant
+Unless specified otherwise the rest of this chapter will be talking about x86-64.
+This is because T86 \todo{ref} is loosely based on x86-64, so it is most relevant
 for us.
 
 In the first chapter, we briefly mentioned that machine code programs can
 instead be written in Assembly language. Assembly is almost 1:1 mapping to
 machine code. When showing programs, we will show them in assembly. In figure
 \ref{fig:assembly-example2}, we present another example of a program that was
-compiled from C to assembly of the x86 architecture. As seen, instructions have
+compiled from C to assembly of the x86-64 architecture. As seen, instructions have
 various operands. Most often registers (\texttt{RBP, RSP, EAX}), memory
 (\texttt{[rbp-4]} is reference to memory at address which is in register
 \texttt{rbp} minus $4$), or labels (like \texttt{L2}). Labels are not part of
 machine code, instead memory address has to be provided. This is a small part
-where assembly and machine code differ. For a detailed overview of the x86
+where assembly and machine code differ. For a detailed overview of the x86-64
 instruction set see \cite{intel-manual}.
 
 \begin{figure}\label{fig:assembly-example2}
@@ -101,12 +101,12 @@ max:
     pop     rbp
     ret
     \end{lstlisting}
-    \caption{Compiled C program with GCC 9.4 compiler as x86 assembly.}
+    \caption{Compiled C program with GCC 9.4 compiler as x86-64 assembly.}
 \end{figure}
 
 \subsection{Registers}\label{subsection:registers}
 
-The x86\_64 architecture has a set of general purpose registers.
+The x86-64 architecture has a set of general purpose registers.
 Some of these are
 \begin{itemize}
     \item RAX - Accumulator for operands and results data,
@@ -126,8 +126,8 @@ registers~\cite{intel-manual}. One might use it for storing calculations, but
 it would make the rest of the instructions that work with stack behave
 unexpectedly.
 
-The instruction pointer register (RIP on x86-64) contains the address of the
-current instruction to be executed. As we mentioned in Introduction \todo{ref},
+The instruction pointer register (RIP) contains the address of the current
+instruction to be executed. As we mentioned in Introduction \todo{ref},
 programs are executed sequentially from top to bottom, with certain
 instructions having the ability to change the control flow. When an instruction
 gets executed, the size of the instruction will be added to the value in RIP
@@ -181,16 +181,16 @@ issue an interrupt after every executed instruction. This could be useful if we
 wanted to inspect execution instruction by instruction.
 
 % Page ~3644 in intel manual
-The CPU may also contain special debug registers. The x86 has six of them,
+The CPU may also contain special debug registers. The x86-64 has six of them,
 named DR0 to DR7, with DR4 and DR5 being synonyms for DR6 and DR7 on most CPUs,
 otherwise they are reserved anyway. CPU provides special breakpoints through
 these registers. The first four registers contain address of the breakpoints.
 The debug status register \texttt{DR6} contains debug conditions that were
 sampled at the last debug interrupt. Lastly, the debug control register
-\texttt{DR7} is used to enable and disable breakpoints and set breakpoint
-conditions. The CPU then issues an interrupt when these breakpoints are hit.
-They can be triggered on memory read and write, on only on instruction
-execution \cite{intel-manual}.
+\texttt{DR7} is used to enable and disable breakpoints for each of the address
+registers and set breakpoint conditions. The CPU then issues an interrupt when
+these breakpoints are hit. They can be triggered on memory read and write, or
+on instruction execution \cite{intel-manual}.
 
 \subsection{Superscalar CPUs}
 Modern CPUs do not execute instructions strictly one by one. They instead use
@@ -238,7 +238,7 @@ an interface through which the user space program can leverage a small part of
 the kernel in form of system calls. They offer a way of requiring some service
 from the OS. This API is often in form of C and C++
 functions~\cite{os-concepts}. A part of these functions is a special
-instruction, like \texttt{SYSCALL} on x86~\cite{intel-manual}, that switches
+instruction, like \texttt{SYSCALL} on x86-64~\cite{intel-manual}, that switches
 the mode to kernel space. The kernel has to check if the call is correct since
 it will be executed in kernel space with full access.
 
@@ -314,8 +314,8 @@ us and instead uses the signals as an abstraction. \todo{Include kernel code.}
 
 \subsubsection{Debugger implementation}
 Now, we have all the necessary building blocks to build a simple debugger on
-the Linux operating system running on the x86 platform. Running a program under
-the debugger is simple. In figure \ref{fig:debugger-init} you can see the
+the Linux operating system running on the x86-64 platform. Running a program
+under the debugger is simple. In figure \ref{fig:debugger-init} you can see the
 initialization of the debugger. It uses the fork-exec idiom. \texttt{fork}
 system call creates an exact copy of the process as a child except the
 following: process ID (PID) of the child is different. In the parent process,
@@ -323,8 +323,7 @@ PID of the child is returned. In the child, $0$ is returned. In the child, we
 initiate the \texttt{PTRACE\_TRACEME} call, which indicates that this process
 is to be traced by its parent. Then it calls \texttt{execve} system call, which
 replaces this program with the one we want to debug. The execve causes a
-\texttt{SIGTRAP} signal on completion because it is being traced
-\cite{execve}.
+\texttt{SIGTRAP} signal on completion because it is being traced \cite{execve}.
 
 The parent first issues a \texttt{waitpid} system call. This waits for the
 child \texttt{execve} to finish. The debugger then has a chance to debug the
@@ -406,7 +405,7 @@ breakpoint, so we will distinguish between setting a breakpoint and enabling
 it. Setting a breakpoint just means that the debugger needs to keep track of
 where the breakpoint was set and if it is enabled or disabled. Enabling a
 breakpoint means writing into the program memory the debug instruction (we will
-use the x86 \texttt{INT3} with opcode \texttt{0xCC}). Figure
+use the x86-64 \texttt{INT3} with opcode \texttt{0xCC}). Figure
 \ref{fig:with-and-without-bp} shows how code looks with and without enabled
 breakpoint. On line $2$, the opcode changes from \texttt{0x83} to
 \texttt{0xCC}. Since the breakpoint is set via the \texttt{PTRACE\_POKEDATA},
@@ -491,7 +490,7 @@ the trap flag we mentioned in section \todo{ref}.
 The ptrace library contains a special \texttt{PTRACE\_SINGLESTEP} command. This
 executes one instruction in the tracee and then signal \texttt{SIGTRAP} will be
 sent to it. The Linux kernel (as ofv6.1.8) uses the previously mentioned trap
-flag for x86 \cite{linuxkernel-trapflag}. If the architecture does not provide
+flag for x86-64 \cite{linuxkernel-trapflag}. If the architecture does not provide
 a way to support single stepping then the call will return an error. If we are
 on an architecture that supports this command we can use it instead of the
 register dance mentioned above. Implementation is described in figure
@@ -543,7 +542,7 @@ step out is used before the rbp is set. Or if some library completely bypasses
 the call instruction.
 
 This concludes the implementation of a very basic assembly level debugger for
-Linux on the x86 platform. The proof of concept implementation is provided as
+Linux on the x86-64 platform. The proof of concept implementation is provided as
 an extension to this thesis and can be found under \todo{\texttt{<path to the
 debugger>}}. The implementation was partially inspired by
 \cite{linux-debugger-blog} and \cite{lldb}.
@@ -561,7 +560,7 @@ the actual code, so a checksum of instruction opcodes can detect them. Hardware
 breakpoints on the other hand do not touch the code, so they cannot be detected
 as easily. They can also be used to break on memory access, which is not
 possible with software breakpoints. However, we can only have limited number of
-hardware breakpoints (4 on x86).
+hardware breakpoints (4 on x86-64).
 
 \todo{Describe how LLDB does things?}
 
@@ -1431,7 +1430,7 @@ we also want to create a compiler for Haskell, we just need to write everything
 up to the IR translation. Once we can translate Haskell into the IR, we can
 reuse the previous part of the compiler to compile to machine code! This also
 works the other way around. If we compiled IR to the machine code that works
-with the x86 architecture, and we want to compile to ARM, we just need to
+with the x86-64 architecture, and we want to compile to ARM, we just need to
 create the code generation part for the ARM architecture, no need to write the
 whole compiler. Also, most of the optimizations are done on the IR level, which
 also saves a lot of development time. The parts of the compiler which are
@@ -1442,7 +1441,7 @@ are called \textbf{backend} (Code generation).
 This is widely used in practice. The LLVM \cite{llvm} project is a compiler
 backend. It uses its own IR (as was mentioned in figure
 \ref{fig:llvm-ir-example}). It can compile this IR into many targets, including
-x86, ARM, and Spark. The \textit{Clang} project is a compiler frontend for C,
+x86-64, ARM, and Spark. The \textit{Clang} project is a compiler frontend for C,
 C++ and Objective-C languages. It translates these languages to the LLVM IR.
 Other frontends for LLVM also include \textit{ghc}, which is a Haskell
 compiler, or \textit{rustc}, which is a Rust compiler. With LLVM, creating a
