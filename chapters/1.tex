@@ -649,9 +649,11 @@ functions, some of which are:
         occur in the specified process. This passes control of the process to
         the debugger if there is one.
     \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events (on
-        Linux, we used \texttt{waitpid}, which is more general purpose).
+        Linux, we used \texttt{waitpid}, which is more a general purpose
+        function).
     \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution
-        after processing debug event (on Linux, we used the \texttt{PTRACE\_CONT}).
+        after processing a debug event (on Linux, we used the
+        \texttt{PTRACE\_CONT}).
     \item \mintinline{c}{OutputDebugString} - Sends a string from the debuggee
         to the debugger.
     \item \mintinline{c}{ReadProcessMemory} and
@@ -772,7 +774,7 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
    }
 }
     \end{minted}
-    \caption{An abbreviated example of a Windows Debugger loop, taken from \cite{windows-msdn-dbg-main-loop}}
+    \caption{An abbreviated example of a Windows Debugger loop, taken from \cite{windows-msdn-dbg-main-loop}}.
     % Beware, this figure is cursed. Adding caption here will break the entire
     % build for god knows what stupid reason. If it works add citation
     % to Writing main debugger loop.
@@ -814,29 +816,29 @@ debugging information is embedded in the executable itself.
 
 ELF is not the only one executable format. Others include the \textit{COFF} and
 \textit{PE} format, which is used by Microsoft Windows, or the \textit{Mach-O},
-which are mostly used on the MacOS operating system. Interesting distinction is
-that the Mach-O saves debugging information into separate file with extension
+which are used by the MacOS operating system. Interesting distinction is that
+the Mach-O saves debugging information into separate file with extension
 \texttt{dSYM}. One possible encoding of this debugging information is specified
 by a DWARF standard.
 
 \subsection{DWARF}
-DWARF\footnote{The name DWARF is a pun since it was developed alongside ELF.}
-is a debugging format used to describe programs written in procedural
-languages. It is primarily associated with the ELF file format. It aims to
-support all different types of information that may be needed while debugging.
-It also strives to encode this information in as much space efficient manner as
-possible. This can make it somewhat complex. 
+DWARF\footnote{The name DWARF is a pun since it was developed alongside
+ELF.}\cite{dwarf} is a debugging format used to describe programs written in
+procedural languages. It is primarily associated with the ELF file format. It
+aims to support all different types of information that may be needed while
+debugging. It also strives to encode this information in as much space
+efficient manner as possible \cite{dwarf}. This can make it somewhat complex. 
 
 There are five versions of the standard, we will be mainly talking about
 version 2, since the others mainly add features to accommodate newer language
-features. We will not get that far even in version 2. The complete changelog
+features. We will not get that far even with version 2. The complete changelog
 can be found in the text describing DWARF version 5 \cite{dwarf-5}. We provide
 many examples of the information that DWARF encodes. For reading the DWARF
 information from object files, we used the \texttt{llvm-dwarfdump},
-\texttt{objdump}, and \texttt{readelf} tools. The information DWARF encodes is
-stored in various debug sections if used in conjunction with the ELF standard.
-If with Mach-O, it is stored in separate file. This file is still however split
-into several sections.
+\texttt{objdump}, and \texttt{readelf} tools to show these examples. The
+information DWARF encodes is stored in various debug sections if used in
+conjunction with the ELF standard. If with Mach-O, it is stored in separate
+file. This file is still however split into several sections.
 
 \subsubsection{Line Number Information}
 Line number information needs to convey which line of code corresponds to an
@@ -856,10 +858,10 @@ one row for each instruction. The columns of the matrix would contain
 \end{itemize}
 They however argue that such a matrix would be very big. The matrix is
 therefore stripped of redundant information. For instance, instruction whose
-location is the same as the previous one is removed. Instead of a matrix, they
-provide a virtual machine specification and a bytecode language that one has to
-interpret to reconstruct this matrix and consequently to get the necessary
-debugging information.
+row would be the same as the previous one is not saved into the matrix. Instead
+of a matrix, they provide a virtual machine specification and a bytecode
+language that one has to interpret to reconstruct this matrix and consequently
+to get the necessary debugging information.
 
 The virtual machine consists of registers \texttt{address}, \texttt{file},
 \texttt{line}, \texttt{column}, \texttt{is\_stmt}, \texttt{basic\_block}, and
@@ -883,19 +885,19 @@ operations:
         registers.
     \item Set the \texttt{basic\_block} register to false.
 \end{itemize}
-All of these opcodes always do these four operations, they only differ in what
-values they add to the \texttt{line} and \texttt{address} register
+All of these special opcodes always do these four operations, they only differ
+in what values they add to the \texttt{line} and \texttt{address} register
 \cite{dwarf}. Those values are calculated from the instruction opcode, which
-ranges from $10$ to $255$ in DWARF version 2. This is the most common series
-of operations the virtual machine must do. Encoding it into single opcode 
-makes the program extremely size efficient.
+ranges from $10$ to $255$ in DWARF version 2. This is the most common series of
+operations the virtual machine must do. Encoding it into single opcode makes
+the program extremely size efficient.
 
 Observe the program in figure \ref{fig:c-program-and-its-assembly}. A simple
 greeter-like program that displays the name given to it as an argument. With
 the \texttt{readelf} utility program, we can inspect the DWARF bytecode
 language describing the locations, it is showed in figure \ref{fig:dwarf-locations}. 
-First few lines of the example are explained below, we ignore the set column which
-is only used for the location to be precise.
+First few lines of the example are explained below, we ignore the set column
+operations which are only used to make the location precise.
 \begin{itemize}
     \item \texttt{0x41} - Jump to the beginning of main function (ie. \texttt{0x1139}).
     \item \texttt{0x4c} - Special opcode - Increment line by one and advance
