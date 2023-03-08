@@ -1486,7 +1486,8 @@ must result in the same optimizations applied). The code must also be
 debuggable with optimizations enabled and provide correct information.
 Sometimes, if a variable is completely optimized out, the debugger may present
 the message \texttt{optimized out}, which reduces the amount of debug
-information available to the developer, but the information is still reliable
+information available to the developer, but the information is still correct.
+Displaying an invalid value must not happen, even with optimizations
 \cite{llvm-debug-info}.
 
 In figure \ref{fig:llvm-ir-debug} we provide an example of LLVM IR with
@@ -1591,7 +1592,7 @@ written in modern (post C++11 standard) C++. It also offers CLI and Python
 interface. We will dive deeper into LLDB in section \ref{section:case-study}.
 
 \subsection{IDA Free}
-IDA is mostly an interactive disassembler, but also offers some
+The main role of IDA is an interactive disassembler, but it also offers some
 instruction-lvel debugging capabilities. It is a tool that is mainly used for
 reverse engineering. An example of the interactivity is that it is possible to
 rename a location like \texttt{[RBP + 4]} to \texttt{counter} to make the
