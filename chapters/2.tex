@@ -16,12 +16,17 @@ The T86 uses a harvard architecture, this means that the data and instructions
 are separated from each other. The author doesn't specify the reason for this,
 put presumably it is to ease the implementation of the virtual machine, since
 the memory and instructions can be represented as two separate array-like
-members of the virtual machine. Memory is addressable by 64-bit blocks.
+members of the virtual machine. Memory is addressable by 64-bit blocks, not
+by 8-bit blocks as is custom in modern computers.
 
-It has the registers we saw on x86\_64, ie. \texttt{PC}, \texttt{SP},
+It shares some of the registers we saw on x86\_64: \texttt{PC}, \texttt{SP},
 \texttt{BP} and the flags register. The intended roles for these registers are
-the same os on x86\_64. It also has other general purpose registers. The number
-of these is configurable. The registers stores 64-bit value.
+the same as on x86\_64. It also has other general purpose registers. The number
+of these is configurable. This is to ease the initial code generation, the students
+can write a compiler that uses infinite amount of registers and worry about
+register allocation later. The registers stores 64-bit value. It also has
+float registers, which can store 64-bit float values. These are separated from
+the normal registers, similarly to x86\_64.
 
 The addressing modes, or what kind of operands instructions can have, include
 immediate values, registers and memory accesses. These accesses are not only
@@ -42,20 +47,20 @@ machine implementation, since they are very much tied to it.
 The goal of the virtual machine was to simulate the execution as close as
 possible to the real world CPUs. Speed of the execution was not a main focus.
 For example, the CPU simulates the whole out-of-order execution briefly
-described in section \todo{ref}. In fact, if the virtual machine just
-interpreted the instructions one by one it would be significantly faster. But
-the main point of the machine is for the students to learn of the impact that
-pipelining, hazards and out of order execution has on the speed of their
-programs. The virtual machine has statistics that can be exported to view how
-much the generated program works with these properties that are present on real
-world CPUs.
+described in section \ref{section:superscalar-cpu}. In fact, if the virtual
+machine just interpreted the instructions one by one it would be significantly
+faster. But the main point of the machine is for the students to learn of the
+impact that pipelining, hazards and out of order execution has on the speed of
+their programs. The virtual machine has statistics that can be exported to view
+how much the generated program works with these properties that are present on
+real world CPUs.
 
-The virtual machine implemented in C++, using the newer standards up to C++17.
-The VM offers only a single interface, and that is \texttt{ProgramBuilder}.
-This is a class through which one may construct a program for the T86 VM.
-An example of how to use this class is in figure \ref{fig:t86-intro}.
-Currently, there is no other way for users to run programs in the VM.
-This means that the students are tied to the C++ language, or use
+The virtual machine is implemented in C++, using the newer standards up to
+C++17. The VM offers only a single interface, and that is
+\texttt{ProgramBuilder}. This is a class through which one may construct a
+program for the T86 VM. An example of how to use this class is in figure
+\ref{fig:t86-intro}. Currently, there is no other way for users to run programs
+in the VM. This means that the students are tied to the C++ language, or use
 some bindings if they want to use other language.
 
 \begin{figure}

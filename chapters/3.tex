@@ -19,38 +19,45 @@ by the very debugger we are implementing here.
 Notice the \texttt{.text}, this is a section, same as the ELF format uses. We
 will carry some of this over from the ELF format. Mainly, the \texttt{.text}
 and \texttt{.data} sections. For debugging purposes, we will also include some
-debug headers. The exact nature of this debugging headers is specified in
+debug sections. The exact nature of this debugging headers is specified in
 section \todo{ref} where the debugging information format for our debugger is
 defined.
 
 \begin{figure}
     \begin{lstlisting}
-        .text
+.data
+"Hello, World!\n"
 
-        0 MOV R0, 49
-        1 PUTCHAR R0
-        # Put newline
-        2 MOV R0, 10
-        3 PUTCHAR R0
-        4 HALT
+.text
+0   MOV [BP + -1], 0
+1   JMP 8
+2   MOV R0, [BP + -1]
+3   MOV R1, [R0]
+4   PUTCHAR R1
+5   MOV R0, [BP + -1]
+6   ADD R0, 1
+7   MOV [BP + -1], R0
+8   MOV R0, [BP + -1]
+9   CMP R0, 13
+10  JLE 2
+11  HALT
     \end{lstlisting}
-    \caption{Example of an T86 program.}
+    \caption{Example of an T86 program which prints "Hello, World!".}
     \label{fig:t86-program}
 \end{figure}
 
 We will also add a few new instructions. One is \texttt{PUTNUM}, which prints
 the numerical value with a newline. This is intended as a simple debug instruction
 and to ease the automated testing of the compiler. Only other way of output was
-to print a char which was represented by the ascii value. If students wants
-to have an automated test that his factorial program translates successfully
-it is very much easier with this instruction.
+to print a char which was represented by the ascii value. With this instruction,
+students can bootstrap basic implementation of their compiler more easily.
 
 Another one is the \texttt{BKPT} instruction. This instruction is similar to
-\texttt{INT3} from x86\_64 or \texttt{BKPT} from ARM. It is an software
+\texttt{INT3} from x86\_64 or \texttt{BKPT} from ARM. It is a software
 breakpoint. When the instruction is hit, a control will be passed to the
 connected debugger. This is thoroughly described in the next section. 
 
-\section{Design of the native T86 debugger}
+\section{T86 debugging support}
 We could simply bake the debugger into the virtual machine itself. This would
 probably prove to be simplest to implement. However, the main point of the
 debugger is not only to ease the code generation part, but to be a learning
@@ -70,25 +77,41 @@ API similar on the virtual machine part. The debugger and the VM will have to
 communicate together somehow. For the interprocess comunnication, there are
 several possibilities.
 
-One of those are signals. Those however are POSIX specific. Other possibilities
-are shared pipes or sockets. We choose sockets, purely because \todo{we do not
-know how to use anything else :)}. Both the virtual machine and the debugger
-will have an opened port through which they will communicate. The format
-of the communication will be a text one, merely because of the ease of use
-as opposed to binary format. The commands that the virtual machine API
+Both the VM and the debugger use an abstract class that represents an interface
+that provides two methods, \texttt{Send} and \texttt{Receive}. The implementation
+of this interface then handles the concrete way of communication. The debugger
+and VM doesn't care about it, they just use these two methods. There are currently
+two implementations of this interface. One is using network communication through
+sockets. This way, the debugger may attach to an existing process, even on
+entirely different computer. It however has a disadvantage. The messages sent
+are often very short and we need to sent a lot of them, so it can be slow.
+Second implementation is via threads. The debugger runs the VM in another
+thread and they communicate via shared queues. This is far faster and also
+allows the debugger the run the process by himself, which can make it easier
+to use.
+
+The format of the communication will be a text one, merely because of the ease
+of use as opposed to binary format. The commands that the virtual machine API
 will offer are
 \begin{itemize}
-    \item \texttt{PEEKREG x} - Return value in register \texttt{x}.
-    \item \texttt{POKEREG x y} - Sets the value in register \texttt{x} to
+    \item \texttt{PEEKREG x} - Return values of all normal registers.
+    \item \texttt{POKEREG x y} - Sets the value in register $x$ to
         \texttt{y}.
-    \item \texttt{PEEKDATA x} - Return value in memory at address \texttt{x}.
-    \item \texttt{POKEDATA x y} - Writes a value \texttt{y} into a memory at
+    \item \texttt{PEEKFLOATREG} - Return values of all float registers.
+    \item \texttt{POKEFLOATREG x y} - Sets the value in float register
+        \texttt{x} to \texttt{y}.
+    \item \texttt{PEEKDEBUGREG} - Return value in all debug registers.
+    \item \texttt{POKEDEBUGREG x y} - Sets the value in debug register
+        \texttt{x} to \texttt{y}.
+    \item \texttt{PEEKDATA x cnt} - Return value in memory at addresses $x$ to $x + cnt - 1$.
+    \item \texttt{POKEDATA x y} - Writes a value $y$ into a memory at
         address \texttt{x}.
     \item \texttt{PEEKTEXT x} - Returns instruction at address \texttt{x}.
-    \item \texttt{POKETEXT x} \texttt{INS} - Rewrite the instruction at
-        address
-        \texttt{x} with the newly supplied instruction.
+    \item \texttt{POKETEXT x} \texttt{INS} - Rewrite the instruction at address
+        \texttt{x} with the newly supplied instruction. The new parser for T86
+        we created made this very easy to implement.
     \item \texttt{CONTINUE} - Continue the execution.
+    \item \texttt{TERMINATE} - End the execution.
     \item \texttt{REASON} - Get the reason why the program stopped (breakpoint,
         singlestep, halt).
     \item \texttt{SINGLESTEP} - Does native level single step.
@@ -98,24 +121,56 @@ machine and the debugger is shown in figure \ref{fig:dbg-vm-seq}. The interface
 is similar to basic ptrace commands. We separate the memory and instruction
 writing because T86 uses harvard architecture, whereas Linux doesn't separate
 text and data address spaces\cite{ptrace}, so the two requests were equivalent
-there.
+there. The API is made to be simple on purpose. Anything more complex should
+be handled in the debugger itself.
 
-Currently, the class that runs the program is the \texttt{Cpu}. We will add
-another manager-like class. This class will take care of running the program
-via the \texttt{Cpu} class and it will also manage said debugger requests. The
-\texttt{Cpu} class will return control to the manager when a reason for
-stopping happens. We will call these reasons \textit{interrupts} because they
-are somewhat similar to real world CPUs interrupts. The manager is then
-responsible for dealing with the interrupt and handling control back to the
-\texttt{Cpu} or terminating the program. When such interrupt happens, its
-important that the \texttt{Cpu} flushes the pipeline, as was disscussed in
-section \todo{ref}. Fortunately, the \texttt{Cpu} class contains an already
-implemented function exactly for this purpose, so it is only a matter of
-calling it.
+The \texttt{Cpu} class is the backbone of the whole virtual machine. It is
+responsible for executing the program.The \texttt{Cpu} has some light debugging
+capabilites, they were mentioned in section \todo{ref}. To properly display the
+values of registers and memory, an unrolling must be done. This was described
+in section \ref{section:superscalar-cpu}. This is already implemented in the VM
+by its author and we can use the same mechanisms for the software breakpoints
+and singlestepping.
 
-The \texttt{Cpu} does not have a way to modify the instruction vector.
-However, we can leverage our previously implemented parser from section
-\ref{section:parser} and create the instruction on the fly.
+The \texttt{Cpu} class offers the \texttt{halted} function. This function
+returns true if the \texttt{Cpu} executed the \texttt{HALT} instruction, which
+marks the end of a program. It also has a \texttt{tick} method, which does one
+tick of the CPU. This does not mean that one tick executes one instruction,
+there are several pipeline stages that the instruction needs to go through. To
+run the VM, you have to write a loop that checks if the VM halted, otherwise
+you tick. As of now, the Cpu has no way of signaling abnormal conditions
+(excluding halt), like breakpoint hits.
+
+We will add another manager-like class called \textit{OS}. This class will take
+care of running the program via the CPU class and it will also manage debugger
+requests. We added an \textit{interrupt} capabilities to the CPU. For example,
+when the \texttt{BKPT} instruction is executed, CPU signals interrupt number
+$3$. To check if and which interrupt happened, the CPU now provides a function
+for it, similar to the \texttt{halted} function. The OS calls the \texttt{tick}
+method periodically and after every tick it checks if halt or interrupt
+occured. If it did then it passes it to some handler.
+
+When an interrupt which is caused by some debugging features happen, the OS
+calls a method in the \texttt{Debug} class. This class is responsible for the
+communication with the debugger. It uses the text protocol we mentioned
+previously.
+
+There are several features we added to the CPU to enhance debugging. One of them
+is the \texttt{BKPT} instruction, which we have already talked about. Executing
+this instruction causes interrupt $3$ to occur. It is also possible to set a
+special flag which causes the CPU to send the interrupt $1$ after every executed
+instruction. 
+
+Another feature are so called \textit{debug registers}.These are special kind
+of registers used for breaking on memory access. There are five of them. First
+four holds an address of a memory cell. The fifth one is called
+\textit{control} register. First four bits of this register indicate whether
+the ith register is active. If it is active and the program writes to a cell
+which address is the same as in the register ith then interrupt $2$ is sent.
+Additionaly, the control registers bits from $8$ to $11$ indicate which
+register caused the interrupt. For example if $10$ bit is set to one then the
+third register is responsible for the interrupt, and consequently the address
+that is stored in this register was written into.
 
 \begin{figure}
     \centering
@@ -145,3 +200,81 @@ However, we can leverage our previously implemented parser from section
     \label{fig:dbg-vm-seq}
 \end{figure}
 
+\section{Native Debugger}
+The implemented debugger has two main layers, first is to support native
+instruction level debugging. This should work out of the box without any
+debugging information whatsoever. The debugger has been implemented as a
+library, inspired by LLDB. It is implemented in modern C++ up to the C++20
+standard. The native debugger is also split into several layers to make it more
+modular.
+
+First layer is called \texttt{Process}, it is an interface. The implementation
+of this interface is responsible for dealing with the concrete architecture,
+the API of that architecture and the communication with the debuggee. One
+implementation is provided for the T86 VM. For instance it has a method called
+\texttt{ReadText} and \texttt{WriteText}. The internals of these methods use
+the \texttt{PEEKTEXT} and \texttt{POKETEXT} API we described. Outside of this
+class, the communication API is never used. If, in the future, another virtual
+machine was made, for whichever architecture, it is only needed to implement
+this interface. The rest of the debugger can be used as-is.
+
+Another layer is the \texttt{Native} class. This implements the complicated
+logic behind a debugger, like setting a breakpoint, handling singlestep and so
+on. It is the main bread and butter of the native part of the debugger. Most of
+the algorithms are similar to the linux debugger implementation presented in
+section \todo{ref}. For illustration, in figure \ref{t86dbg:breakpoint} we show
+a snippet of code that is used to create a breakpoint. It firstly reads the
+text at address where we want to set the breakpoint. This text is then
+rewritten by the breakpoint opcode and the backup is stored.
+
+When we arrive at the breakpoint and want to continue further, we need to unset
+the breakpoint, ie. replace the breakpoint opcode in the T86 program with the
+backup we saved, do a native level single step, and write the breakpoint back.
+
+The Native class uses a \texttt{DebugEvent} structure which indicates what
+caused the VM to stop. It is implemented as a \texttt{variant} of multiple
+structures, for example \texttt{BreakpointHit}, \texttt{WatchpointTrigger} and
+so on. The reason it is a variant is that because the watchpoint also needs to
+convey information about an address that caused the break, same with the
+breakpoint. It could also signal if the break was caused by reading or writing
+to the memory cell, although for now the T86 VM only interrupts on writing.
+
+\begin{figure}
+    \begin{minted}{c++}
+SoftwareBreakpoint CreateSoftwareBreakpoint(uint64_t address) {
+    auto opcode = GetSoftwareBreakpointOpcode();
+    // Read the text at the breakpoint address
+    auto backup = process->ReadText(address, 1).at(0);
+    // Rewrite it with the breakpoint opcode
+    std::vector<std::string> data = {std::string(opcode)};
+    process->WriteText(address, data);
+    // Check that it was truly written
+    auto new_opcode = process->ReadText(address, 1).at(0);
+    if (new_opcode != opcode) {
+        Error(...);
+    }
+    // Create a breakpoint object which keeps the text backup
+    return SoftwareBreakpoint{backup, true};
+}
+    \end{minted}
+    \caption{Debugger code in \texttt{Native} class to enable a breakpoint.}
+    \label{t86dbg:breakpoint}
+\end{figure}
+
+As of now, the native debugger has following features:
+\begin{itemize}
+    \item Breakpoints - Can set, unset, enable and disable software breakpoints.
+    \item Watchpoints - Can set and unset watchpoints on memory writes.
+    \item Singlestep - Can do native level step into.
+    \item Text manipulation - Can read and write into the debuggee text area,
+        effectively allows to overwrite the running code.
+    \item Data manipulation - Can read and write into the program RAM.
+    \item Register manipulation - Can manipulate with normal, float and debug registers.
+\end{itemize}
+
+\section{Source debugger}
+With the solid foundation represented by the native part of the debugger, we
+can extend it by providing some form of source level debugging. For this part
+we need to keep in mind that the debugger will only be used by a students.
+Because of this, we need to have a gentler debugging information than DWARF,
+but we certainly can take inspiration from it.
