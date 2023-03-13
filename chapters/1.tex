@@ -1391,16 +1391,16 @@ consistent. For example that used variable has been declared before.
     \label{fig:astgraph}
 \end{figure}
  
-\subsection{Intermediate code generation}
-This part converts AST into some other representation, most commonly called IR,
-which means intermediate representation. IR should be closer to the machine
-code, to be easily translated but is still machine independent. It also should
-retain some high-level properties that make it easier to work with it, like
-types and functions, but should be language-independent. There are many types
-of IR. One of the most popular compilers, LLVM, uses single static assignment
-(SSA) and satisfies all of the above \cite{llvm}. An example of LLVM IR can be
-found in figure \ref{fig:llvm-ir-example}. Compilers perform most optimizations
-on this intermediate representation. 
+After that the intermediate code generation comes into play. It converts the
+AST into some other representation, most commonly called IR, which means
+intermediate representation. IR should be closer to the machine code, to be
+easily translated but is still machine independent. It also should retain some
+high-level properties that make it easier to work with it, like types and
+functions, but should be language-independent. There are many types of IR. One
+of the most popular compilers, LLVM, uses single static assignment (SSA) and
+satisfies all of the above \cite{llvm}. An example of LLVM IR can be found in
+figure \ref{fig:llvm-ir-example}. Compilers perform most optimizations on this
+intermediate representation. 
 
 \begin{figure}\label{fig:llvm-ir-example}
     \begin{minted}{llvm}
@@ -1416,13 +1416,12 @@ on this intermediate representation.
     \caption{Simplified example of LLVM IR.}
 \end{figure}
 
-\subsection{Code generation}
-Here, IR is translated directly to the target machine code or possibly
-assembly. Even though IR can seem very similar to assembly, there are still
-some things to take care of. For example, SSA IR doesn't have registers, it
-uses an unlimited number of variables. Other architectures might have some
-other traits that differentiate them from the IR and they all have to be
-accounted for when generating code.
+Finally, IR is translated directly to the target machine code or possibly
+assembly, this is called code generation. Even though IR can seem very similar
+to assembly, there are still some things to take care of. For example, SSA IR
+doesn't have registers, it uses an unlimited number of variables. Other
+architectures might have some other traits that differentiate them from the IR
+and they all have to be accounted for when generating code.
 
 \subsection{Modularity of compilers}
 The main advantage of using an IR is that there is a common ground for every
@@ -1443,12 +1442,11 @@ are called \textbf{backend} (Code generation).
 This is widely used in practice. The LLVM \cite{llvm} project is a compiler
 backend. It uses its own IR (as was mentioned in figure
 \ref{fig:llvm-ir-example}). It can compile this IR into many targets, including
-x86-64, ARM, and Spark. The \textit{Clang} project is a compiler frontend for C,
-C++ and Objective-C languages. It translates these languages to the LLVM IR.
+x86-64, ARM, and Spark. The \textit{Clang} project is a compiler frontend for
+C, C++ and Objective-C languages. It translates these languages to the LLVM IR.
 Other frontends for LLVM also include \textit{ghc}, which is a Haskell
 compiler, or \textit{rustc}, which is a Rust compiler. With LLVM, creating a
-new programming language comes down to parsing it into an AST and transforming
-that AST into the LLVM IR.
+new programming language mostly comes down to just writing the front end.
 
 \subsection{IR Debugging information}
 With IR translation, some of the information from the AST is stripped away.
@@ -1483,12 +1481,12 @@ So, if one compiles the code with optimizations and with debugging information,
 the same optimizations must be applied that would be applied if no debugging
 information was generated (running \texttt{clang -O3 -g} and \texttt{clang -O3}
 must result in the same optimizations applied). The code must also be
-debuggable with optimizations enabled and provide correct information.
-Sometimes, if a variable is completely optimized out, the debugger may present
+debuggable with optimizations enabled and provide correct information. For
+example, if a variable is completely optimized out, the debugger may present
 the message \texttt{optimized out}, which reduces the amount of debug
-information available to the developer, but the information is still correct.
-Displaying an invalid value must not happen, even with optimizations
-\cite{llvm-debug-info}.
+information available to the developer, but the information is still correct
+and not misleading. Displaying an invalid value must not happen, even with
+optimizations \cite{llvm-debug-info}.
 
 In figure \ref{fig:llvm-ir-debug} we provide an example of LLVM IR with
 debugging information. It is encoded in form of metadata, starting with an
@@ -1593,7 +1591,7 @@ interface. We will dive deeper into LLDB in section \ref{section:case-study}.
 
 \subsection{IDA Free}
 The main role of IDA is an interactive disassembler, but it also offers some
-instruction-lvel debugging capabilities. It is a tool that is mainly used for
+instruction-level debugging capabilities. It is a tool that is mainly used for
 reverse engineering. An example of the interactivity is that it is possible to
 rename a location like \texttt{[RBP + 4]} to \texttt{counter} to make the
 assembly more readable. It can also follow references (like jumps or calls),
@@ -1675,7 +1673,7 @@ All commands are of the following structure:
 <noun> <verb> [-options [option-value]] [argument [argument...]]
 \end{lstlisting}
 Some of the commands have shorter form, like \texttt{step} for \texttt{thread
-step-in}. Also, using ani unambiguous prefix works too, like \texttt{br s -M
+step-in}. Also, using an unambiguous prefix works too, like \texttt{br s -M
 foo} for \texttt{breakpoint set --name foo}.
 
 The LLDB debugger has an expression parser. While debugging, one can write an
@@ -1686,4 +1684,3 @@ map\_var["Value"]} command. Since the debugger uses Clang, it can parse
 any C++ expression. This can be used in conjuction with backticks in commands
 for example the \texttt{register write rax `loc`} command will write the
 value of variable \texttt{loc} into the register \texttt{rax}.
-
