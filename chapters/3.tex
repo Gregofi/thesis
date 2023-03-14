@@ -299,6 +299,12 @@ about one function only, and for that function source debugging capabilities
 will work, but not for any other. This means that users can generate debug
 information incrementally.
 
+The debugger is of course not only limited to TinyC language. Any imperative
+language that can be encoded with the following debugging information we expect
+is suitable to be debugged at source level. We show an example of this in a
+provided test case for the debugger, it can be found in the thesis attachment
+on path \todo{doplnit cestu}.
+
 \subsection{Line information}
 Line information is one of the simplest to generate. Since it'll probably be
 the most generated information by the students, we choose the following simple
@@ -458,11 +464,6 @@ Since we are working with text so much, it was a lifesaver. Another one is
 REPL when typing and also to have commands history. Another one is
 \texttt{argparse}, used for parsing command line arguments and finally
 \textit{GoogleTest}.
-
-The debugger is of course not only limited to TinyC language. Any imperative
-language that can be encoded with the debugging information we expect is
-suitable to be debugged at source level. We show an example of this in a
-provided test case for the CLI \todo{doplnit cestu}.
 
 The repository is very well tested. It contains many unit tests for all parts
 of the project, be it the T86 parser, the Native level debugging or the source
