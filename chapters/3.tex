@@ -231,6 +231,12 @@ When we arrive at the breakpoint and want to continue further, we need to unset
 the breakpoint, ie. replace the breakpoint opcode in the T86 program with the
 backup we saved, do a native level single step, and write the breakpoint back.
 
+Since breakpoints change the underlying code of the debuggee we need to be
+careful when presenting information to the user. If we simply printed the text
+that we get from the debuggee it might contain the \texttt{BKPT} instructions
+we have set earlier. We need to mix it with the backup code stored in
+breakpoints to correctly show the assembly of the program.
+
 The Native class uses a \texttt{DebugEvent} structure which indicates what
 caused the VM to stop. It is implemented as a \texttt{variant} of multiple
 structures, for example \texttt{BreakpointHit}, \texttt{WatchpointTrigger} and
@@ -275,6 +281,195 @@ As of now, the native debugger has following features:
 \section{Source debugger}
 With the solid foundation represented by the native part of the debugger, we
 can extend it by providing some form of source level debugging. For this part
-we need to keep in mind that the debugger will only be used by a students.
-Because of this, we need to have a gentler debugging information than DWARF,
+we need to keep in mind that the debugger will only be used by students.
+As such, we ought to have a gentler debugging information than DWARF,
 but we certainly can take inspiration from it.
+
+As we previously mentioned, the executable with T86 code is separated into sections.
+The \texttt{.text} and \texttt{.data} sections are for the VM. We will introduce new
+sections where debugging information will be stored. All those sections will have
+\texttt{.debug\_} prefix. The simplest new section is \texttt{.debug\_source}, which
+should contain the original source code which was compiled into this executable.
+This later allows us, with combination of other information, to display the source
+code lines where something abnormal happened.
+
+The main philosophy of the source level debugger is to allow an arbitrary
+amount of debug information. This means that an user can generate information
+about one function only, and for that function source debugging capabilities
+will work, but not for any other. This means that users can generate debug
+information incrementally.
+
+\subsection{Line information}
+Line information is one of the simplest to generate. Since it'll probably be
+the most generated information by the students, we choose the following simple
+format for it: \texttt{<line>:<address>}. The section \texttt{.debug\_line} is
+made up of these lines. The format is self explanatory, it says that line $x$
+corresponds to address $y$. This is very easy to generate.
+
+With this information, we are able to do source level breakpoints. If the
+source code is also provided, we can show the user on which line is the
+debugged program currently paused. It is not needed to specify every line in
+the program. The debugger will simply refuse to put a source level breakpoint
+on some line if it doesn't have the necessary information.
+
+\subsection{Debugging information format}
+In the line information, we provided a very easy format. However, to describe
+some advanced constructs of the source, we will need an advanced structure.
+Here we will draw inspiration from the Dwarf Debugging Information (DIE). Take
+a look at figure \ref{fig:t86dbg-die}, which shows an example of such debugging
+information. It has a tree like structure which in some ways mimics the
+original program. The nodes of this tree are called debugging information
+entries (DIEs). Those entries can have another entries as their children and
+each entry has a tag which is part of its name (for example the
+\texttt{compilation\_unit} tag). They can also have attributes which describe
+their properties. As we can see, this is very similar to the DWARF entries.
+This format is also a text one, this allows to generate the format easily and
+also to easily find mistakes in it. We don't want to force the students to
+debug their generated debugging information.
+
+For instance, the function main has a name, a beginning address and end
+address. Those two information are leveraged to allow setting breakpoints on
+functions and also to display in which function are we currently located.
+It also has a child, which is scope. Scope is mainly used for keeping
+a track of which variables are currently active, because the T86 (or
+any other assembly language in general) has no notion of scopes.
+In the scope there is only one variable called \texttt{d}. Thanks to this,
+we are able to list currently active variables.
+
+\begin{figure}
+    \begin{lstlisting}
+DIE_compilation_unit: {
+DIE_function: {
+    ATTR_name: main,
+    ATTR_begin_addr: 0,
+    ATTR_end_addr: 10,
+    DIE_scope: {
+        ATTR_begin_addr: 0
+        ATTR_begin_addr: 10
+        DIE_variable: {
+            ATTR_name: d,
+        },
+    }
+}
+}
+    \end{lstlisting}
+    \caption{Debugging function information for the T86 debugger.}
+    \label{fig:t86dbg-die}
+\end{figure}
+
+It would however be much better if we could print their values and types. For
+this, another piece of information is needed. We will introduce entries for
+types. Currently, three type entries are present, one for primitive types (such
+as int or float), one for pointers and one for structured types
+(\texttt{struct} or \texttt{class} in C++). The types are saved as separate
+entry, and as such we need some way to link them together with the variables.
+To achieve this, we will use the \texttt{ATTR\_id} attribute. This attribute
+should be unique for every entry. In this role it is similar to the id
+attribute of HTML elements. The variables themselves have the \texttt{ATTR\_type}
+attribute, which will have id of type as its value. An example of pointer type
+which points to int is in figure \ref{fig:t86dbg-types}. If we had a variable
+which is a pointer to int, it would need to have the \texttt{ATTR\_type: 1}
+attribute, because id of pointer type to integer is one.
+
+The primitive types need to have their size. For T86, this is the number of
+memory cells it occupies, which will almost always be one, since one memory
+cell is 64-bits. It also has a name of its primitive type. Currently, four are
+supported: signed integer, unsigned integer, floating point number and a
+boolean. The pointer type is simpler, it only needs its size (which again
+is one for T86) and the id of type it points to.
+
+Structured types are more complicated. They need to have a list of members
+which are stored in the structure. For each of these members an offset
+from the beginning of the structure must be specified as well. It also must
+provide a size because the compiler might align it and it may be larger
+than the sum of size of its members.
+
+\begin{figure}
+    \begin{lstlisting}
+DIE_primitive_type: {
+    ATTR_name: signed_int,
+    ATTR_id: 0,
+    ATTR_size: 1,
+},
+DIE_pointer_type: {
+    ATTR_type: 1,
+    ATTR_id: 1,
+    ATTR_size: 1
+},
+    \end{lstlisting}
+    \caption{Debugging type information for the T86 debugger.}
+    \label{fig:t86dbg-types}
+\end{figure}
+
+With this information, we are able to show the type of the variable.
+But the most valuable thing is its value. Variables either stored
+in memory, register, or optimized out completely. We will go in
+DWARF footsteps and provide a language for virtual machine that one
+can interpret to gain the information.
+
+A several examples can be seen in figure \ref{fig:t86dbg-vm}. Same as DWARF, it
+is a stack based machine. The top value on the stack after computation is done
+is considered to be the location of the variable. The instruction \texttt{PUSH}
+pushes either offset or register onto the stack. The second example says that
+the variable is located in register \texttt{R0}. The first example tells us
+that the variable is in memory, at the address in register \texttt{BP} minus
+two. The third example has the same meaning, but since the variables will
+most often be stored at some offset from register \texttt{BP} a shorthand
+was provided. There is also a dereference instruction, which can be used
+to inspect to which location a pointer points.
+
+\begin{figure}
+    \begin{lstlisting}
+- [PUSH BP; PUSH -2; ADD],
+- `PUSH R0`
+- `BASE_REG_OFFSET -2`
+    \end{lstlisting}
+    \caption{Debugging type information for the T86 debugger.}
+    \label{fig:t86dbg-vm}
+\end{figure}
+
+This information is stored in a variable attribute called
+\texttt{ATTR\_location}. Now we finally know where are some variables located
+and might look up their value. Together with the type information, we might
+also properly inspect the value and report it to the user. If no type
+information is provided then the user is informed and the value is reprented as
+raw bytes.
+
+\subsection{Usage}
+Finally, to make the debugger usable, we provide a command line interface which
+leverages the debugger library. It provides many commands and its manual can be
+found as appendix in this thesis.
+
+The main priority of the CLI is to make the debugger easy to use. It consist of
+several commands, one of them is \texttt{breakpoint set 5}, which will set a
+source-level breakpoint on fifth line of the program. It is however not
+necessary to write the whole command, any prefix will do, like \texttt{b s 5}.
+
+The CLI also displays various information on program stop, like the reason why
+the program stopped, on which address or line - if available, and also prints
+the surrounding lines of assembly or source. The CLI can also list breakpoints
+and display them straight in the disassembly or in the source view.
+
+The whole project was done in the C++ language and some libraries were used to
+make the implementation smoother. For example the famous \textit{fmt}
+\todo{citace} library, which is used to format text with python like syntax.
+Since we are working with text so much, it was a lifesaver. Another one is
+\texttt{linenoise}, which we used to allow users to move back and forth in the
+REPL when typing and also to have commands history. Another one is
+\texttt{argparse}, used for parsing command line arguments and finally
+\textit{GoogleTest}.
+
+The debugger is of course not only limited to TinyC language. Any imperative
+language that can be encoded with the debugging information we expect is
+suitable to be debugged at source level. We show an example of this in a
+provided test case for the CLI \todo{doplnit cestu}.
+
+The repository is very well tested. It contains many unit tests for all parts
+of the project, be it the T86 parser, the Native level debugging or the source
+debugging. It also has an integration tests for the T86-CLI and the Debugger
+CLI. The project itself was developed with the help of git and github has a
+very describing development history via commit messages. A special care was
+taken to ensure the main branch of the git repository always has a working
+instance of the project. To this end the development was done via pull requests
+and each request was merged if and only if all tests passed for it. Github issues
+were used to track the current shortcomings of the project.
