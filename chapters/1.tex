@@ -570,7 +570,7 @@ breakpoint exists, the code depicted in \texttt{fig:singlestep} must be
 utilized, otherwise the \verb|PTRACE_SINGLESTEP| command may be directly
 used.
 
-Next is line is the step over operations, which allows to jump out of the
+Next is line is the step out operations, which allows to jump out of the
 current function. When a procedure is entered using the \texttt{call}
 instruction, the address immediately after the call instruction is put onto the
 stack. Upon entry into the function, the value of \texttt{rbp} register is
@@ -615,21 +615,18 @@ Linux operating system.
 The Microsoft Windows operating system also offers built-in support for
 debugging. It is provided at the Win32 API layer
 \cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds on
-\textit{debug events} and \textit{debug functions}. Before we get to that
-however, there is a need to signal and handle abnormal conditions which needs
-to be immediately addressed, such as hitting a breakpoint or just interrupts in
-general. The Linux and other POSIX compliant operating systems use signals,
-which we have described in section \ref{section:linux-dbg}. Windows, however,
-is not a POSIX system, and as such it uses a different strategy.
+\textit{debug events} and \textit{debug functions}. Unlike POSIX systems such
+as Linux, Windows uses a different approach for signaling abnormal conditions,
+such as breakpoint hits or just interrupts in general. We will explore this
+mechanism before getting to the debugging API.
 
 \subsubsection*{Structured Exception Handling}
-Instead of signals, Windows uses \textit{Structured Exceptions}
-\cite{windows-msdn-seh}. From now on, we will be using the abbreviation 'SEH'.
-An exception is an event that requires the execution of code outside the normal
-flow of control. There are software exceptions, like throwing an exception
-explicitly or by the operating system, and hardware exceptions, which are
-caused by the CPU (eg. interrupts). SEH unifies both of these things into one
-just like signals do.
+Instead of signals, Windows uses \textit{Structured Exceptions}~(SEH)~
+\cite{windows-msdn-seh}. An exception is an event that requires the execution
+of code outside the normal flow of control. There are software exceptions, like
+throwing an exception explicitly or by the operating system, and hardware
+exceptions, which are caused by the CPU (eg. interrupts). SEH unifies both of
+these things into one just like signals do.
 
 When an exception is triggered, control is transferred to the system. It saves
 all necessary information that can later be used to continue execution from the
@@ -637,7 +634,7 @@ point where the exception was thrown. It also contains information about which
 type of exception was thrown, if the execution can continue after handling the
 exception, the address where the exception occurred and some other bits of
 information\footnote{See MSDN documentation \cite{windows-msdn-seh} for full
-detailed list}. The system then searches for an exception handler that will
+detailed list.}. The system then searches for an exception handler that will
 handle the exception. The search is performed in this order:
 
 \begin{enumerate}
@@ -821,7 +818,7 @@ void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
     % to Writing main debugger loop.
 \end{figure}
 
-\section{Source Level Debugging}
+\section{Source Level Debugging}\label{section:source-level-debugging}
 If we want to debug at the source code level, we need to give the debugger some
 information, because otherwise, it can only work with the generated machine
 code. For instance, we somehow need to provide information to the debugger that
