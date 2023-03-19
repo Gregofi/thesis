@@ -19,7 +19,7 @@ talk about the API that various operating systems provide. Finally, we'll
 discuss how are compilers and debuggers able to allow us to debug source code
 although the program we debug was compiled into a machine code program.
 
-\section{CPU level support}
+\section{CPU level support}\label{section:cpu-debug-support}
 The CPU can only execute machine code which is made of instructions. It also
 has several registers to help with computations. Which instructions and
 registers the CPU has can differ from CPU to CPU. This is specified by
@@ -500,38 +500,37 @@ ability to single step as well.
 
 \begin{figure}
     \centering
-    \includegraphics[width=5cm,scale=0.5]{media/bp}
+    \includegraphics[scale=0.5]{media/DIAGRAM}
     \caption{Continue sketch}
     \label{fig:continue}
 \end{figure}
 
-We showed that the breakpoint must be put at the next instruction. This is not
-as simple as it sounds. Where is the next instruction? On CISC architectures,
-this is not easy to find out since instructions have different sizes. But even
-on RISC architectures like ARM, what if the instruction is a jump of some sort
-and the next instruction is not simply the one that follows this one in the
-code? For this reason, debuggers may need to have an instruction emulator,
-which needs to emulate the whole instruction set to see where the program
-counter ends up\footnote{And there can be a \textit{lot} of
-instructions~\cite{intel-manual}}. However, some architectures offer hardware
-support, like the trap flag we mentioned in section \todo{ref}.
+However, putting a breakpoint on the instruction that will be executed next
+is not as easy as it might appear. Due to the varying sizes of instructions
+on CISC architectures, even determining the instruction that follows the current
+one in the code is challenging. RISC architectures facilitate the identification
+of subsequent instructions, because they all have the same length. Finding the
+next instruction to be executed may still pose a challenge if the instruction
+is a conditional jump. Accurately determining where the jump will go can be
+an arduous task. To achieve this, some debuggers use an instruction emulators.
+Fortunately, some architectures have a built in hardware support for single
+stepping, like the trap flag we mentioned in section
+\ref{section:cpu-debug-support}.
 
-The ptrace library contains a special \texttt{PTRACE\_SINGLESTEP} command. This
-executes one instruction in the tracee and then signal \texttt{SIGTRAP} will be
-sent to it. The Linux kernel (as ofv6.1.8) uses the previously mentioned trap
-flag for x86-64 \cite{linuxkernel-trapflag}. If the architecture does not provide
-a way to support single stepping then the call will return an error. If we are
-on an architecture that supports this command we can use it instead of the
-register dance mentioned above. Implementation is described in figure
-\ref{fig:singlestep}. We presume that the instruction pointer was moved when
-the breakpoint was hit, so we do not need to return one byte backward. This is
-more reasonable anyway since you want to show the user at which address was the
-breakpoint hit. The LLDB \cite{lldb} debugger uses hardware support if there is
-one, else it uses an instruction emulator. For example for the ARM
-architecture, LLDB uses an instruction emulator. All instructions are of the
-same length, however, some jump or another program counter modifier could cause
-the next instruction to be executed is not necessarily the following one in the
-code.
+The ptrace library contains a special \texttt{PTRACE\_SINGLESTEP} command,
+which executes one instruction in the tracee before sending the
+\texttt{SIGTRAP} signal. The Linux kernel (as of v6.1.8) uses the previously
+mentioned trap flag for x86-64 \cite{linuxkernel-trapflag}. If the architecture
+does not provide a hardware supported single stepping then the call will return
+an error. In lieu of the breakpoint dance mentioned earlier, the singlestep
+command will be used in our implementation because x86-64 supports it.
+Implementation is described in figure \ref{fig:singlestep}. We presume that the
+instruction pointer was moved when the breakpoint was hit, eliminating the need
+to return one byte backward. This is more reasonable anyway since you want to
+show the user at which address was the breakpoint hit. The LLDB \cite{lldb}
+debugger uses hardware support if there is one, else it uses an instruction
+emulator. For instance for the ARM architecture, LLDB uses an instruction
+emulator, whereas for the x86-64 it uses the trap flag.
 
 \begin{figure}
     \begin{minted}{c}
@@ -553,49 +552,62 @@ void step_over_bp(pid_t pid) {
     \label{fig:singlestep}
 \end{figure}
 
-For a normal single step, we can just use the \texttt{PTRACE\_SINGLESTEP}
+For a step in, we can just use the \texttt{PTRACE\_SINGLESTEP}
 command. We however need to check if the current line doesn't have a
 breakpoint, since that would cause the debugger to return the program counter
 back before it and we wouldn't be able to step over it. So, if there is a
 breakpoint use the code from \texttt{fig:singlestep}, else just use
 \texttt{PTRACE\_SINGLESTEP}.
 
-Step over is more entertaining. It is used to jump out of the current function.
-When a procedure is entered using the \texttt{call} instruction, the address
-immediately after the call instruction is put onto the stack. Then, on entry to
-the function, \texttt{rbp} register is pushed onto the stack and then the value
-of it is set to the current value of the stack pointer. So the return address
-is located at \texttt{rbp + 8}. We can set a breakpoint at that address and
-then continue execution, wait for the debuggee to hit the breakpoint, and then
-disable and remove it. This has its flaws, for example, it won't work if the
-step out is used before the rbp is set. Or if some library completely bypasses
-the call instruction.
+To perform a step in, the \verb|PTRACE_SINGLESTEP| command can be utilized.
+However, in the case where the current line contains a breakpoint, the debugger
+must be cautious, as executing the single step would cause the program counter
+to revert back before the breakpoint\footnote{Remeber that we set the
+instruction pointer before the breakpoint when we hit it.}, rendering it
+impossible to step over. Therefore, a check for the presence of a breakpoint
+must be performed prior to the execution of the single step operation. If a
+breakpoint exists, the code depicted in \texttt{fig:singlestep} must be
+utilized, otherwise the \verb|PTRACE_SINGLESTEP| command may be directly
+used.
+
+Next is line is the step over operations, which allows to jump out of the
+current function. When a procedure is entered using the \texttt{call}
+instruction, the address immediately after the call instruction is put onto the
+stack. Upon entry into the function, the value of \texttt{rbp} register is
+pushed onto the stack and then the register is updated to reflect the current
+value of the stack pointer. As a result, the return address is located at
+\texttt{rbp + 8}. We can set a breakpoint at that address, continue execution,
+wait for the debuggee to hit the breakpoint, and then disable and remove it.
+This has its flaws, for example, it won't work if the step out is used before
+the rbp is set, or if some library completely bypasses the call instruction.
 
 This concludes the implementation of a very basic assembly level debugger for
-Linux on the x86-64 platform. The proof of concept implementation is provided as
-an extension to this thesis and can be found under \todo{\texttt{<path to the
-debugger>}}. The implementation was partially inspired by
-\cite{linux-debugger-blog} and \cite{lldb}.
+Linux on the x86-64 platform. The proof of concept implementation is provided
+as an extension to this thesis and can be found under \texttt{/linux-debugger}
+folder. The implementation was partially inspired by \cite{linux-debugger-blog}
+and \cite{lldb}. It demonstrates the feasibility of building a very basic
+debugger with the ptrace api.
 
 \subsubsection*{Hardware versus Software breakpoints}
-The breakpoints we have implemented here are called \textit{software
-breakpoints}. In section \todo{ref} we mentioned that CPU also supports
+The presented implementation has used \texttt{software breakpoints}, which are
+implemented by modifications to the actual code. In section
+\todo{section:cpu-debug-support} we mentioned that CPU also supports
 breakpoints, these are called \textit{hardware breakpoints}. The difference
-between these two are mostly felt when doing reverse engineering, where people
-study compiled programs in machine code because they do not have an access to
-source code of the programs. This is done to find out what the program does,
-for example to find out if it is of malicious nature. The programs themselves
-however often try to defend from being debugged. Software breakpoints changes
-the actual code, so a checksum of instruction opcodes can detect them. Hardware
-breakpoints on the other hand do not touch the code, so they cannot be detected
-as easily. They can also be used to break on memory access, which is not
-possible with software breakpoints. However, we can only have limited number of
-hardware breakpoints (4 on x86-64).
+between these two are mostly felt when conducting reverse engineering, which
+involves studying compiled programs in machine code because they do not have an
+access to source code of the programs, often in order to identify potential
+malicious activity. The programs themselves however may try to defend from
+being debugged. Software breakpoints changes the actual code, so a checksum of
+instruction opcodes can detect them. Hardware breakpoints on the other hand do
+not modify the code and are therefore more difficult to detect. Additionaly,
+they can also be used to break on memory access, which is not possible with
+software breakpoints. However, there are limits amount of hardware breakpoints
+that can be set, with only four available on the x86-64 architecture.
 
 \subsection{UNIX systems}
 There are other systems based on UNIX, however, the implementation is very
 similar to the Linux one. For example, MacOS, FreeBSD, and OpenBSD also have
-the \texttt{ptrace} system call. The function is a little different on each
+the \texttt{ptrace} system call. The call itself is a little different on each
 operating system but it can be used to achieve the same functionality as on the
 Linux operating system.
 
