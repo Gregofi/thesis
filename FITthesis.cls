@@ -10,20 +10,10 @@
 \DeclareOption{thesis=B}{\gdef\@thesistype{B}\@thesistypedefinedtrue}
 \DeclareOption{thesis=M}{\gdef\@thesistype{M}\@thesistypedefinedtrue}
 
-\DeclareOption{czech}{
-	\AtBeginDocument{\selectlanguage{czech}}
-	\PassOptionsToPackage{english,main=czech}{babel}
-	\def\@lang{1}
-}
 \DeclareOption{english}{
 	\AtBeginDocument{\selectlanguage{english}}
 	\PassOptionsToPackage{czech,main=english}{babel}
 	\def\@lang{0}
-}
-\DeclareOption{slovak}{
-	\AtBeginDocument{\selectlanguage{slovak}}
-	\PassOptionsToPackage{english,main=slovak}{babel}
-	\def\@lang{2}
 }
 \DeclareOption{10pt}{\PassOptionsToClass{\CurrentOption}{memoir}}
 \DeclareOption{11pt}{\PassOptionsToClass{\CurrentOption}{memoir}}

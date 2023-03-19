@@ -5,4 +5,4 @@ clean:
 
 compile: main.tex chapters/0.tex chapters/1.tex
 	mkdir -p out/text
-	latexmk -xelatex -bibtex -output-directory=out -shell-escape -pdf
+	latexmk -xelatex -bibtex -output-directory=out -shell-escape -pdf -file-line-error
