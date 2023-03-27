@@ -100,19 +100,19 @@ a program written in high level programming language. This is an implementation
 of the binary search algorithm. As an input, it receives sorted sequence of
 numbers and some number $n$ and checks if that number $n$ is in the sequence.
 This algorithm is widely used when searching because of its
-$\mathcal{O}(\text{log}(n)$ complexity.
+$\mathcal{O}(\text{log} n)$ complexity.
 
 \section{Debugging}
-Programs are mostly written by humans, and humans tend to make mistakes
-\cite{human-error}. We are no exception, as we have also made a mistake in the
-program that implements binary search. Let us try to run the program with a
-\texttt{[1,2,3]} sequence and search for the number $4$. This number is
-apparently not in the sequence, so the expected output would be $0$. Instead,
-if we run the program it would run forever, because of a mistake we have made
-in the source code. We will call such mistakes a \textit{bug}\footnote{The term
-\textit{bug} actually comes from a real bug that got stuck in relays back when
-computers were made from relays. They literally had to debug the machine by
-taking the bug out.}.
+Programs are mostly written by humans, and humans tend to make
+mistakes~\cite{human-error}. We are no exception, as we have also made a
+mistake in the program that implements binary search. Let us try to run the
+program with a \texttt{[1,2,3]} sequence and search for the number $4$. This
+number is apparently not in the sequence, so the expected output would be $0$.
+Instead, if we run the program it would run forever, because of a mistake we
+have made in the source code. We will call such mistakes a
+\textit{bug}\footnote{The term \textit{bug} actually comes from a real bug that
+got stuck in relays back when computers were made from relays. They literally
+had to debug the machine by taking the bug out.}.
 
 We of course have to fix this bug, otherwise no one would use our programs if
 they didn't work. We could just try to look at the source code and find the

@@ -1,12 +1,13 @@
-\chapter{The T86 Virtual machine}\label{section:T86}
+\chapter{Tiny86}\label{section:T86}
 At the FIT CTU, in the NI-GEN course students have to write their own compiler.
-To ease the code generation part, the T86 architecture was created and a
-virtual machine was written as a way to execute programs in that architecture.
-The architecture was made as part of a masters thesis \cite{ivo2021tiny}. This
-chapter explores the T86 architecture and the virtual machine that was made for
-it and delves into the existing debugging capabilites of said virtual machine.
+To ease the code generation part, the Tiny86 (T86) architecture was created and
+a virtual machine was written as a way to execute programs in that
+architecture. The architecture was made as part of a masters
+thesis~\cite{ivo2021tiny}. This chapter explores the T86 architecture and the
+virtual machine that was made for it and delves into the existing debugging
+capabilites of said virtual machine.
 
-\section{T86 ISA}
+\section{The T86 Instruction Set Architecture}
 The name is an abbreviation for Tiny x86, but in some aspects the architecture
 is more similar to other architectures like ARM, for example it is a RISC
 architecture. It is an educational ISA, so some properties are configurable,
@@ -19,29 +20,47 @@ the memory and instructions can be represented as two separate array-like
 members of the virtual machine. Memory is addressable by 64-bit blocks, not
 by 8-bit blocks as is custom in modern computers.
 
-It shares some of the registers we saw on x86\_64: \texttt{PC}, \texttt{SP},
-\texttt{BP} and the flags register. The intended roles for these registers are
-the same as on x86\_64. It also has other general purpose registers. The number
-of these is configurable. This is to ease the initial code generation, the students
-can write a compiler that uses infinite amount of registers and worry about
-register allocation later. The registers stores 64-bit value. It also has
-float registers, which can store 64-bit float values. These are separated from
-the normal registers, similarly to x86\_64.
+It shares some of the registers we saw on x86-64: the program counter (PC),
+stack pointer (SP), base pointer (BP) and the flags register. The intended
+roles for these registers are the same as on x86-64. It also has other general
+purpose registers. The number of these is configurable. This is to ease the
+initial code generation, the students can write a compiler that uses an
+infinite amount of registers and worry about register allocation later. The
+registers store a 64-bit value. It also has float registers, which can store
+64-bit float values. These are separated from the normal registers, similarly
+to x86-64.
 
 The addressing modes, or what kind of operands instructions can have, include
-immediate values, registers and memory accesses. These accesses are not only
-immediate or register offsets, but can be combined in various way, like
-\texttt{[R0 + R1 * 2]}, or \texttt{[R0 + 10 + R1 * 2]}. The addressing modes
-are however not arbitrary, \texttt{[R0 + R1 + R2]} is not correct addressing
-mode for T86. For full list refer to \cite{ivo2021tiny}.
+immediate values, registers and memory accesses. They can also be combined in
+in various way, like \texttt{[R0 + R1 * 2]}, or \texttt{[R0 + 10 + R1 * 2]}.
+The addressing modes are however not arbitrary, \texttt{[R0 + R1 + R2]} is not
+correct addressing mode for T86. For full list refer to \cite{ivo2021tiny}. The
+instructions that are taken over from x64-64 have more restrictive addressing
+modes. For example, the \verb|add| instruction can take a memory offset as an
+destination operand in x64-86, but in T86 it can only take registers.
 
-The instructions the ISA provides are very similar to what we have already seen
-when examining various real world examples. Interesting exceptions to that are
-the IO instructions - \texttt{PUTCHAR} and \texttt{GETCHAR}, which allow for
-very basic input and output. Also, an \texttt{DBG} and \texttt{BREAK} are
-defined. These are used for debugging, but in a very different way that we have
-seen in previous sections. We will touch upon them when discussing the virtual
-machine implementation, since they are very much tied to it.
+Other than that, the ISA is a subset of the x64-86 most used instructions, many
+of which we have already seen in various examples spread thorough the thesis. A
+small example of a piece of T86 program can be seen in figure
+\ref{fig:t86-example}. Interesting exceptions to that are the IO instructions -
+\texttt{PUTCHAR} and \texttt{GETCHAR}, which allow for very basic input and
+output. Also, an \texttt{DBG} and \texttt{BREAK} are defined. These are used
+for debugging, but in a very different way that we have seen in previous
+sections. We will touch upon them when discussing the virtual machine
+implementation, since they are very much tied to it.
+
+\begin{figure}
+    \begin{lstlisting}
+SUB SP, 1
+MOV R0, 5
+MOV [BP - 2], R0
+LEA R1, [BP - 2]
+MOV [BP - 1], R1
+MOV R2, 4
+    \end{lstlisting}
+    \caption{A small piece of a T86 program.}
+    \label{fig:t86-example}
+\end{figure}
 
 \subsection{T86 Virtual machine}
 The goal of the virtual machine was to simulate the execution as close as
@@ -56,7 +75,7 @@ how much the generated program works with these properties that are present on
 real world CPUs.
 
 The virtual machine is implemented in C++, using the newer standards up to
-C++17. The VM offers only a single interface, and that is
+C++17. The VM offers only a single interface, and that is the
 \texttt{ProgramBuilder}. This is a class through which one may construct a
 program for the T86 VM. An example of how to use this class is in figure
 \ref{fig:t86-intro}. Currently, there is no other way for users to run programs

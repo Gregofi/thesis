@@ -1,0 +1,36 @@
+\chapter{Evaluation}
+In this chapter, we evaluate the debugger, comparing its usage to the gdb and
+lldb debugger. We will also measure the impact of the debugging onto the
+performace.
+
+\section{The development process}
+The development of the thesis was done in a github repository. The power of
+github was leveraged not only for keeping a history, but also for writing
+issues, planning the development, or making sure that the repository is in
+consistent and working state via github actions, which runs tests before pull
+request is accepted. This repository can be used going forward.
+
+The project itself contains many tests. The code is first tested via many unit
+tests. The \texttt{GoogleTest} framework was used. The unit tests cover almost
+all parts of the code.
+
+\section{Usage}
+There was an attepmt to follow the interface of GDB closely, so that the users
+are somewhat familiar with the debugger before even running it. However, we had
+to diverge on some features. For example, the GDB uses \texttt{stepi} for
+single stepping. This has a common prefix with \texttt{step}. We however expect
+our users to use the assembly level debugging more often than source level, so
+we choose the \texttt{istep} command. The two commands have no shared prefix
+and so typing \texttt{is} is enough.
+
+Also, the program is run via \texttt{run}, this starts the VM but the program
+is paused. In GDB, one has to use the \texttt{start} command, \texttt{run} runs
+the program without stopping at the beginning. When we did a brief user
+testing, it was confusing for the user. However, renaming the command
+\texttt{run} to \texttt{start} would cause it to have the same prefix as
+\texttt{step}. Considering this, we've made the decision to leave the command
+as \texttt{run}.
+
+There are other minor things, most of them come from the fact that we give more
+priority to assembly level debugging, whereas GDB focus more on the source
+level.
