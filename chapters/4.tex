@@ -1,20 +1,23 @@
 \chapter{Evaluation}
-In this chapter, we evaluate the debugger, comparing its usage to the gdb and
-lldb debugger. We will also measure the impact of the debugging onto the
-performace.
+In this chapter, we evaluate the debugger, comparing its usage to the gdb
+debugger. We will also measure the impact of the debugging onto the performace.
 
 \section{The development process}
-The development of the thesis was done in a github repository. The power of
-github was leveraged not only for keeping a history, but also for writing
+The development of the thesis was done in a Github repository. The power of
+Github was leveraged not only for keeping a history, but also for writing
 issues, planning the development, or making sure that the repository is in
 consistent and working state via github actions, which runs tests before pull
-request is accepted. This repository can be used going forward.
+request is accepted. The actions runs on two operating systems, Ubuntu and
+MacOS, making sure that the project works on both of them.
 
 The project itself contains many tests. The code is first tested via many unit
-tests. The \texttt{GoogleTest} framework was used. The unit tests cover almost
-all parts of the code.
+tests, whcih use the \texttt{GoogleTest} framework. The unit tests cover almost
+all parts of the code. It also has integration tests for T86-CLI and the
+debugger CLI. Most of the debugger CLI integration tests were made with the
+help of the TinyC to T86 compiler, which was made as a part of a
+thesis~\todo{Credit Martinovi.}.
 
-\section{Usage}
+\section{Usage and user testing}
 There was an attepmt to follow the interface of GDB closely, so that the users
 are somewhat familiar with the debugger before even running it. However, we had
 to diverge on some features. For example, the GDB uses \texttt{stepi} for
@@ -33,4 +36,71 @@ as \texttt{run}.
 
 There are other minor things, most of them come from the fact that we give more
 priority to assembly level debugging, whereas GDB focus more on the source
-level.
+level. We provide a short list of examples showing how to achieve something in
+GDB and in our debugger \todo{Linknout path do sourcu nebo to pridat sem jako
+appendix}.
+
+The debugger was already tested by one student, and he said that the experience
+was pleasant. There were few minor things that he didn't like (for example the
+fact that usage message can only be displayed after the debuggee program is
+run), most of which we took to heart and corrected. Also, another student, who
+is currently writing a compiler from TinyC to T86, used it to debug his
+generated code.
+
+Blabla\todo{complete this part when code is public}.
+
+\section{Performance}
+The performance of the debugged program can suffer. In this section, we show
+which debugging features hurt performance the most and if there is any way
+around it. The tests were done on two programs, the first one is a quicksort
+algorithm, the second is a naive prime number checker. We will test four cases,
+the speed of the program with the debugger connected but no extra action except
+\texttt{continue} taken. Then we will try to set a breakpoint in a hot spot of
+the function and check if that slows it down. The third test will be the same,
+but in addition to just using \texttt{continue} when the breakpoint is hit we
+will also read memory and registers. Finally, we will try to step over the call
+to the most slow function and step out of that function.
+
+\begin{table}[]
+\begin{tabular}{lll}
+Usecase                                      & Quicksort - Time & Prime numbers - Time \\
+T86 without debugger                         & $9.96$            & $11.68$             \\
+Debugger connected                           & $9.32$            & $12.33$             \\
+Breakpoints at hot-spot                      & $10.9$            & $58.32$             \\
+Breakpoints with memory and register probing & $10.9$            & $72.85$             \\
+Step over the most expensive function        & $9.73$            & $10.53$             \\
+Step out of the most expensive function      & $9.65$            & $230.81$            \\
+\end{tabular}
+\caption{Performance comparison when using various features of the debugger.
+The Quicksort had 674 breakpoints hits, while prime numbers had 101266 hits.
+Each case was run five times and average was taken.}
+\label{table:benchmark}
+\end{table}
+
+In table \ref{table:benchmark} are the results of the program running at
+mentioned conditions. It is apparent that just having the debugger connected
+introduces almost no slowdown. In the quicksort case, the program is even
+faster. This is probably due to measure errors. The breakpoints however cause a
+slowdown. In the quicksort, the program had $674$ breakpoint hits, while in the
+prime numbers it had a $101266$ breakpoint hits. The quicksort version is $1.1$
+times slower, which is no big deal. However the prime numbers take severe hit
+with being at least $5$ times slower. This shouldn't come as a suprise, as
+there is enormous number of breakpoint hits. The communication between the
+debugger and the debuggee starts to slow down the program. Such result is still
+satisfactory given the enormous number of breakpoints. Reading memory and
+registers together with the breakpoints introduces minimal slowdown.
+
+The step over result is not very suprising. It puts a breakpoint after the call
+and runs the program, so the result should be roughly the same. Step out is
+stepping over until a return is encountered. This works well in the recursive
+function, because it skips a large part of the program. But in the prime case,
+which is implemented via cycle, it severely slows down the program because it
+essentially single steps through the entire thing.
+
+The debugger is more than suited for usage on normal programs. In case of very
+computational intensive programs, certain features of the debugger will start
+to struggle. On the other hand, a hundred thousand breakpoint hits is a very
+big number. We consider the quicksort example as a peak of what the students
+will have to debug, and on that example the debugger had almost no slowdowns at
+all. Still, it is something to keep in mind while using the debugger and there
+is a potential for improvements in the future.
