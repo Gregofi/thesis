@@ -1,53 +1,54 @@
 \chapter{Tiny86}\label{section:T86}
-At the FIT CTU, in the NI-GEN course students have to write their own compiler.
-To ease the code generation part, the Tiny86 (T86) architecture was created and
-a virtual machine was written as a way to execute programs in that
-architecture. The architecture was made as part of a masters
-thesis~\cite{ivo2021tiny}. This chapter explores the T86 architecture and the
-virtual machine that was made for it and delves into the existing debugging
-capabilites of said virtual machine.
+At the FIT CTU, in the NI-GEN course, students have to write a compiler. The
+Tiny86 (T86) architecture was created to make code generation easier. This
+allows the students to focus on more interesting parts of compiler design, such
+as optimizations. To be able to execute programs written using this
+architecture, a virtual machine was created. This was all done as a part of a
+master's thesis made by Ivo Strejc~\cite{ivo2021tiny}. This chapter explores
+said architecture and the virtual machine. It also delves into the existing
+debugging capabilities of said virtual machine.
 
 \section{The T86 Instruction Set Architecture}
-The name is an abbreviation for Tiny x86, but in some aspects the architecture
-is more similar to other architectures like ARM, for example it is a RISC
-architecture. It is an educational ISA, so some properties are configurable,
-like the number of available registers.
+The T86 name is an abbreviation for Tiny x86. It was designed with a goal in
+mind, that goal being the fact that it is an educational ISA. The Virtual
+Machine made for the ISA allows configuring the number of registers, the RAM
+size, or the length of each instruction. This allows the student to develop
+their compilers incrementally.
 
-The T86 uses a harvard architecture, this means that the data and instructions
-are separated from each other. The author doesn't specify the reason for this,
-put presumably it is to ease the implementation of the virtual machine, since
-the memory and instructions can be represented as two separate array-like
-members of the virtual machine. Memory is addressable by 64-bit blocks, not
-by 8-bit blocks as is custom in modern computers.
+The T86 uses a Harvard architecture, meaning the data and instructions are
+physically separated. The author doesn't specify the reason for this.
+Presumably, it is to ease the implementation of the virtual machine since the
+memory and instructions can be represented as two separate array-like members
+of the virtual machine. Memory is addressable by 64-bit blocks, not by 8-bit
+blocks as is the custom in modern computers.
 
-It shares some of the registers we saw on x86-64: the program counter (PC),
-stack pointer (SP), base pointer (BP) and the flags register. The intended
-roles for these registers are the same as on x86-64. It also has other general
-purpose registers. The number of these is configurable. This is to ease the
-initial code generation, the students can write a compiler that uses an
-infinite amount of registers and worry about register allocation later. The
-registers store a 64-bit value. It also has float registers, which can store
-64-bit float values. These are separated from the normal registers, similarly
-to x86-64.
+It shares some of the registers we saw on x86-64: the program counter (PC), the
+stack pointer (SP), the base pointer (BP), and the flags register. The intended
+roles for these registers are the same as on x86-64 architecture. It also has
+other general-purpose registers. As previously said, the amount of these is
+configurable. The registers store a 64-bit value. It also has float registers,
+which can store 64-bit float values. These are separated from the standard
+registers, similarly to x86-64.
 
 The addressing modes, or what kind of operands instructions can have, include
-immediate values, registers and memory accesses. They can also be combined in
-in various way, like \texttt{[R0 + R1 * 2]}, or \texttt{[R0 + 10 + R1 * 2]}.
-The addressing modes are however not arbitrary, \texttt{[R0 + R1 + R2]} is not
-correct addressing mode for T86. For full list refer to \cite{ivo2021tiny}. The
-instructions that are taken over from x64-64 have more restrictive addressing
-modes. For example, the \verb|add| instruction can take a memory offset as an
-destination operand in x64-86, but in T86 it can only take registers.
+immediate values, registers, and memory accesses. They can also be combined in
+various ways, like \texttt{[R0 + R1 * 2]}, or \texttt{[R0 + 10 + R1 * 2]}. The
+addressing modes are, however, not arbitrary, \texttt{[R0 + R1 + R2]} is not a
+correct addressing mode for T86. For a full list, refer to \cite{ivo2021tiny}.
+The instructions that are taken over from x86-64 have more restrictive
+addressing modes than in x86-64. For example, the \verb|add| instruction can
+take a memory offset as a destination operand in x64-86, but in T86, it can
+only take registers.
 
-Other than that, the ISA is a subset of the x64-86 most used instructions, many
-of which we have already seen in various examples spread thorough the thesis. A
-small example of a piece of T86 program can be seen in figure
-\ref{fig:t86-example}. Interesting exceptions to that are the IO instructions -
-\texttt{PUTCHAR} and \texttt{GETCHAR}, which allow for very basic input and
-output. Also, an \texttt{DBG} and \texttt{BREAK} are defined. These are used
-for debugging, but in a very different way that we have seen in previous
-sections. We will touch upon them when discussing the virtual machine
-implementation, since they are very much tied to it.
+Other than that, the ISA is a subset of the x86-64 most used instructions, many
+of which we have already seen in various examples throughout the thesis.
+Interesting exceptions are the IO instructions - \texttt{PUTCHAR} and
+\texttt{GETCHAR}, which allow for very primitive input and output handling.
+Also, an \texttt{DBG} and \texttt{BREAK} are defined. These are used for
+debugging, but in a very different way than we have seen in previous sections.
+We will touch upon them when discussing the virtual machine implementation
+since they are very much tied to it. A small sample of a T86 program can be
+seen in figure \ref{fig:t86-example}.
 
 \begin{figure}
     \begin{lstlisting}
@@ -62,19 +63,17 @@ MOV R2, 4
     \label{fig:t86-example}
 \end{figure}
 
-\subsection{T86 Virtual machine}
-The goal of the virtual machine was to simulate the execution as close as
-possible to the real world CPUs. Speed of the execution was not a main focus.
-For example, the CPU simulates the whole out-of-order execution briefly
-described in section \ref{section:superscalar-cpu}. In fact, if the virtual
-machine just interpreted the instructions one by one it would be significantly
-faster. But the main point of the machine is for the students to learn of the
-impact that pipelining, hazards and out of order execution has on the speed of
-their programs. The virtual machine has statistics that can be exported to view
-how much the generated program works with these properties that are present on
-real world CPUs.
+\subsection{T86 Virtual machine}\label{section:t86-vm}
+The primary objective of the virtual machine is to replicate the CPU as
+accurately as possible, without prioritizing execution speed. For instance, the
+virtual machine simulates the out-of-order technique briefly described in
+section \ref{section:superscalar-cpu}. The purpose of the virtual machine is to
+allow the students to gain a deeper understanding of the effects of pipeline
+stalls and similar events on program speed. The virtual machine is able to
+generate statistics that provide information about these factors and how
+much they influenced the speed of the generated program.
 
-The virtual machine is implemented in C++, using the newer standards up to
+The virtual machine (VM) is implemented in C++, using the newer standards up to
 C++17. The VM offers only a single interface, and that is the
 \texttt{ProgramBuilder}. This is a class through which one may construct a
 program for the T86 VM. An example of how to use this class is in figure
@@ -98,16 +97,16 @@ some bindings if they want to use other language.
     \label{fig:t86-intro}
 \end{figure}
 
-\subsubsection*{Debug instructions}
+\subsubsection{Debug instructions}\label{section:t86-debug-cap}
 The VM offers some limited debug capabilities. It has the \texttt{DBG} and
 \texttt{BRK} instructions. The \texttt{DBG} instruction takes as an operand a
 function. The function has the following signature: \texttt{void fun(Cpu\&)}.
 This function then gets executed when the instruction is hit. This can prove
-useful to inspect the internal state of the Cpu. In figure \ref{fig:t86-debug}
-we show a possible usage of this instruction. The \texttt{BRK} instruction
-works in a similar way. It however has no operand. Instead, a function must be
-provided before execution to the CPU itself. \texttt{BRK} then always runs this
-function when hit.
+helpful in inspecting the internal state of the CPU. In figure
+\ref{fig:t86-debug}, we show a possible usage of this instruction. The
+\texttt{BRK} instruction works similarly. It, however, has no operand. Instead,
+a function must be provided before execution to the CPU itself. \texttt{BRK}
+then always runs this function when hit.
 
 \begin{figure}
     \begin{minted}{cpp}
@@ -121,13 +120,13 @@ function when hit.
     \label{fig:t86-debug}
 \end{figure}
 
-Such debugging capabilites can be helpful. It however proves insufficient
-when a step by step inspection is sought. To achieve this, a debug instruction
-would have to placed at every second line of the program. Also, interactivity is
-not much present. This function however can accept input, so one could create a
-function robust enough to handle register and memory writing. An idea of how
-this could be done is illustrated in \ref{fig:t86-pocket-debugger} via the
-\texttt{BRK} instruction.
+Such debugging capabilities can be helpful but quickly prove insufficient. For
+example, when a step-by-step inspection is sought, a debug instruction must be
+placed at every second line of the program. Also, interactivity is not present.
+However, this function can accept input, so one could create a robust enough to
+handle register and memory writing. An idea of how this could be done is
+illustrated in \ref{fig:t86-pocket-debugger} via the \texttt{BRK} instruction.
+
 \begin{figure}
     \begin{minted}{cpp}
     cpu.connectBreakHandler([](Cpu& cpu) {
@@ -152,6 +151,6 @@ this could be done is illustrated in \ref{fig:t86-pocket-debugger} via the
     \caption{Small debugger implementation using T86 BRK instruction, abbreviated.}
     \label{fig:t86-pocket-debugger}
 \end{figure}
-This however still does not come close to using a real debugger.
-For example, setting something like a breakpoint is impossible since
-the instruction vector is not writable.
+
+This still leaves much to be desired. Not to mention placing the debug
+instruction can prove very bothersome.
