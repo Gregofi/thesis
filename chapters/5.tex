@@ -1,0 +1,58 @@
+\chapter{Conclusion}
+\section{Summary}
+We explored debugging capabilities of modern CPU architectures. We also
+described how debugging is supported at various layers, from operating systems
+to compilers. Then, we discuss the T86 architecture and its lackluster
+debugging support. We remedy this by adding a debugging API inspired by modern
+architectures. We also created a native and source-level debugger, which is
+production ready and \todo{Trosku odvazny ale snad to tak dopadne} already used
+in the NI-GEN course at FIT CTU. This debugger is extensible enough that if a
+new architecture, virtual machine, or source language comes into play, it
+should be fairly easy to add debugging support.
+
+The debugger encourages students in the NI-GEN course to investigate how the
+debugger works, the connection between the generated machine code and the
+source code, and to emit information about those connections so that the
+debugger can work at the source level. It can also make their lives easier
+since the debugger works at the native level without additional work, allowing
+them to debug the code their compiler generated.
+
+The tool is, along with the enhanced T86 virtual machine, openly available at
+\verb|https://github.com/Gregofi/tinyverse-monorepo|.
+
+\section{Future Work}
+There are many possible improvements to be made. We have created a new
+executable text format for T86 ISA and, consequently, a parser for that format.
+Students, however, have to generate this text, which includes not only the
+instructions themselves but also the debugging information. A builder interface
+could go a long way, especially for the most commonly used languages in the
+NI-GEN course.
+
+The native part of the debugger is fairly complete. It can always be extended
+for new architectures and virtual machines should they emerge. The source-level
+debugger can, however, be extended. The expression command, which evaluates a
+TinyC expression, can't handle function calls. There is also no way to format
+the output (for instance, to print an integer as a hexadecimal number).
+
+New types can always be added to the debugging information. For example, we're
+missing enums, qualifiers like \texttt{const} and \texttt{mutable}, or more
+advanced types that are in the C++ standard library. Those types are not in the
+TinyC language that is being taught in the NI-GEN course, but the debugger is
+not strictly tied to the language.
+
+The debugger currently does not handle frame information in any way. This could
+be a helpful addition so that it displays call frames and allows one to step
+out of them. This would require a new section, which would have to contain
+enough information to simulate an unwind. The exact mechanism was described in
+section \ref{section:call-frames}.
+
+The T86 VM generates statistics about the program execution. It records things
+like pipeline stalls. Since the debugger has the capability to connect the
+source to the assembly, it could display the code hot spots in the source code
+directly.
+
+Last but not least, a graphical user interface could be created for the
+debugger. Currently, it only offers a command line interface. A graphical
+interface could be more pleasant to work in. Alternatively, it could be hooked
+to an existing editor, like the Visual Studio Code, which allows the usage of
+other debuggers like LLDB or GDB.
