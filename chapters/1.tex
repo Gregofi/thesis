@@ -770,7 +770,7 @@ typedef struct _DEBUG_EVENT {
 
 \subsubsection*{Tying it all together}
 Now we have all the necessary building blocks to create a tiny Windows
-compiler. The implementation itself would be very similar to the Linux one we
+debugger. The implementation itself would be very similar to the Linux one we
 presented in section \ref{section:linux-dbg}. To provide at least some idea,
 figure \ref{fig:windows-debugger-mainloop} contains an abbreviated main loop of
 the debugger \cite{windows-msdn-dbg-main-loop}. We need to handle all of the
@@ -856,9 +856,10 @@ and written to, but cannot be executed. The ELF also contains various debug
 sections, so the debugging information is embedded in the executable itself.
 
 ELF is not the only one executable format. Others include the \textit{COFF} and
-\textit{PE} format, which is used by Microsoft Windows, or the \textit{Mach-O},
-which are used by the MacOS operating system. All of these formats use some
-encoding for the debugging information. ELF and Mach-O use the DWARF encoding.
+\textit{PE} format, which are used by Microsoft Windows, or the
+\textit{Mach-O}, which is used by the MacOS operating system. All of these
+formats use some kind of encoding for the debugging information. ELF and Mach-O
+use the DWARF encoding.
 
 \subsection{DWARF}
 DWARF~\cite{dwarf} is a debugging information format used to describe programs
@@ -880,7 +881,7 @@ is stored in various debug sections if used in conjunction with the ELF
 standard. The Mach-O format stores debugging information into separate file.
 This file is still however split into several sections.
 
-\subsubsection{Line Number Information}
+\subsubsection{Line Number Information}\label{section:line-number-information}
 Line number information needs to convey which line of code corresponds to an
 address of a machine code instruction. The DWARF standard~\cite{dwarf} mentions
 that encoding this information would be possible in a matrix, which would have
@@ -913,7 +914,7 @@ compressed), and similar pieces of information.
 Then the \textit{Standard opcodes} are provided, which are instructions of the
 virtual machine. These are mostly used for manipulating the registers of the
 machine or to create a new row from the values in the registers and append it
-to the matrix \cite{dwarf}. 
+to the matrix~\cite{dwarf}. 
 
 It also has several \textit{Special opcodes}, each of which does all of the
 following operations:
@@ -1028,7 +1029,7 @@ blocks of debugging information in DWARF. Each entry has a tag and a series of
 attributes. The tag specifies the class to which an entry belongs, like
 \verb|DW_TAG_subprogram|, which is used for functions, or
 \verb|DW_TAG_variable|, which is used for variables. A complete list can be
-found in~\cite{dwarf}. Those entries can be found in \verb|.debug_info|
+found in~\cite{dwarf}. Those entries can be found in the \verb|.debug_info|
 section~\cite{dwarf}. 
 
 The attributes themselves then convey some property of the entry, like the name
@@ -1048,7 +1049,7 @@ its a const type, and again has a link to another entry. Finally, the entry at
 \texttt{0x6b} has a base type. It contains the size of the type, name, and
 encoding. 
 
-We also have the \texttt{DW\_TAG\_SUBPROGRAM}, which represents a function. It
+We also have the \verb|DW_TAG_SUBPROGRAM|, which represents a function. It
 has many attributes, like name, path to the file where it was declared, on
 which line and column it is located, at which machine code address the function
 begins and ends, and so on. This entry also owns some other entries (indicated
@@ -1112,29 +1113,32 @@ DW_TAG_subprogram
 \end{figure}
 
 \subsubsection{Locations of variables}\label{section:dwarf-location}
-Locations are probably the most complicated thing in the DWARF standard. Like
-with locations, a virtual machine is needed to decode this information.
-Variables are generally stored in one place. This can be a memory, register, or
-stack. Sometimes however the location of an object can change throughout its
-lifetime, it may not be present at all since it was optimized away, it can be
-split into several locations, or it might be a reference to some other object.
-The fact that an object changes location throughout its lifetime seldom happens
-\cite{dwarf-intro}, but DWARF is nevertheless prepared for it \cite{dwarf}.
+Locations are one of the most complicated type of debugging information in the
+DWARF standard. Like with line mapping, a virtual machine is needed to decode
+this information. Variables are generally stored in one place. This can be a
+memory, register, or stack. Sometimes, however, the location of an object can
+change throughout its lifetime, it may not be present at all since it was
+optimized away, it can be split into several locations, or it might be a
+reference to some other object. The fact that an object changes location
+throughout its lifetime seldom happens \cite{dwarf-intro}, but DWARF is
+nevertheless prepared for it \cite{dwarf}.
 
-Contrary to the virtual machine described in line encoding, which was
-register-based, this one is stack-based. This means that most operations take
-their operands from the stack and push the result back onto the stack. More
-about stack-based virtual machines can be discovered in
+Contrary to the virtual machine described in the line encoding section, which
+was register-based, this one is stack-based. This means that most operations
+take their operands from the stack and push the result back onto the stack.
+More about stack-based virtual machines can be discovered in
 \cite{crafting-interpreters}. DWARF calls those instructions
 \textit{expressions} \cite{dwarf}. The last value on the top of the stack after
 the VM runs is considered to be the resulting value (this can be an address of
 an object, value of an array bound, length of dynamic string, and so on)
-\cite{dwarf}. For example in the figure \ref{fig:c-program-and-its-assembly}
-there is the \texttt{DW\_OP\_fbreg -24}, this pushes value at offset $-24$ by
-the register specified by a descriptor in \texttt{DW\_AT\_frame\_base}, which
-often is a base pointer to the stack. And since there are no more expressions
-the computed value on the top of the stack is the resulting location of the
-variable that the debugger will get to use.
+\cite{dwarf}.
+
+For example in the figure \ref{fig:c-program-and-its-assembly} there is the
+\verb|DW_OP_fbreg -24|, this pushes value at offset $-24$ by the register
+specified by a descriptor in \verb|DW_AT_frame_base|, which often is a base
+pointer to the stack. And since there are no more expressions the computed
+value on the top of the stack is the resulting location of the variable that
+the debugger will get to use.
 
 There are many types of expressions, like arithmetic operations, stack
 manipulation, control flow operations, and last but not least, the
@@ -1142,19 +1146,20 @@ specifications of the location. We provided already the example with the base
 pointer to the stack, let us look at some more examples, mostly taken from
 \cite{dwarf}:
 \begin{itemize}
-    \item \texttt{DW\_OP\_reg3} - The value is in register $3$.
-    \item \texttt{DW\_OP\_addr 0xABCD} - The value of a static variable is at
-        address \texttt{0xABCD}.
-    \item \texttt{DW\_OP\_bregx 54 3; DW\_OP\_deref} - Adds $54$ to value in
+    \item \verb|DW_OP_reg3| - The value is in register $3$.
+    \item \verb|DW_OP_addr 0xABCD| - The value of a static variable is at
+        address \verb|0xABCD|.
+    \item \verb|DW_OP_bregx 54 3; DW_OP_deref| - Adds $54$ to value in
         register $3$. This should yield an address. The value at the location
         to which the yielded address points is then pushed onto the stack. This
         can be used for recording information about references and pointers.
-    \item \texttt{DW\_OP\_reg3; DW\_OP\_dup; DW\_OP\_add} - Fetches value from
+    \item \verb|DW_OP_reg3; DW_OP_dup; DW_OP_add| - Fetches value from
         register $3$ and pushes it onto the stack, duplicates that value and
         pushes it on the stack, and pops two values from the stack, adds them
         together, and pushes them back onto the stack\footnote{Artificial
         example just to show the power of the language.}.
 \end{itemize}
+
 With this computational power, we can save any information we need. There are
 many more instructions, all of which can be found in \cite{dwarf}. An example
 of an interpreter for this can be found in the LLDB source code in file
