@@ -1,6 +1,7 @@
-% arara: xelatex
-% arara: xelatex
-% arara: xelatex
+% arara: xelatex: {shell:true}
+% arara: bibtex
+% arara: xelatex: {shell:true}
+% arara: xelatex: {shell:true}
 
 % options:
 % thesis=B bachelor's thesis
@@ -11,13 +12,13 @@
 
 \documentclass[thesis=M,english]{FITthesis}[2019/12/23]
 
-\usepackage[utf8]{inputenc}
+% \usepackage[utf8]{inputenc}
 \usepackage{amsmath} %advanced maths
 \usepackage{amssymb} %additional math symbols
 \usepackage{lipsum,tikz}
-\usepackage[cache=false, outputdir=out]{minted}
+\usepackage[cache=false]{minted}
 \usepackage{listings} % typesetting of sources
-\usepackage[fontsize=11pt]{fontsize}
+% \usepackage[fontsize=11pt]{fontsize}
 \usepackage{xcolor}
 \usepackage{float}
 \usepackage{fancyvrb}

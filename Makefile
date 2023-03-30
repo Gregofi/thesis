@@ -1,8 +1,7 @@
 .DEFAULT_GOAL := compile
 
 clean:
-	rm -rd out
+	latexmk -C
 
-compile: main.tex chapters/0.tex chapters/1.tex
-	mkdir -p out/text
-	latexmk -xelatex -bibtex -output-directory=out -shell-escape -pdf -file-line-error
+compile: main.tex chapters/0.tex chapters/1.tex chapters/2.tex chapters/3.tex chapters/4.tex chapters/5.tex
+	arara main
