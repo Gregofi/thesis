@@ -106,7 +106,7 @@ max:
     \label{fig:assembly-example2}
 \end{figure}
 
-\subsection{Registers}\label{subsection:registers}
+\subsection*{Registers}\label{subsection:registers}
 
 The x86-64 architecture has a set of general purpose registers.
 Some of these are
@@ -609,7 +609,7 @@ There are other systems based on UNIX, however, the implementation is very
 similar to the Linux one. For example, MacOS, FreeBSD, and OpenBSD also have
 the \texttt{ptrace} system call. The call itself is a little different on each
 operating system but it can be used to achieve the same functionality as on the
-Linux operating system.
+Linux operating system.\todo{Kratky, asi nema cenu aby to byla subsection}
 
 \subsection{Windows}
 The Microsoft Windows operating system also offers built-in support for
@@ -672,7 +672,7 @@ first-chance:
         single step was completed.
 \end{itemize}
 
-\subsubsection{Debug events and functions}
+\subsubsection*{Debugging events and functions}
 Now that we have explained how a breakpoint may be signaled, let us look at
 other tools that the Windows API gives us to allow for debugger implementation.
 On Linux, we had a single function called \texttt{ptrace} which behavior
