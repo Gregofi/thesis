@@ -36,7 +36,7 @@ ISA specifies the following:
         architectures. }.   
     \item Addressing modes - Possible methods to refer to memory or register. 
 \end{itemize}
-This list is not exhaustive, for our purposes it is however enough. For each
+This list is not exhaustive, but for our purposes it suffices. For each
 instruction and operand it is specified how they should be encoded into binary.
 CPU then \textit{implements} some ISA. If two different CPUs implement the same
 ISA then they should be able to run the same machine code program. For example,
@@ -621,48 +621,47 @@ such as breakpoint hits or just interrupts in general. We will explore this
 mechanism before getting to the debugging API.
 
 \subsubsection*{Structured Exception Handling}
-Instead of signals, Windows uses \textit{Structured Exceptions}~(SEH)~
-\cite{windows-msdn-seh}. An exception is an event that requires the execution
-of code outside the normal flow of control. There are software exceptions, like
-throwing an exception explicitly or by the operating system, and hardware
-exceptions, which are caused by the CPU (eg. interrupts). SEH unifies both of
-these things into one just like signals do.
+Instead of signals, Windows uses \textit{Structured
+Exceptions}~(SEH)~\cite{windows-msdn-seh}. An exception is an event that
+requires the execution of code outside the normal flow of control. There are
+software exceptions, like throwing an exception explicitly or by the operating
+system, and hardware exceptions that are caused by the CPU (e.g., interrupts).
+SEH unifies both of these things into one, just like signals do.
 
 When an exception is triggered, control is transferred to the system. It saves
 all necessary information that can later be used to continue execution from the
 point where the exception was thrown. It also contains information about which
 type of exception was thrown, if the execution can continue after handling the
-exception, the address where the exception occurred and some other bits of
-information\footnote{See MSDN documentation \cite{windows-msdn-seh} for full
-detailed list.}. The system then searches for an exception handler that will
-handle the exception. The search is performed in this order:
+exception, the address where the exception occurred, and some other bits of
+information\footnote{See \cite{windows-msdn-seh} for a full list.}. The system
+then searches for an exception handler that will handle the exception. The
+search is performed in this order:
 
 \begin{enumerate}
-    \item If the process is debugged the debugger is notified.
+    \item If the process is being debugged the debugger is notified.
     \item If the process is not debugged or the debugger does not handle the
         exception, the frame-based exception handler is to be
         found\footnote{For detailed information about the handlers see
-        \cite{windows-msdn-seh}.}
+        \cite{windows-msdn-seh}.}.
     \item If no frame-based handler can be found, or no handler handles the
-        exception, but the process is being debugged then the debugger gets
-        notified once again.
+        exception, but the process is being debugged, then the debugger gets
+        notified a second time.
     \item The system provides a default handler, which often is the termination of
         the program via \mintinline{c}{ExitProcess}.
 \end{enumerate}
-
 The debugger has two opportunities to handle the exception. The
 \textit{first-chance} is before the exception gets to the debuggee. This is
 intended for exceptions for which the debugger is responsible, for example,
-breakpoint or single stepping. The debugger should handle these because the
-debuggee is not responsible for them. The second opportunity, called
-\textit{last-chance}, is when a debuggee doesn't have an appropriate frame-based
-handler to handle the exception. If the debugger weren't in the way, the system
-would have already used the default exception handler, which is often program
-termination. An example of an exception the debugger shouldn't handle on
-first-chance is \texttt{EXCEPTION\_INT\_DIVIDE\_BY\_ZERO}. It should pass it
-along to the debuggee. If however the debuggee does not have any appropriate
-handler the debugger will get a last chance to look at the state of the program
-before it will be killed \cite{windows-msdn-dbg-exc-handling}.
+breakpoint or single stepping. The debugger should handle these because it is
+responsible for them, while the debuggee is not. The second opportunity, called
+last-chance, is when a debuggee does not have an appropriate frame-based
+handler to handle the exception. If no debugger were attached, the system would
+have already used the default exception handler, which is often program
+termination. An example of an exception the debugger should not handle on first
+chance is \verb|EXCEPTION_INT_DIVIDE_BY_ZERO|. It should pass it along to the
+debuggee. If the debuggee does not have any appropriate handler, the debugger
+will have a last chance to look at the program's state before it is
+killed~\cite{windows-msdn-dbg-exc-handling}.
 
 Two important exception types for debugging, both of which should be handled on
 first-chance:
@@ -674,10 +673,10 @@ first-chance:
 
 \subsubsection*{Debugging events and functions}
 Now that we have explained how a breakpoint may be signaled, let us look at
-other tools that the Windows API gives us to allow for debugger implementation.
-On Linux, we had a single function called \texttt{ptrace} which behavior
-changed based on arguments. Windows on the other hand provides us with many
-functions, some of which are:
+other tools that the Windows API gives us to allow debugger implementation. On
+Linux, we had a single function called \texttt{ptrace}. The behavior of this
+function changed based on its arguments. Windows, on the other hand, provides
+us with many functions, some of which are:
 
 \begin{itemize}
     \item \mintinline{c}{DebugActiveProcess} - Attaches the debugger to an
@@ -685,11 +684,11 @@ functions, some of which are:
     \item \mintinline{c}{DebugBreakProcess} - Causes a breakpoint exception to
         occur in the specified process. This passes control of the process to
         the debugger if there is one.
-    \item \mintinline{c}{WaitForDebugEvent} - Waits for new debug events (on
-        Linux, we used \texttt{waitpid}, which is more a general purpose
+    \item \mintinline{c}{WaitForDebugEvent} - Waits for new debugging events
+        (on Linux, we used \texttt{waitpid}, which is more a general purpose
         function).
     \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution
-        after processing a debug event (on Linux, we used the
+        after processing a debugging event (on Linux, we used the
         \texttt{PTRACE\_CONT}).
     \item \mintinline{c}{OutputDebugString} - Sends a string from the debuggee
         to the debugger.
@@ -697,15 +696,16 @@ functions, some of which are:
     \mintinline{c}{WriteProcessMemory} - Read and modify process virtual
         address space. On linux we used \texttt{PTRACE\_PEEKTEXT} and
         \texttt{PTRACE\_POKETEXT}.
-    \item \mintinline{c}{FlushInstructionCache} - Flushes instruction cache of
-        the process. This should be used when modifying process text section,
-        because the old instructions may still be cached.
+    \item \mintinline{c}{FlushInstructionCache} - Flushes the instruction cache
+        of the process. This should be used when modifying the process text
+        section because the old instructions may still be cached.
 \end{itemize}
 
-The figure \ref{fig:win32debugger} depicts how a communication between
-debugger, Windows and debuggee can look. The debugger waits for debug events via
-function \mintinline{c}{WaitForDebugEvent}. This function has a timeout
-parameter, so the debugger can also do other things while it's waiting.
+The figure \ref{fig:win32debugger} depicts how a communication between the
+debugger, the Windows operating system and the debuggee can look. The debugger
+waits for debug events via function \mintinline{c}{WaitForDebugEvent}. This
+function has a timeout parameter, so the debugger can also do other things
+while it is waiting, like GUI updates.
 
 \begin{figure}
     \centering
@@ -728,21 +728,21 @@ parameter, so the debugger can also do other things while it's waiting.
         \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
     \end{tikzpicture}
     }
-    \caption{A sequence diagram for debugger using Windows API. Inspired by TODO{NI-REV 6. lecture}}
+    \caption{A diagram representing the communication between the debuggee, the Windows operating system and the debugger~\cite{windows-dbg-api-rev}.}
     \label{fig:win32debugger}
 \end{figure}
  
-\subsubsection*{Debug Events}\label{section:Debug Events}
+\subsubsection*{Debugging Events}\label{section:Debug Events}
 Debugging events are various incidents in the debuggee that causes the system
-to notify the debugger \cite{windows-msdn-debug-events}. These are stored in
+to notify the debugger~\cite{windows-msdn-debug-events}. These are stored in
 special \mintinline{c}{DEBUG_EVENT} structure, which is received in
-\texttt{WaitForDebugEvent} call initiated from the debugger. This structure
-contains various information about the event, the internals can be seen in
-figure \ref{fig:DebugEvent}. These events include loading and unloading a DLL,
-creating and exiting a process, sending debug strings via the
+\mintinline{c}{WaitForDebugEvent} call initiated from the debugger. This
+structure contains various information about the event, the internals can be
+seen in figure \ref{fig:DebugEvent}. These events include loading and unloading
+a DLL, creating and exiting a process, sending debug strings via the
 \mintinline{c}{OutputDebugString}, and last but not least, exception occurence.
-Exceptions include the \texttt{EXCEPTION\_BREAKPOINT} and
-\texttt{EXCEPTION\_SINGLESTEP} mentioned previously, which are vital to the
+Exceptions include the \verb|EXCEPTION_BREAKPOINT| and
+\verb|EXCEPTION_SINGLESTEP| mentioned previously, which are vital to the
 debugger.
 
 \begin{figure}
@@ -764,7 +764,7 @@ typedef struct _DEBUG_EVENT {
   } u;
 } DEBUG_EVENT, *LPDEBUG_EVENT;
 \end{minted}
-\caption{Structure which contains info about debug event.}
+\caption{A structure which contains an information about a debugging event.}
 \label{fig:DebugEvent}
 \end{figure}
 

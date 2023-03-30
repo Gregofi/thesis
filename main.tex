@@ -24,6 +24,7 @@
 \usepackage{todonotes}
 \usepackage{pdfpages}
 
+\usemintedstyle{borland}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
@@ -94,17 +95,18 @@ TinyC podobnému jazyku C do architektury Tiny x86. Tato architektura nemá žá
 procesor, který by ji implementoval. Místo toho používá virtuální stroj.
 
 Aby byl programovací jazyk použitelný, potřebuje vhodné nástroje, například
-ladicí programy. Aby debuggery fungovaly, musí překladač emitovat ladicí
+ladicí programy. Aby ladící program fungovaly, musí překladač emitovat ladicí
 informace popisující vazby mezi generovaným kódem a zdrojovým kódem. Virtuální
-stroj nepodporuje téměř žádné ladění. Studenti tedy nemají žádný důvod
-generovat ladicí informace.
+stroj pro Tiny x86 nenabízí téměř žádnou podporu pro ladění. Studenti tedy
+nemají žádný důvod generovat ladicí informace.
 
 Tato práce popisuje, jak je podpora ladění poskytována na různých úrovních,
-jako je procesor a operační systém. Popisuje také, jak vytvořit velmi
-jednoduchý ladicí program v systému Linux. Práce dále popisuje přidávání
-podporu ladění do samotného virtuálního stroje Tiny x86, přičemž se inspirujeme
-skutečnými případy. Nakonec je vytvořen debugger na úrovni assembleru a
-zdrojového kódu opět inspirovaný návrhem debuggerů z reálného světa.
+jako je procesor, operační systém a překladač. Popisuje také, jak vytvořit
+velmi jednoduchý ladicí program za použití rozhraní systému Linux a Windows.
+Dále je popsána podpora ladění virtuálního stroje Tiny x86, která byla v rámci
+práce přídána. Ladící podpora byla inspirována rozhraním které nabízí systém
+Linux. Nakonec je vytvořen debugger na úrovni assembleru a zdrojového kódu
+inspirovaný návrhem ladících programů z reálného světa.
 }
 \abstractEN{
 Many university courses teach compiler design. One such course is taught at FIT
@@ -114,16 +116,16 @@ processor that implements it. Instead, it uses a virtual machine.
 
 To make a programming language usable, it needs proper tooling, like debuggers.
 For debuggers to work, the compiler must emit debugging information describing
-the connections between generated code and the source code. The virtual machine
-supports almost no debugging. Hence the students do not have any reason to
-generate debugging information.
+the connections between generated machine code and the source code. The virtual
+machine has almost no debugging support. Hence the students do not have any
+reason to generate debugging information.
 
 That is about to change. This thesis describes how debugging support is
 provided at various levels, like the central processing unit and the operating
 system. It also describes how to create a very simple debugger on Linux. We
-then add debugging support to the Tiny x86 virtual machine itself, inspired by
-real-world cases. Finally, we create an assembly and source-level debugger
-inspired by real-world debuggers' design.
+then add debugging support to the Tiny x86 virtual machine itself, which is
+partially inspired by the studied Linux debugging interface. Finally, we create
+an assembly and source-level debugger inspired by real-world debuggers' design.
 }
 
 \placeForDeclarationOfAuthenticity{Prague} %where you have signed the declaration

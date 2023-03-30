@@ -1,6 +1,6 @@
-\chapter{Tiny86}\label{section:T86}
+\chapter{Tiny x86}\label{section:T86}
 At the FIT CTU, in the NI-GEN course, students have to write a compiler. The
-Tiny86 (T86) architecture was created to make code generation easier. This
+Tiny x86 (T86) architecture was created to make code generation easier. This
 allows the students to focus on more interesting parts of compiler design, such
 as optimizations. To be able to execute programs written using this
 architecture, a virtual machine was created. This was all done as a part of a
@@ -63,7 +63,7 @@ MOV R2, 4
     \label{fig:t86-example}
 \end{figure}
 
-\section{T86 Virtual machine}\label{section:t86-vm}
+\section{T86 Virtual Machine}\label{section:t86-vm}
 The primary objective of the virtual machine is to replicate the CPU as
 accurately as possible, without prioritizing execution speed. For instance, the
 virtual machine simulates the out-of-order technique briefly described in
@@ -97,7 +97,7 @@ some bindings if they want to use other language.
     \label{fig:t86-intro}
 \end{figure}
 
-\subsubsection{Debug instructions}\label{section:t86-debug-cap}
+\subsubsection{Debug Instructions}\label{section:t86-debug-cap}
 The VM offers some limited debug capabilities. It has the \texttt{DBG} and
 \texttt{BRK} instructions. The \texttt{DBG} instruction takes as an operand a
 function. The function has the following signature: \texttt{void fun(Cpu\&)}.
