@@ -22,3 +22,22 @@ jobs:
           name: pdf
           path: ${{ github.workspace }}/out/ctufit-thesis.pdf
           retention-days: 5
+  deploy-pdf:
+    name: Deploy PDF to github pages
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    needs: [build-pdf]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Download pdf
+        uses: actions/download-artifact@v3
+        with:
+          name: pdf
+      - name: Move the pdf to static
+        run: |
+          mv ${{ github.workspace }}/ctufit-thesis.pdf ${{ github.workspace }}/static/main.pdf
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ${{ github.workspace }}/static
