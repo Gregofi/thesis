@@ -4,7 +4,7 @@ debugger and reason about the design choices we made. Also, we describe which
 parts of the virtual machine were modified or added for the benefit of the
 debugger or, in general, for the greater good.
 
-\section{T86 ISA extensions}\label{section:parser}
+\section{T86 ISA Extensions}\label{section:parser}
 In chapter~\ref{section:t86-vm}, we showed how to build a program for the T86
 VM. It was necessary to use the builder the T86 VM provides. We remedied this
 with a custom ELF-like format, which we provide a parser for. This format
@@ -64,7 +64,7 @@ ARM. It is a software breakpoint. Control will be passed to the connected
 debugger when the instruction is hit. This is thoroughly described in the next
 section. 
 
-\section{T86 debugging support}
+\section{T86 Debugging Support}
 We could bake the debugger into the virtual machine itself, which would likely
 be the simplest way to implement it. However, the goal of the debugger is not
 only to ease the code generation part but to be a learning point so that
@@ -298,7 +298,7 @@ The native debugger has the following features:
     \item Register manipulation - Can manipulate with normal, float and debug registers.
 \end{itemize}
 
-\section{Source debugger}\label{section:source-debugger}
+\section{Debugging Source Code}\label{section:source-debugger}
 With the solid foundation represented by the native part of the debugger, we
 can extend it by providing some form of source-level debugging. For this part,
 we need to remember that the debugger will only be used by students. As such,
@@ -325,7 +325,7 @@ suitable to be debugged at the source level. We show an example of this in a
 provided test case for the debugger. It can be found as an attachment to the
 thesis on path \todo{doplnit cestu}.
 
-\subsection{Line information}
+\subsection{Line Information}
 Line information is one of the simplest to generate. Since it will probably be
 the most generated information by the students, we choose the following simple
 format for it: \texttt{<line>:<address>}. The section \verb|.debug_line| is
@@ -337,8 +337,11 @@ source code is also provided, we can show the user on which line is the
 debugged program currently paused. It is not necessary to specify every line in
 the program. The debugger will refuse to put a source-level breakpoint on some
 line if it does not have the necessary information.
+\todo{We did this the other way than the DWARF, which maps address to
+instruction and records additional information, like if it is a basic block.
+Reason about why we choose this}
 
-\subsection{Debugging information format}
+\subsection{Debugging Information Format}
 In the line information, we provided a straightforward format. However, we will
 need a more sophisticated structure to describe some advanced constructs of the
 source code. Here we will draw inspiration from the Dwarf Debugging Information
@@ -467,7 +470,7 @@ variable is stored and may look up its value. Together with the type
 information, we might also properly interpret the value and report it to the
 user.
 
-\subsection{Expressions}
+\subsection{Location Expressions}
 We could make a very straightforward implementation of getting variable value
 by its name. It is only a matter of finding the variable DIE with the correct
 name and interpreting its location and type. However, we often need to inspect
