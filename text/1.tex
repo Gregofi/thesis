@@ -1112,9 +1112,10 @@ DW_TAG_subprogram
     \label{fig:dwarf-die}
 \end{figure}
 
-\subsubsection{Locations of variables}\label{section:dwarf-location}
+\subsubsection{Locations of Variables}\label{section:dwarf-location}
 Locations are one of the most complicated type of debugging information in the
-DWARF standard. Like with line mapping, a virtual machine is needed to decode
+DWARF standard. Like with line mapping, described in section
+\ref{section:line-number-information} a virtual machine is needed to decode
 this information. Variables are generally stored in one place. This can be a
 memory, register, or stack. Sometimes, however, the location of an object can
 change throughout its lifetime, it may not be present at all since it was
