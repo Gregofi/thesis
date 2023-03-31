@@ -319,10 +319,10 @@ The debugger is, however, not only limited to TinyC language. Any imperative
 language that can be encoded with the following debugging information is
 suitable to be debugged at the source level. We show an example of this in a
 provided test case for the debugger where we debug the LLVM IR. It can be found
-as an attachment to the thesis on path \texttt{src/src/dbg-cli/tests/llvm.ir}.
+as an attachment to the thesis on path \texttt{impl/src/dbg-cli/tests/llvm.ir}.
 We also provide a documentation for developers who wish to generate this
 debugging information in the thesis attachment on path
-\texttt{src/docs/source-info.md}.
+\texttt{impl/docs/source-info.md}.
 
 \subsection{Line Information and Source Code}
 The line information is encoded in a table, where every row is:
@@ -496,7 +496,7 @@ just write \texttt{array[x] = y}.
 Finally, we provide a command line interface that leverages the debugger
 library to make the debugger usable. It provides many commands, and its manual
 can be found in the thesis attachment under path
-\texttt{src/docs/debugging.md}. In this file, a table can be found showing how
+\texttt{impl/docs/debugging.md}. In this file, a table can be found showing how
 some of the CLI commands differ from the GDB debugger.
 
 The main priority of the CLI is to make the debugger easy to use. It consists
