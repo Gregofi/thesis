@@ -1417,7 +1417,7 @@ to be kept in the AST together with the nodes.
 The \textit{Semantic analysis} then checks that the program is semantically
 consistent. For example that used variable has been declared before.
 
-\begin{figure}\label{fig:ast}
+\begin{figure}
     \centering
     \begin{tikzpicture}[,shorten >=1pt,node distance=1.8cm,on grid,initial/.style={}]
     \node (assignment) {$=$};
@@ -1435,7 +1435,7 @@ consistent. For example that used variable has been declared before.
      (plus)        edge node[scale=0.7, left, yshift=0.1cm] {lhs}  (one);
     \end{tikzpicture}
     \caption{Simplified example of an abstract syntax tree.}
-    \label{fig:astgraph}
+    \label{fig:ast}
 \end{figure}
  
 After that, intermediate code generation comes into play. It converts the AST

@@ -1,0 +1,276 @@
+%% This is the ctufit-thesis example file. It is used to produce theses
+%% for submission to Czech Technical University, Faculty of Information Technology.
+%%
+%% Get the newest version from
+%% https://gitlab.fit.cvut.cz/theses-templates/FITthesis-LaTeX
+%%
+%%
+%% Copyright 2021, Eliska Sestakova and Ondrej Guth
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public Licenese, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%  https://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% This work has the LPPL maintenance status `maintained'.
+%%
+%% The current maintainer of this work is Ondrej Guth.
+%% Contact ondrej.guth@fit.cvut.cz for bug reports.
+%% Alternatively, submit bug reports into the tracker at
+%% https://gitlab.fit.cvut.cz/theses-templates/FITthesis-LaTeX/issues
+%%
+%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CLASS OPTIONS
+% language: czech/english/slovak
+% thesis type: bachelor/master/dissertation
+% colour: bw for black&white OR no option for default colour scheme
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[english,master,unicode,bw]{ctufit-thesis}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FILL IN THIS INFORMATION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ctufittitle{Tiny86 Debugger}
+\ctufitauthorfull{Bc. Filip Gregor}
+\ctufitauthorsurnames{Gregor} % replace with your surname(s) / family name(s)
+\ctufitauthorgivennames{Filip} % replace with your first name(s) / given name(s)
+\ctufitsupervisor{Ing. Petr Máj} % replace with name of your supervisor/advisor (include academic degrees)
+\ctufitdepartment{Department of theoretical computer science} % replace with the department of your defence
+\ctufityear{2023} % replace with the year of your defence
+\ctufitdeclarationplace{Praze} % replace with the place where you sign the declaration
+\ctufitdeclarationdate{\today} % replace with the date of signature of the declaration
+\ctufitabstractCZE{V mnoha univerzitních kurzech se vyučuje návrh překladače.
+Jeden takový předmět se vyučuje na FIT ČVUT. Studenti mají za úkol vytvořit
+kompilátor z jazyka TinyC podobnému jazyku C do architektury Tiny x86. Tato
+architektura nemá žádný procesor, který by ji implementoval. Místo toho používá
+virtuální stroj.
+
+Aby byl programovací jazyk použitelný, potřebuje vhodné nástroje, například
+ladicí programy. Aby ladící program fungovaly, musí překladač emitovat ladicí
+informace popisující vazby mezi generovaným kódem a zdrojovým kódem. Virtuální
+stroj pro Tiny x86 nenabízí téměř žádnou podporu pro ladění. Studenti tedy
+nemají žádný důvod generovat ladicí informace.
+
+Tato práce popisuje, jak je podpora ladění poskytována na různých úrovních,
+jako je procesor, operační systém a překladač. Popisuje také, jak vytvořit
+velmi jednoduchý ladicí program za použití rozhraní systému Linux a Windows.
+Dále je popsána podpora ladění virtuálního stroje Tiny x86, která byla v rámci
+práce přídána. Ladící podpora byla inspirována rozhraním které nabízí systém
+Linux. Nakonec je vytvořen debugger na úrovni assembleru a zdrojového kódu
+inspirovaný návrhem ladících programů z reálného světa.}
+
+\ctufitabstractENG{Many university courses teach compiler design. One such
+course is taught at FIT CTU. The students are tasked to create a compiler from
+a C-like language called TinyC into the Tiny x86 architecture. This
+architecture does not have any processor that implements it. Instead, it uses a
+virtual machine.
+
+To make a programming language usable, it needs proper tooling, like debuggers.
+For debuggers to work, the compiler must emit debugging information describing
+the connections between generated machine code and the source code. The virtual
+machine has almost no debugging support. Hence the students do not have any
+reason to generate debugging information.
+
+That is about to change. This thesis describes how debugging support is
+provided at various levels, like the central processing unit and the operating
+system. It also describes how to create a very simple debugger on Linux. We
+then add debugging support to the Tiny x86 virtual machine itself, which is
+partially inspired by the studied Linux debugging interface. Finally, we create
+an assembly and source-level debugger inspired by real-world debuggers'
+design.}
+
+\ctufitkeywordsCZE{Ladění, ladící program, Překladač, Implementace ladícího programu, LLVM,
+Linux, Windows, Tiny x86, Podpora pro ladění, Chyby v programech}
+\ctufitkeywordsENG{Debugging, Debugger, Debug, Debugger implementation, Compiler, LLVM,
+Linux, Windows, Tiny x86, Debugging support, Errors in programs}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END FILL IN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CUSTOMIZATION of this template
+% Skip this part or alter it if you know what you are doing.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\RequirePackage{iftex}[2020/03/06]
+\iftutex % XeLaTeX and LuaLaTeX
+    \RequirePackage{ellipsis}[2020/05/22] %ellipsis workaround for XeLaTeX
+\else
+    \RequirePackage[utf8]{inputenc}[2018/08/11] %this file encoding
+    \RequirePackage{lmodern}[2009/10/30] % vector flavor of Computer Modern font
+\fi
+
+% hyperlinks
+\RequirePackage[pdfpagelayout=TwoPageRight,colorlinks=false,allcolors=decoration,pdfborder={0 0 0.1}]{hyperref}[2020-05-15]
+
+% uncomment the following to hide all hyperlinks
+% \RequirePackage[pdfpagelayout=TwoPageRight,hidelinks]{hyperref}[2020-05-15]
+
+\RequirePackage{pdfpages}[2020/01/28]
+
+\setcounter{secnumdepth}{4} % numbering sections; 4: subsubsection
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CUSTOMIZATION of this template END
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% DEMO CONTENTS SETTINGS
+% You may choose to modify this part.
+%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{dirtree}
+\usepackage{lipsum,tikz}
+\usepackage{csquotes}
+\usepackage[style=iso-numeric]{biblatex}
+\addbibresource{text/bib-database.bib}
+\usepackage{listings} % typesetting of sources
+\usepackage[cache=false, outputdir=out]{minted} % typesetting of sources
+\usepackage{todonotes}
+\usepackage[fontsize=11pt]{fontsize}
+% \usepackage{lmodern}
+\usemintedstyle{borland}
+% Tikz thingies
+
+\lstdefinestyle{mystyle}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4
+}
+\lstset{style=mystyle}
+
+\usetikzlibrary{calc,positioning,arrows,shapes.geometric}
+\tikzstyle{process} = [rectangle, 
+minimum width=3cm, 
+minimum height=1cm, 
+text centered, 
+text width=3cm, 
+draw=black, 
+]
+
+\usetikzlibrary{arrows.meta}
+\tikzset{>={Latex[width=3mm,length=3mm]}}
+
+\begin{document} 
+\frontmatter\frontmatterinit % do not remove these two commands
+
+\includepdf[pages={1-}]{assignment-include.pdf} % replace that file with your thesis assignment provided by study office
+
+\thispagestyle{empty}\cleardoublepage\maketitle % do not remove these three commands
+
+\imprintpage % do not remove this command
+
+\tableofcontents % do not remove this command
+%%%%%%%%%%%%%%%%%%%%%%
+% list of other contents: figures, tables, code listings, algorithms, etc.
+% add/remove commands accordingly
+%%%%%%%%%%%%%%%%%%%%%%
+\listoffigures % list of figures
+\begingroup
+\let\clearpage\relax
+\listoftables % list of tables
+% \lstlistoflistings % list of source code listings generated by the listings package
+% \listoflistings % list of source code listings generated by the minted package
+\endgroup
+%%%%%%%%%%%%%%%%%%%%%%
+% list of other contents END
+%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%
+% ACKNOWLEDGMENT
+% FILL IN / MODIFY
+% This is a place to thank people for helping you. It is common to thank your supervisor.
+%%%%%%%%%%%%%%%%%%%
+\begin{acknowledgmentpage}
+First and foremost, thanks to my parents, who have always supported me and
+    enabled me to pursue my dreams, whatever they may be.
+
+    I would also like to thank my supervisor, who spent an ungodly amount of
+    time and patience to break through my stubbornness and make this thesis
+    what it is.
+
+    Last but not least, thanks to my girlfriend, Jana. Without her support,
+    this work would never have come to be.
+\end{acknowledgmentpage} 
+%%%%%%%%%%%%%%%%%%%
+% ACKNOWLEDGMENT END
+%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%
+% DECLARATION
+% FILL IN / MODIFY
+%%%%%%%%%%%%%%%%%%%
+% INSTRUCTIONS
+% ENG: choose one of approved texts of the declaration. DO NOT CREATE YOUR OWN. Find the approved texts at https://courses.fit.cvut.cz/SFE/download/index.html#_documents (document Declaration for FT in English)
+% CZE/SLO: Vyberte jedno z fakultou schvalenych prohlaseni. NEVKLADEJTE VLASTNI TEXT. Schvalena prohlaseni najdete zde: https://courses.fit.cvut.cz/SZZ/dokumenty/index.html#_dokumenty (prohlášení do ZP)
+\begin{declarationpage}
+Prohlašuji, že jsem předloženou práci vypracoval samostatně a že jsem uvedl veškeré
+použité informační zdroje v~souladu s~Metodickým pokynem o~do\-držo\-vání etických
+principů při přípravě vysokoškolských závěrečných prací.
+
+Beru na vědomí, že se na moji práci vztahují práva a povinnosti vy\-plý\-va\-jící ze zákona
+č.\,121/2000~Sb., autorského zákona, ve znění pozdějších předpisů. V~souladu s~ust.\,§\,2373 odst.\,2 zákona č.\,89/2012~Sb., občanský zákoník, ve znění pozdějších předpisů,
+tímto uděluji nevýhradní oprávnění (licenci) k~užití této mojí práce, a to včetně všech 
+počítačových programů, jež jsou její součástí či přílohou a veškeré jejich
+dokumentace (dále souhrnně jen \uv{Dílo}), a to všem osobám, které si přejí Dílo užít.
+Tyto osoby jsou oprávněny Dílo užít jakýmkoli způsobem, který nesnižuje hodnotu
+Díla a za jakýmkoli účelem (včetně užití k~výdělečným účelům). Toto oprávnění je
+časově, teritoriálně i množstevně neomezené. Každá osoba, která využije výše
+uvedenou licenci, se však zavazuje udělit ke každému dílu, které vznikne (byť jen
+zčásti) na základě Díla, úpravou Díla, spojením Díla s~jiným dílem, zařazením Díla
+do díla souborného či zpracováním Díla (včetně překladu) licenci alespoň ve výše
+uvedeném rozsahu a zároveň zpřístupnit zdrojový kód takového díla alespoň
+srovnatelným způsobem a ve srovnatelném rozsahu, jako je zpřístupněn zdrojový
+kód Díla.
+\end{declarationpage}
+%%%%%%%%%%%%%%%%%%%
+% DECLARATION END
+%%%%%%%%%%%%%%%%%%%
+
+\printabstractpage % do not remove this command
+
+
+\mainmatter\mainmatterinit % do not remove these two commands
+
+%%%%%%%%%%%%%%%%%%%
+% THE THESIS
+% MODIFY ANYTHING BELOW THIS LINE
+%%%%%%%%%%%%%%%%%%%
+
+\include{text/0}
+\include{text/1}
+\include{text/2}
+\include{text/3}
+\include{text/4}
+\include{text/5}
+
+% WARNING: If something doesn't work, put these guys back
+% \appendix\appendixinit % do not remove these two commands
+
+% \include{text/appendix} % include `appendix.tex' from `text/' subdirectory
+
+\backmatter % do not remove this command
+
+\printbibliography % print out the BibLaTeX-generated bibliography list
+
+\include{text/medium} % include `medium.tex' from `text/' subdirectory
+
+\end{document}

@@ -11,4 +11,6 @@ RUN apt-get update && \
     texlive-lang-czechslovak \
     latexmk \
     git \
-    make
+    make \
+    vim \
+    python3-pygments

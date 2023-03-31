@@ -20,5 +20,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: pdf
-          path: ${{ github.workspace }}/main.pdf
+          path: ${{ github.workspace }}/out/main.pdf
           retention-days: 5
