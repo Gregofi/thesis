@@ -839,8 +839,8 @@ which are
         static\footnote{In this context, static means that the variable exists
         for the entire lifetime of the program.} variables and other objects.
     \item \texttt{.bss} - allocated space for uninitialized static variables,
-    \item \texttt{.rodata} - data that doesn't change for the entirety of the
-        program lifetime, like strings literals in C.
+    \item \texttt{.rodata} - data that do not change for the entirety of the
+        program lifetime, like strings literals in the C language.
     \item various debug sections like \verb|.debug_info|, \verb|.debug_line|
         etc.
 \end{itemize}
@@ -999,27 +999,27 @@ int main(int argc, char* argv[]) {
 
 \begin{figure}
     \begin{lstlisting}
-[0x3f] Set column to 34
-[0x41] Extended opcode 2: set Address to 0x1139
-[0x4c] Special opcode 6: advance Address by 0 to 0x1139 and Line by 1 to 2
-[0x4d] Set column to 8
-[0x4f] Special opcode 216: advance Address by 15 to 0x1148 and Line by 1 to 3
-[0x50] Set column to 16
-[0x52] Special opcode 90: advance Address by 6 to 0x114e and Line by 1 to 4
-[0x53] Set column to 17
-[0x55] Special opcode 104: advance Address by 7 to 0x1155 and Line by 1 to 5
-[0x56] Set column to 5
-[0x58] Special opcode 174: advance Address by 12 to 0x1161 and Line by 1 to 6
-[0x59] Set column to 12
-[0x5b] Advance PC by constant 17 to 0x1172
-[0x5c] Special opcode 146: advance Address by 10 to 0x117c and Line by 1 to 7
-[0x5d] Set column to 1
-[0x5f] Special opcode 76: advance Address by 5 to 0x1181 and Line by 1 to 8
-[0x60] Advance PC by 2 to 0x1183
-[0x62] Extended opcode 1: End of Sequence
+0x3f: Set column to 34
+0x41: Extended opcode 2: set Address to 0x1139
+0x4c: Special opcode 6: advance Address by 0 to 0x1139 and Line by 1 to 2
+0x4d: Set column to 8
+0x4f: Special opcode 216: advance Address by 15 to 0x1148 and Line by 1 to 3
+0x50: Set column to 16
+0x52: Special opcode 90: advance Address by 6 to 0x114e and Line by 1 to 4
+0x53: Set column to 17
+0x55: Special opcode 104: advance Address by 7 to 0x1155 and Line by 1 to 5
+0x56: Set column to 5
+0x58: Special opcode 174: advance Address by 12 to 0x1161 and Line by 1 to 6
+0x59: Set column to 12
+0x5b: Advance PC by constant 17 to 0x1172
+0x5c: Special opcode 146: advance Address by 10 to 0x117c and Line by 1 to 7
+0x5d: Set column to 1
+0x5f: Special opcode 76: advance Address by 5 to 0x1181 and Line by 1 to 8
+0x60: Advance PC by 2 to 0x1183
+0x62: Extended opcode 1: End of Sequence
     \end{lstlisting}
     \caption{A DWARF description of mapping source lines to addresses for
-    program in figure \ref{fig:c-program-and-its-assembly}.}
+    program in figure~\ref{fig:c-program-and-its-assembly}.}
     \label{fig:dwarf-locations}
 \end{figure}
 
@@ -1114,25 +1114,25 @@ DW_TAG_subprogram
 
 \subsubsection{Locations of Variables}\label{section:dwarf-location}
 Locations are one of the most complicated type of debugging information in the
-DWARF standard. Like with line mapping, described in section
-\ref{section:line-number-information} a virtual machine is needed to decode
-this information. Variables are generally stored in one place. This can be a
-memory, register, or stack. Sometimes, however, the location of an object can
-change throughout its lifetime, it may not be present at all since it was
+DWARF standard. Like with line mapping, described in
+section~\ref{section:line-number-information} a virtual machine is needed to
+decode this information. Variables are generally stored in one place. This can
+be a memory, register, or stack. Sometimes, however, the location of an object
+can change throughout its lifetime, it may not be present at all since it was
 optimized away, it can be split into several locations, or it might be a
 reference to some other object. The fact that an object changes location
-throughout its lifetime seldom happens \cite{dwarf-intro}, but DWARF is
-nevertheless prepared for it \cite{dwarf}.
+throughout its lifetime seldom happens~\cite{dwarf-intro}, but DWARF is
+nevertheless prepared for it~\cite{dwarf}.
 
 Contrary to the virtual machine described in the line encoding section, which
 was register-based, this one is stack-based. This means that most operations
 take their operands from the stack and push the result back onto the stack.
-More about stack-based virtual machines can be discovered in
-\cite{crafting-interpreters}. DWARF calls those instructions
+More about stack-based virtual machines can be discovered
+in~\cite{crafting-interpreters}. DWARF calls those instructions
 \textit{expressions} \cite{dwarf}. The last value on the top of the stack after
 the VM runs is considered to be the resulting value (this can be an address of
-an object, value of an array bound, length of dynamic string, and so on)
-\cite{dwarf}.
+an object, value of an array bound, length of dynamic string, and so
+on)~\cite{dwarf}.
 
 For example in the figure \ref{fig:c-program-and-its-assembly} there is the
 \verb|DW_OP_fbreg -24|, this pushes value at offset $-24$ by the register
@@ -1155,20 +1155,21 @@ pointer to the stack, let us look at some more examples, mostly taken from
         to which the yielded address points is then pushed onto the stack. This
         can be used for recording information about references and pointers.
     \item \verb|DW_OP_reg3; DW_OP_dup; DW_OP_add| - Fetches value from
-        register $3$ and pushes it onto the stack, duplicates that value and
-        pushes it on the stack, and pops two values from the stack, adds them
-        together, and pushes them back onto the stack\footnote{Artificial
-        example just to show the power of the language.}.
+        register $3$ and pushes it onto the stack. This value is then copied
+        and the copy is pushed onto the stack. Finally, it pops two values from
+        the stack, adds them together, and pushes them back onto the
+        stack\footnote{Artificial example just to show the power of the
+        language.}.
 \end{itemize}
 
 With this computational power, we can save any information we need. There are
-many more instructions, all of which can be found in \cite{dwarf}. An example
-of an interpreter for this can be found in the LLDB source code in file
+many more expressions, all of which can be found in~\cite{dwarf}. An example of
+an interpreter for this can be found in the LLDB source code in file
 \texttt{source/Expression/DWARFExpression.cpp}.
 
 \subsubsection{Call frames}\label{section:call-frames}
 Debuggers often need to know through which function calls the executed program
-went to arrive at a certain state \cite{dwarf}. For each function call, there
+went to arrive at a certain state~\cite{dwarf}. For each function call, there
 is a \textit{stack frame} saved on the stack. Stack frame is a part of the stack memory that
 contains information relevant to the function invocation. An example of a
 stack frame can be seen in figure \ref{fig:stack-layout}.
@@ -1177,34 +1178,35 @@ Stack frames mostly consist of the following:
     \item Return address - This contains the location from which the program
         was called so that after the function finishes it may properly return
         to that location. This fact was also used in our step-out
-        implementation in \ref{section:linux-dbg}.
+        implementation described in section~\ref{section:linux-dbg}.
     \item Base pointer backup - Backup of the value in the base pointer which
         was set by the previous function. This register needs to be preserved
-        between calls, that's why a backup is made. Other registers might need
+        between calls, that is why a backup is made. Other registers might need
         to be saved for the same reason.
     \item Allocated space for variables - A space for local variables.
 \end{itemize}
-Stack frames are described in more detail in \cite{dragon-book}, where they are
+Stack frames are described in more detail in~\cite{dragon-book}, where they are
 called activation records. We also provide an example of how a function
-prologue and epilogue look in figure \ref{fig:prologue-and-epilogue}, so one
-may get a better feel about how such stack frame comes to fruition.
+prologue and epilogue looks in figure~\ref{fig:prologue-and-epilogue}, so that
+one may get a better feel about how such stack frame comes to fruition.
 
 Debuggers need to do a so-called stack unwinding. Unwinding essentially means
 going to a state where the previous stack frame is the most recent. This needs
 to be done several times to get the whole chain of function calls which led to
 the current state of the program. We can get the last stack frame by looking at
 the current value of base pointer. But to get to the penultimate one is not
-easy. We need to know exactly where was the base pointer and possibly other
-registers saved so that we may simulate the unwinds \cite{dwarf}.
+as easy. We need to know exactly where was the backup of the base pointer
+stored so that we may simulate the unwinds~\cite{dwarf}. We might also need the
+values of other registers at various points throughout the program.
 
 DWARF proposes a table, in each row, there is an address of a location in the
 program, a location of a stack frame, and values of other registers for that
 location. However, such table would be very large, so DWARF again uses a
 virtual machine for the construction of the table, since many columns in one
-row would be have the same values in the following rows \cite{dwarf}. The
-location of a stack frame can be described either by a register and a signed
-offset which are added together, or a DWARF expression may be used (the ones
-used to describe variable locations).
+row would have the same values in the following rows~\cite{dwarf}. The location
+of a stack frame can be described either by a register and a signed offset
+which are added together, or a DWARF expression may be used (the ones used to
+describe variable locations).
 
 Figure \ref{fig:dwarf-stack-frames} contains an example of the encoding of this
 information and also the decoded values for the program in figure
@@ -1274,6 +1276,7 @@ DW_CFA_def_cfa: RSP +8
 % https://tex.stackexchange.com/questions/583197/
 % how-can-i-put-two-boxes-right-next-to-each-other-that-have-the-exact-same-size
 \begin{figure}
+    \centering
     \begin{tikzpicture}[
 node distance = 0pt,
 square/.style = {draw=black!60, fill=white!5, very thick, 
@@ -1368,7 +1371,7 @@ may be debugged at source level. In the next section, we will briefly explore
 compilers and how they handle debugging information.
 
 \section{Compilers}
-The compiler is a program that transforms the source code into some other form,
+A compiler is a program that transforms the source code into some other form,
 most often into machine code or assembly. Compilers are very complicated pieces
 of software. Often, they are made of several parts, the general structure can
 be seen in figure \ref{fig:compiler-structure} \cite{dragon-book}. We will
@@ -1410,13 +1413,13 @@ might be translated into tokens like this
 
 The \textit{Syntactic analysis} then works with these tokens and transforms
 them into some other representation. This is most often an abstract syntax tree
-(abbr. AST, figure \ref{fig:ast}). It also checks that the source code complies
-with the grammar of the language. With AST, we already lose the locations
-of the language constructs, so for debugging information to work it needs
-to be kept in the AST together with the nodes.
+(abbr. AST, figure~\ref{fig:ast}). It also checks that the source code complies
+with the language's grammar. With AST, we already lose the locations of the
+language constructs in the source code, so for debugging information to work,
+it needs to be kept in the AST together with the nodes.
 
 The \textit{Semantic analysis} then checks that the program is semantically
-consistent. For example that used variable has been declared before.
+consistent. For example, that used variable has been declared before.
 
 \begin{figure}
     \centering
@@ -1447,7 +1450,7 @@ high-level properties that make it easier to work with, like types and
 functions, but should be language-independent. There are many types of IR. One
 of the most popular compilers, LLVM, uses single static assignment (SSA) and
 satisfies all of the above~\cite{llvm}. An example of LLVM IR can be found in
-figure \ref{fig:llvm-ir-example}. Compilers perform most optimizations on this
+figure~\ref{fig:llvm-ir-example}. Compilers perform most optimizations on this
 intermediate representation. 
 
 \begin{figure}
@@ -1475,10 +1478,10 @@ them from the IR, and they all have to be accounted for when generating code.
 \subsection{Modularity of compilers}
 The main advantage of using an IR is that there is a common ground for every
 language. Imagine we write a compiler for the C language. We need to write all
-five parts from figure \ref{fig:compiler-structure}. If we later decided that
+five parts from figure~\ref{fig:compiler-structure}. If we later decided that
 we also wanted to create a compiler for Haskell, we just need to write
 everything up to the IR translation. Once we can translate Haskell into the IR,
-we can reuse the previous part of the compiler to compile to machine code! This
+we can reuse the previous part of the compiler to compile to machine code. This
 also works the other way around. If we compile IR to the machine code that
 works with the x86-64 architecture and we want to compile to ARM, we need to
 create the code generation part for the ARM architecture. There is no need to
@@ -1488,14 +1491,14 @@ on the source language are called \textbf{frontend} (Syntax, Semantic, and IR
 translation), and the parts that are dependent on the target are called
 \textbf{backend} (Code generation).
 
-This is widely used in practice. The LLVM \cite{llvm} project is a compiler
-backend. It uses its own IR (as was mentioned in figure
-\ref{fig:llvm-ir-example}). It can compile this IR into many targets, including
-x86-64, ARM, and Spark. The \textit{Clang} project is a compiler frontend for
-C, C++, and Objective-C languages. It translates these languages to the LLVM
-IR. Other frontends for LLVM also include \textit{ghc}, which is a Haskell
-compiler, or \textit{rustc}, which is a Rust compiler. With LLVM, creating a
-new programming language comes down to just writing the front end.
+This is widely used in practice. The LLVM~\cite{llvm} project is a compiler
+backend. It uses its own IR (as was mentioned in
+figure~\ref{fig:llvm-ir-example}). It can compile this IR into many targets,
+including x86-64, ARM, and Spark. The \textit{Clang} project is a compiler
+frontend for C, C++, and Objective-C languages. It translates these languages
+to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a
+Haskell compiler, or \textit{rustc}, which is a Rust compiler. With LLVM,
+creating a new programming language comes down to just writing the front end.
 
 \subsection{IR Debugging information}
 With IR translation, some of the information from the AST is stripped away. The
@@ -1506,24 +1509,24 @@ Since the LLVM IR is transformed into many existing architectures and many very
 different existing programming languages are compiled into it, LLVM debug
 information does not put any restrictions on the flavor of the programming
 language. A high priority of the LLVM debugging information (LDI) is to make it
-interact well with optimizations \cite{llvm-debug-info}. The LDI guarantees the
+interact well with optimizations~\cite{llvm-debug-info}. The LDI guarantees the
 following:
 \begin{enumerate}
     \item LDI always provides information to accurately \textbf{read} the
         source-level state of the program regardless of which LLVM
-        optimizations have been run \cite{llvm-debug-info}. Emphasis has been
+        optimizations have been run~\cite{llvm-debug-info}. Emphasis has been
         put on the word read, because it is not always possible to, for
         example, change the value of a variable because it might have been
         completely optimized away.
     \item LDI does not prevent optimizations from happening.
     \item LLVM optimizations may be upgraded to be aware of debugging
         information. This is sometimes necessary, especially if the
-        optimizations are aggressive \cite{llvm-debug-info}. LLVM provides a
-        guide to developers of optimization passes specifiying how to handle
-        certain situations \cite{llvm-debug-optimizations}. For example,
+        optimizations are aggressive~\cite{llvm-debug-info}. LLVM provides a
+        guide for developers of optimization passes specifiying how to handle
+        certain situations~\cite{llvm-debug-optimizations}. For example,
         an accurate stack trace is desired even though inlining or tail call
-        optimization was applied \cite{llvm-debug-info}.
-    \item The LDI is optimized with the rest of the program (i.e., unused
+        optimization was applied~\cite{llvm-debug-info}.
+    \item The LDI is optimized with the rest of the program (e.g., unused
         information is removed).
 \end{enumerate}
 So, if one compiles the code with optimizations and with debugging information,
@@ -1533,27 +1536,27 @@ must result in the same optimizations applied). The code must also be
 debuggable with optimizations enabled and provide correct information. For
 example, suppose a variable is completely optimized out. In that case, the
 debugger may present the message \texttt{optimized out}, which reduces the
-amount of debug information available to the developer. However, the
+amount of debugging information available to the developer. However, the
 information is still correct and not misleading. Displaying an invalid value
 must not happen, even with optimizations~\cite{llvm-debug-info}.
 
-In figure \ref{fig:llvm-ir-debug}, we provide an example of LLVM IR with
+In figure~\ref{fig:llvm-ir-debug}, we provide an example of LLVM IR with
 debugging information. It is encoded in the form of metadata, starting with an
-exclamation mark. LLVM IR also provides intrinsic functions to register
-debugging information about variables. The function from the example
+exclamation mark. LLVM IR also contains intrinsic functions to record debug
+information pertaining to variables. The function from the example
 \texttt{llvm.dbg.declare} receives the address of the variable, the description
-of the variable, and its location in the form of a complex expression. This is
-similar to the Dwarf expressions used for locations described in section
-\ref{section:dwarf-location}. There is also the \texttt{llvm.dbg.address},
-which has the same role but can be used multiple times for one variable. This
-is primarily used after optimizations to describe how a variable's address
-changes throughout the program.
+of the variable, and its location in the form of a complex expression. Complex
+expressions are similar to the Dwarf expressions used for locations described
+in section~\ref{section:dwarf-location}. There is also the
+\texttt{llvm.dbg.address}, which has the same role but can be used multiple
+times for one variable. This is primarily used after optimizations to describe
+how a variable's address changes throughout the program.
 
 The debugging information in the figure is otherwise mostly self-explanatory.
 The variables and locations also have their scope included because LLVM IR does
-not have any notion of scoping. LLVM provides \textit{consumers}, which are
-able to transform the LLVM IR debugging information into some other format,
-like DWARF.
+not have any notion of scoping. Finally, LLVM provides \textit{consumers},
+which are able to transform the LLVM IR debugging information into some other
+format, like DWARF.
 
 There are some more nuances that need to be dealt with, especially considering
 optimizations like instruction scheduling and register selection. This is
@@ -1614,17 +1617,19 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 In this section, we will focus on existing debugger implementations and what
 each brings to the table. We will not be discussing every feature of said
 debuggers since even some of the manuals are longer than this
-thesis\footnote{Most notably GDB manual \cite{gdb-manual}, which has whooping
-930 pages!}, but point out the ones that were interesting to this thesis. Each
-debugger discussed here implements, at the very least, breakpoints,
-single-stepping, reading and writing into program memory and registers.
+thesis\footnote{Most notably the GDB manual~\cite{gdb-manual}, which has
+whooping 930 pages!}, but point out the ones that were interesting to this
+thesis. Each debugger discussed here implements, at the very least,
+breakpoints, single-stepping, reading and writing into program memory and
+registers.
 
 \subsection{GDB}
 The GNU Project debugger (GDB) \cite{gdb-manual} is a source and
 instruction-level debugger. It supports languages like C, C++, D, Fortran, Go,
 Objective-C, Pascal, Rust, and some others. GDB is written in C/C++. It offers
 a CLI application through which one might interact with the debugger. It also
-has an API for Python.
+has an API for Python. It is one of the oldest debugging software, and from our
+experience, the most reliable one on the Linux systems.
 
 An interesting feature GDB offers is \textit{reverse debugging}. This allows us
 to go back in the execution flow. For example, the command
@@ -1632,7 +1637,7 @@ to go back in the execution flow. For example, the command
 executed instructions must be explicitly invoked. GDB then sets the state of
 the program depending on the record. It still is not fully supported, and from
 our limited testing, cannot handle even some basic statements, like the usage
-of \texttt{printf} in C.
+of \texttt{printf} function in a program written in the C language.
 
 \subsection{IDA Free}
 The primary role of IDA is to be an interactive disassembler, but it also
@@ -1644,8 +1649,9 @@ calls), create a control flow graph from the assembly, and much more. We show
 an example of an iterative factorial function disassembled via IDA in figure
 \ref{fig:ida}. In the figure, the variable locations were renamed to represent
 their semantic meaning. This has to be done by hand. IDA itself can sometimes
-know that it is a variable but not its exact purpose. IDA is an invaluable
-asset in reverse engineer's toolkit for static analysis.
+know that a variable is stored in some location but it does not know its
+semantical meaning. IDA is an invaluable asset in reverse engineer's toolkit
+for static analysis.
 
 \begin{figure}
     \centering{
