@@ -23,7 +23,7 @@ although the program we debug was compiled into a machine code program.
 The CPU can only execute machine code which is made of instructions. It also
 has several registers to help with computations. Which instructions and
 registers the CPU has can differ from CPU to CPU. This is specified by
-\textit{Instruction Set Architecture} (ISA)~\cite{aps-isa}. It is an abstract
+an \textit{Instruction Set Architecture} (ISA)~\cite{isa}. It is an abstract
 interface between the hardware and the lowest level software (machine code). It
 contains all information needed to write a program in machine code. In general,
 ISA specifies the following: 
@@ -40,9 +40,10 @@ This list is not exhaustive, but for our purposes it suffices. For each
 instruction and operand it is specified how they should be encoded into binary.
 CPU then \textit{implements} some ISA. If two different CPUs implement the same
 ISA then they should be able to run the same machine code program. For example,
-most PC use the x86-64 architecture~\cite{aps-isa}, although the ARM
-architecture is also seeing use in personal computers, for example, the Apple
-Sillicon is of ARM architecture.
+personal computers often use the x86-64 while the mobile devices like
+smartphones or tablets tend to use the ARM architecture~\cite{riscvscisc2}. The
+ARM architecture is beginning to find its way into the computer space as well,
+for example the Apple Sillicon uses ARM architecture.
 
 The x86-64 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
@@ -148,9 +149,9 @@ instruction \texttt{cmp} compares its two operands and if they are the same the
 \subsection{Interrupts}
 An interrupt is a special request to the CPU to stop the execution of the
 current program and to quickly react to the reason that caused the
-request~\cite{aps-interrupts}. An example of such event can be a keyboard press
-or an error in a program (division by zero). There are two main categories
-~\cite{intel-manual}
+request~\cite{computer-architecture}. An example of such event can be a
+keyboard press or an error in a program (division by zero). There are two main
+categories~\cite{intel-manual}
 \begin{itemize}
     \item An \textbf{interrupt} is an asynchronous\footnote{Meaning that the
         interrupt may happen when another instruction is being processed (not
@@ -207,18 +208,19 @@ caused the interrupt~\cite{intel-manual}.
 
 \subsection{Superscalar CPUs}\label{section:superscalar-cpu}
 Modern CPUs do not execute instructions strictly one by one. They instead use
-\textit{pipelines} and \textit{out-of-order execution}. This means that they
-can execute several instructions at once and can execute them in non sequential
-order. The observable behaviour of the program has to be the same as if it was
-run sequentially. The CPU has to be careful about which instruction it can run
-in parallel and out of order. The execution of an instruction consist of
-several stages, which together form an \textit{execution pipeline}. The stages
-can be \textit{Fetch}, \textit{Decode}, \textit{Execute}, \textit{Memory}, and
-\textit{Writeback}, this may vary depending on architecture, but the general
-ideas behind it are the same. The instruction must pass all these stages to be
-successfully executed. To maximize efficiency, all stages are occupied by an
-instruction. This means that when instruction $x$ leaves fetch stage, it goes
-to the decode stage and instruction $y$ is put into the fetch stage.
+\textit{pipelines} and \textit{out-of-order execution}~\cite{isa,
+computer-architecture}. This means that they can execute several instructions
+at once and can execute them in non sequential order. The observable behaviour
+of the program has to be the same as if it was run sequentially. The CPU has to
+be careful about which instruction it can run in parallel and out of order. The
+execution of an instruction consist of several stages, which together form an
+\textit{execution pipeline}. The stages can be \textit{Fetch}, \textit{Decode},
+\textit{Execute}, \textit{Memory}, and \textit{Writeback}, this may vary
+depending on architecture, but the general ideas behind it are the same. The
+instruction must pass all these stages to be successfully executed. To maximize
+efficiency, all stages are occupied by an instruction. This means that when
+instruction $x$ leaves fetch stage, it goes to the decode stage and instruction
+$y$ is put into the fetch stage.
 
 However, when the next instruction is a conditional jump, there may be no way
 to be sure if the jump will be taken.  CPUs deal with it in various ways and
