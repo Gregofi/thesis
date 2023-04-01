@@ -5,10 +5,10 @@ described how debugging is supported at various layers, from operating systems
 to compilers. Then, we discuss the T86 architecture and its lackluster
 debugging support. We remedy this by adding a debugging API inspired by modern
 architectures. We also created a native and source-level debugger, which is
-production ready and \todo{Trosku odvazny ale snad to tak dopadne} already used
-in the NI-GEN course at FIT CTU. This debugger is extensible enough that if a
-new architecture, virtual machine, or source language comes into play, it
-should be fairly easy to add debugging support.
+production ready and already used in the NI-GEN course at FIT CTU. This
+debugger is extensible enough that if a new architecture, virtual machine, or
+source language comes into play, it should be fairly easy to add debugging
+support.
 
 The debugger encourages students in the NI-GEN course to investigate how the
 debugger works, the connection between the generated machine code and the
@@ -38,13 +38,15 @@ New types can always be added to the debugging information. For example, we're
 missing enums, qualifiers like \texttt{const} and \texttt{mutable}, or more
 advanced types that are in the C++ standard library. Those types are not in the
 TinyC language that is being taught in the NI-GEN course, but the debugger is
-not strictly tied to the language.
+not strictly tied to the language. Some parts of the program could be
+optimized, like the step out which can prove slow, as demonstrated in
+section~\ref{section:benchmark}.
 
 The debugger currently does not handle frame information in any way. This could
 be a helpful addition so that it displays call frames and allows one to step
 out of them. This would require a new section, which would have to contain
 enough information to simulate an unwind. The exact mechanism was described in
-section \ref{section:call-frames}.
+section~\ref{section:call-frames}.
 
 The T86 VM generates statistics about the program execution. It records things
 like pipeline stalls. Since the debugger has the capability to connect the

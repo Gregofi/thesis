@@ -262,7 +262,7 @@ which we can do these operations that are needed for debugging.
 
 \subsection{Linux}\label{section:linux-dbg}
 Linux offers a special system call which is very handy for debugging. It is
-called \texttt{ptrace} \cite{ptrace} - process trace. It has following
+called \texttt{ptrace}~\cite{ptrace} - process trace. It has following
 signature: \texttt{ptrace(request, pid, void* addr, void* data)}. The request
 is a \texttt{PTRACE\_COMMAND}, which specifies the behavior of the function
 (for example \texttt{PTRACE\_SINGLESTEP}), pid of some process (presumably the
@@ -520,17 +520,17 @@ stepping, like the trap flag we mentioned in section
 The ptrace library contains a special \texttt{PTRACE\_SINGLESTEP} command,
 which executes one instruction in the tracee before sending the
 \texttt{SIGTRAP} signal. The Linux kernel (as of v6.1.8) uses the previously
-mentioned trap flag for x86-64 \cite{linuxkernel-trapflag}. If the architecture
+mentioned trap flag for x86-64~\cite{linuxkernel-trapflag}. If the architecture
 does not provide a hardware supported single stepping then the call will return
 an error. In lieu of the breakpoint dance mentioned earlier, the singlestep
 command will be used in our implementation because x86-64 supports it.
-Implementation is described in figure \ref{fig:singlestep}. We presume that the
+Implementation is described in figure~\ref{fig:singlestep}. We presume that the
 instruction pointer was moved when the breakpoint was hit, eliminating the need
 to return one byte backward. This is more reasonable anyway since you want to
-show the user at which address was the breakpoint hit. The LLDB \cite{lldb}
-debugger uses hardware support if there is one, else it uses an instruction
-emulator. For instance for the ARM architecture, LLDB uses an instruction
-emulator, whereas for the x86-64 it uses the trap flag.
+show the user at which address the breakpoint hit happened. The
+LLDB~\cite{lldb} debugger uses hardware support if there is one, else it uses
+an instruction emulator. For instance for the ARM architecture, LLDB uses an
+instruction emulator, whereas for the x86-64 it uses the trap flag.
 
 \begin{figure}
     \begin{minted}{c}
@@ -584,8 +584,8 @@ the rbp is set, or if some library completely bypasses the call instruction.
 This concludes the implementation of a very basic assembly level debugger for
 Linux on the x86-64 platform. The proof of concept implementation is provided
 as an extension to this thesis and can be found under \texttt{/linux-debugger}
-folder. The implementation was partially inspired by \cite{linux-debugger-blog}
-and \cite{lldb}. It demonstrates the feasibility of building a very basic
+folder. The implementation was partially inspired by~\cite{linux-debugger-blog}
+and~\cite{lldb}. It demonstrates the feasibility of building a very basic
 debugger with the ptrace api.
 
 \subsubsection*{Hardware versus Software breakpoints}
@@ -701,7 +701,7 @@ us with many functions, some of which are:
         section because the old instructions may still be cached.
 \end{itemize}
 
-The figure \ref{fig:win32debugger} depicts how a communication between the
+The figure~\ref{fig:win32debugger} depicts how a communication between the
 debugger, the Windows operating system and the debuggee can look. The debugger
 waits for debug events via function \mintinline{c}{WaitForDebugEvent}. This
 function has a timeout parameter, so the debugger can also do other things
@@ -738,7 +738,7 @@ to notify the debugger~\cite{windows-msdn-debug-events}. These are stored in
 special \mintinline{c}{DEBUG_EVENT} structure, which is received in
 \mintinline{c}{WaitForDebugEvent} call initiated from the debugger. This
 structure contains various information about the event, the internals can be
-seen in figure \ref{fig:DebugEvent}. These events include loading and unloading
+seen in figure~\ref{fig:DebugEvent}. These events include loading and unloading
 a DLL, creating and exiting a process, sending debug strings via the
 \mintinline{c}{OutputDebugString}, and last but not least, exception occurence.
 Exceptions include the \verb|EXCEPTION_BREAKPOINT| and
@@ -771,9 +771,9 @@ typedef struct _DEBUG_EVENT {
 \subsubsection*{Tying it all together}
 Now we have all the necessary building blocks to create a tiny Windows
 debugger. The implementation itself would be very similar to the Linux one we
-presented in section \ref{section:linux-dbg}. To provide at least some idea,
-figure \ref{fig:windows-debugger-mainloop} contains an abbreviated main loop of
-the debugger \cite{windows-msdn-dbg-main-loop}. We need to handle all of the
+presented in section~\ref{section:linux-dbg}. To provide at least some idea,
+figure~\ref{fig:windows-debugger-mainloop} contains an abbreviated main loop of
+the debugger~\cite{windows-msdn-dbg-main-loop}. We need to handle all of the
 debugging events if we want the debugger to be robust. For example, thread
 creation should be handled so that we may trace all threads spawned by the
 debuggee.
@@ -866,13 +866,13 @@ DWARF~\cite{dwarf} is a debugging information format used to describe programs
 written in procedural languages. It is primarily associated with the ELF file
 format. It aims to support all different types of information that may be
 needed while debugging. It also strives to encode this information in as much
-space efficient manner as possible \cite{dwarf}. This can make it somewhat
+space efficient manner as possible~\cite{dwarf}. This can make it somewhat
 complex. 
 
 There are five versions of the standard, we will be mainly talking about
 version 2, since the others mainly add features to accommodate newer language
 features. We will not get that far even with version 2. The complete changelog
-can be found in the text describing DWARF version 5 \cite{dwarf-5}. We provide
+can be found in the text describing DWARF version 5~\cite{dwarf-5}. We provide
 many examples of the information that DWARF encodes. For reading the DWARF
 information from object files, we used the \texttt{llvm-dwarfdump},
 \texttt{objdump}, and \texttt{readelf} tools to construct these
@@ -1687,8 +1687,8 @@ are many more.
 \end{figure}
 
 \subsection{Case study - LLDB}\label{section:case-study}
-In this section, we go into more significant details about the LLDB \cite{lldb}
-debugger. It is a part of the LLVM tools collection \cite{llvm}. Supported
+In this section, we go into more significant details about the LLDB~\cite{lldb}
+debugger. It is a part of the LLVM tools collection~\cite{llvm}. Supported
 languages for debugging are the C, Objective-C, and C++ languages (LLVM tools
 support mainly those three languages) on desktop and iOS devices. It works
 closely with the Clang compiler, which is also part of LLVM, and the LLVM
@@ -1700,7 +1700,7 @@ LLDB offers an API through which one can interact with the debugger. For
 example, the command line application through which one can use LLDB uses this
 API. LLDB is written in modern C++, but a bridging interface to the API is
 provided for Python. Thanks to this, one can use LLDB for debugging and, for
-example, as a library to disassemble machine code \cite{lldb}.
+example, as a library to disassemble machine code~\cite{lldb}.
 
 LLDB provides a command line interface (CLI) through which one can use the
 debugger directly. The CLI provides a variety of commands that one can use.

@@ -489,15 +489,17 @@ to fetch variable values. It supports almost all C operators, including the
 assignment operator. An example of such an expression is \texttt{foo[2]->bar + 3}.
 This is a very powerful feature, as it allows to easily inspect or modify
 various variables or expressions. If an user wishes to modify part of an
-array, he does not have to use the raw memory or register setters. He can
-just write \texttt{array[x] = y}.
+array, there is no need to use the raw memory or register setters. Instead, it
+is possible to just write \texttt{array[x] = y}.
 
-\subsection{Frontend}
-Finally, we provide a command line interface that leverages the debugger
-library to make the debugger usable. It provides many commands, and its manual
-can be found in the thesis attachment under path
-\texttt{impl/docs/debugging.md}. In this file, a table can be found showing how
-some of the CLI commands differ from the GDB debugger.
+\section{Frontend}
+We provide two command line interface programs. First one is for the T86, is
+runs the given T86 program on the virtual machine. The second application
+leverages the debugger library to create a command line interface for the
+debugger. It provides many commands, and its manual can be found in the thesis
+attachment under path \texttt{impl/docs/debugging.md}. In this file, a table
+can be found showing how some of the commands the application accepts differ
+from the GDB debugger.
 
 The main priority of the CLI is to make the debugger easy to use. It consists
 of several commands, one of them is \texttt{breakpoint set 5}, which will set a
@@ -509,7 +511,7 @@ REPL satisfying to use.
 The CLI also displays various information on program stop, like why the program
 stopped, on which address or line, and prints the surrounding lines of assembly
 or source. The CLI can also list breakpoints and display their locations in the
-disassembly or the source code. Figure \ref{fig:cli-hit} provides an example of
+disassembly or the source code. Figure~\ref{fig:cli-hit} provides an example of
 a breakpoint hit report. The debugger had all debugging information available
 here. It can show the line in the source code where the breakpoint happened,
 name the offending function, and variables in scope.
