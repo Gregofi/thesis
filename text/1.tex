@@ -23,7 +23,7 @@ although the program we debug was compiled into a machine code program.
 The CPU can only execute machine code which is made of instructions. It also
 has several registers to help with computations. Which instructions and
 registers the CPU has can differ from CPU to CPU. This is specified by
-\textit{Instruction Set Architecture} (ISA) \cite{aps-isa}. It is an abstract
+\textit{Instruction Set Architecture} (ISA)~\cite{aps-isa}. It is an abstract
 interface between the hardware and the lowest level software (machine code). It
 contains all information needed to write a program in machine code. In general,
 ISA specifies the following: 
@@ -40,36 +40,36 @@ This list is not exhaustive, but for our purposes it suffices. For each
 instruction and operand it is specified how they should be encoded into binary.
 CPU then \textit{implements} some ISA. If two different CPUs implement the same
 ISA then they should be able to run the same machine code program. For example,
-most PC use the x86-64 architecture \cite{aps-isa}, although the ARM
+most PC use the x86-64 architecture~\cite{aps-isa}, although the ARM
 architecture is also seeing use in personal computers, for example, the Apple
 Sillicon is of ARM architecture.
 
 The x86-64 architecture is so called \textit{Complex Instruction Set Architecture}
 (CISC). It contains many instructions that do many things at once, have varying
-lengths, and take multiple clock cycles to complete \cite{intel-manual}. On the
+lengths, and take multiple clock cycles to complete~\cite{intel-manual}. On the
 other hand, the ARM architecture is \textit{Reduced Instruction Set
 Architecture} (RISC). The number of instructions is smaller, they are intended
 to be small building blocks from which complex operations may be created by
 using many of them. Each instruction in RISC also has the same length. Both
 architectures have their pros and cons, although some literature suggests that
 in modern days the choice of architecture is irrelevant if one is only
-considering performance and power consumption \cite{riscvscisc1, riscvscisc2}.
+considering performance and power consumption~\cite{riscvscisc1, riscvscisc2}.
 Unless specified otherwise the rest of this chapter will be talking about x86-64.
-This is because the T86 architecture \ref{section:T86} is loosely based on
+This is because the T86 architecture~\ref{section:T86} is loosely based on
 x86-64, so it is most relevant for us.
 
 In the first chapter, we briefly mentioned that machine code programs can
 instead be written in assembly language. Assembly is almost 1:1 mapping to
 machine code. When showing programs, we will show them in assembly so that they
-are readable. In figure \ref{fig:assembly-example2}, we present another example
+are readable. In figure~\ref{fig:assembly-example2}, we present another example
 of a program that was compiled from the C programming language to assembly of
 the x86-64 architecture. As seen, instructions have various operands. Most
 often registers (\texttt{rbp, rsp, eax}), memory (\texttt{[rbp-4]} is reference
 to memory at address which is in register \texttt{rbp} minus $4$), or labels
 (like \texttt{L2}). Labels are not part of machine code, instead memory address
 has to be provided. This is a small part where assembly and machine code
-differ. For a detailed overview of the x86-64 instruction set see
-\cite{intel-manual}.
+differ. For a detailed overview of the x86-64 instruction set
+see~\cite{intel-manual}.
 
 \begin{figure}
     \begin{lstlisting}
@@ -147,10 +147,10 @@ instruction \texttt{cmp} compares its two operands and if they are the same the
 
 \subsection{Interrupts}
 An interrupt is a special request to the CPU to stop the execution of the
-current program and to quickly react to the reason that caused the request
-\cite{aps-interrupts}. An example of such event can be a keyboard press or
-an error in a program (division by zero). There are two main categories
-\cite{intel-manual}
+current program and to quickly react to the reason that caused the
+request~\cite{aps-interrupts}. An example of such event can be a keyboard press
+or an error in a program (division by zero). There are two main categories
+~\cite{intel-manual}
 \begin{itemize}
     \item An \textbf{interrupt} is an asynchronous\footnote{Meaning that the
         interrupt may happen when another instruction is being processed (not
@@ -234,7 +234,7 @@ for the user that tries to debug the program.
 \section{Operating system support}
 Operating system is a layer between computer components (CPU, memory,
 input/output devices, \dots) and software. It is responsible for handling all
-the resources so programmers do not have to think about it \cite{modern-os,
+the resources so programmers do not have to think about it~\cite{modern-os,
 os-concepts}. Managing resources is not only to make writing programs easier
 but to make sure that the programs are safe from each other. Modern operating
 system allows to run multiple programs at once (or at least offer the illusion
@@ -617,12 +617,12 @@ Linux operating system.\todo{Kratky, asi nema cenu aby to byla subsection}
 
 \subsection{Windows}
 The Microsoft Windows operating system also offers built-in support for
-debugging. It is provided at the Win32 API layer
-\cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds on
-\textit{debug events} and \textit{debug functions}. Unlike POSIX systems such
-as Linux, Windows uses a different approach for signaling abnormal conditions,
-such as breakpoint hits or just interrupts in general. We will explore this
-mechanism before getting to the debugging API.
+debugging. It is provided at the Win32 API
+layer~\cite{windows-msdn-debugging-api, windows-press-debugging-api}. It builds
+on \textit{debug events} and \textit{debug functions}. Unlike POSIX systems
+such as Linux, Windows uses a different approach for signaling abnormal
+conditions, such as breakpoint hits or just interrupts in general. We will
+explore this mechanism before getting to the debugging API.
 
 \subsubsection*{Structured Exception Handling}
 Instead of signals, Windows uses \textit{Structured
@@ -637,16 +637,16 @@ all necessary information that can later be used to continue execution from the
 point where the exception was thrown. It also contains information about which
 type of exception was thrown, if the execution can continue after handling the
 exception, the address where the exception occurred, and some other bits of
-information\footnote{See \cite{windows-msdn-seh} for a full list.}. The system
-then searches for an exception handler that will handle the exception. The
-search is performed in this order:
+information\footnote{Refer to~\cite{windows-msdn-seh} for a full list.}. The
+system then searches for an exception handler that will handle the exception.
+The search is performed in this order:
 
 \begin{enumerate}
     \item If the process is being debugged the debugger is notified.
     \item If the process is not debugged or the debugger does not handle the
         exception, the frame-based exception handler is to be
-        found\footnote{For detailed information about the handlers see
-        \cite{windows-msdn-seh}.}.
+        found\footnote{For detailed information about the handlers
+        see~\cite{windows-msdn-seh}.}.
     \item If no frame-based handler can be found, or no handler handles the
         exception, but the process is being debugged, then the debugger gets
         notified a second time.
@@ -899,7 +899,7 @@ one row for each instruction. The columns of the matrix would contain
     \item whether this instruction is the beginning of a basic
         block\footnote{Basic block is a sequence of instructions that is
         entered only at the first instruction and exited only at the last
-        instruction \cite{dwarf}. In other words, all of the instructions in
+        instruction~\cite{dwarf}. In other words, all of the instructions in
         the basic block are executed sequentially.}.
 \end{itemize}
 They however argue that such a matrix would be very big. The matrix is
@@ -932,13 +932,13 @@ following operations:
     \item Set the \texttt{basic\_block} register to false.
 \end{itemize}
 All of these special opcodes always do these four operations, they only differ
-in what values they add to the \texttt{line} and \texttt{address} register
-\cite{dwarf}. Those values are calculated from the instruction opcode, which
-ranges from $10$ to $255$ in DWARF version 2. This is the most common series of
-operations the virtual machine must do. Encoding it into single opcode makes
-the program extremely size efficient.
+in what values they add to the \texttt{line} and \texttt{address}
+register~\cite{dwarf}. Those values are calculated from the instruction opcode,
+which ranges from $10$ to $255$ in DWARF version 2. This is the most common
+series of operations the virtual machine must do. Encoding it into single
+opcode makes the program extremely size efficient.
 
-Observe the program in figure \ref{fig:c-program-and-its-assembly}. A simple
+Observe the program in figure~\ref{fig:c-program-and-its-assembly}. A simple
 greeter-like program that displays the name given to it as an argument. With
 the \texttt{readelf} utility program, we can inspect the DWARF bytecode
 language describing the locations, it is showed in figure
@@ -1137,7 +1137,7 @@ was register-based, this one is stack-based. This means that most operations
 take their operands from the stack and push the result back onto the stack.
 More about stack-based virtual machines can be discovered
 in~\cite{crafting-interpreters}. DWARF calls those instructions
-\textit{expressions} \cite{dwarf}. The last value on the top of the stack after
+\textit{expressions}~\cite{dwarf}. The last value on the top of the stack after
 the VM runs is considered to be the resulting value (this can be an address of
 an object, value of an array bound, length of dynamic string, and so
 on)~\cite{dwarf}.
@@ -1152,8 +1152,8 @@ the debugger will get to use.
 There are many types of expressions, like arithmetic operations, stack
 manipulation, control flow operations, and last but not least, the
 specifications of the location. We provided already the example with the base
-pointer to the stack, let us look at some more examples, mostly taken from
-\cite{dwarf}:
+pointer to the stack, let us look at some more examples, mostly taken
+from~\cite{dwarf}:
 \begin{itemize}
     \item \verb|DW_OP_reg3| - The value is in register $3$.
     \item \verb|DW_OP_addr 0xABCD| - The value of a static variable is at
@@ -1237,7 +1237,7 @@ missing. This is because their value didn't change across the function, so
 there was no need to save information about them.
 
 The DWARF offers more instructions for manipulation, for a complete overview
-and another example consult \cite{dwarf}. With this information, DWARF can
+and another example consult~\cite{dwarf}. With this information, DWARF can
 describe a way to simulate a stack unwinding without touching the state of the
 debuggee.
 
@@ -1308,10 +1308,10 @@ square/.style = {draw=black!60, fill=white!5, very thick,
 
 \subsubsection{Other informations}
 The DWARF standard has information about compilation units, since object files
-may be derived from multiple compilation units \cite{dwarf}. It also has
+may be derived from multiple compilation units~\cite{dwarf}. It also has
 information about subroutines and inlined subroutines, lexical blocks,
 try-and-catch blocks, and many other constructs. These are not special in any
-way, we have seen a small example in figure \ref{fig:dwarf-die}. They mainly
+way, we have seen a small example in figure~\ref{fig:dwarf-die}. They mainly
 store the beginning and end and some other information. They also contain
 various information about macros, so that the debugger can work with the
 original code before the macro expansion.
@@ -1383,8 +1383,8 @@ compilers and how they handle debugging information.
 A compiler is a program that transforms the source code into some other form,
 most often into machine code or assembly. Compilers are very complicated pieces
 of software. Often, they are made of several parts, the general structure can
-be seen in figure \ref{fig:compiler-structure} \cite{dragon-book}. We will
-briefly explore these stages.
+be seen in figure~\ref{fig:compiler-structure}. We will briefly explore these
+stages.
 
 \tikzstyle{compilerblock} = [rectangle, draw, minimum width=6cm, minimum height=1cm] 
 \tikzstyle{tables} = [rectangle, draw, minimum width=4cm, minimum height=1cm] 
@@ -1404,7 +1404,7 @@ briefly explore these stages.
     \end{tikzpicture} 
     \par}
     \caption{Simplified structure of a compiler, some parts were left out, like
-    optimizations.}
+    optimizations~\cite{dragon-book}.}
     \label{fig:compiler-structure}
 \end{figure}
 
