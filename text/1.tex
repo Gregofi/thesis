@@ -102,7 +102,8 @@ max:
     pop     rbp
     ret
     \end{lstlisting}
-    \caption{Compiled C program with GCC 9.4 compiler as x86-64 assembly.}
+    \caption{Compiled program from the C programming language to the x86-64
+    assembly with the GCC compiler.}
     \label{fig:assembly-example2}
 \end{figure}
 
@@ -330,7 +331,7 @@ a signal that we will catch with the \texttt{waitpid} function.
 \subsubsection{Debugger implementation}
 Now, we have all the necessary building blocks to build a simple debugger on
 the Linux operating system running on the x86-64 platform. Running a program
-under the debugger is simple. In figure \ref{fig:debugger-init} you can see the
+under the debugger is simple. Figure~\ref{fig:debugger-init} shows the
 initialization of the debugger. It uses the fork-exec idiom. The \texttt{fork}
 system call creates an exact copy of the process as a child except the
 following: process ID (PID) of the child is different. In the parent process,
@@ -363,7 +364,8 @@ if (pid == 0) {
     }
 }
     \end{minted}
-    \caption{Linux - Debugger initialization.}
+    \caption{Linux debugger implementation - Initialization of the debuggee
+    process.}
     \label{fig:debugger-init}
 \end{figure}
 
@@ -373,7 +375,7 @@ a word (32 or 64 bits, depending on the Linux variant) into tracees memory.
 However, if we want to write an arbitrary amount of bytes, we have to work
 around the word limitation. We need to write by blocks and for the last one we
 have to pad the write with already existing data if the block size does not
-divide the word size. Figure \ref{fig:write-read} is shown how to read and
+divide the word size. Figure~\ref{fig:write-read} is shown how to read and
 write exactly one byte of memory at a given address, which is simpler to
 implement but not ideal for writing many bytes.
 
@@ -390,7 +392,7 @@ void write_memory(pid_t pid, uint64_t address, uint8_t data) {
     ptrace(PTRACE_POKEDATA, pid, address, new_data);
 }
     \end{minted}
-    \caption{Linux - Reading and writing one byte using ptrace.}
+    \caption{Reading and writing one byte to debuggee memory using ptrace.}
     \label{fig:write-read}
 \end{figure}
 
@@ -416,7 +418,7 @@ void set_register(pid_t pid, const char* name, uint64_t data) {
     ptrace(PTRACE_SETREGS, pid, NULL, &regs);
 }
     \end{minted}
-    \caption{Linux - Setting one register using ptrace}
+    \caption{Setting debuggee register value using ptrace.}
     \label{fig:set-register}
 \end{figure}
 
@@ -451,7 +453,8 @@ be found on \ref{fig:breakpoint-enable}.
   ff e0     jmp rax
         \end{Verbatim}
     \end{minipage}
-    \caption{Code with and without a breakpoint.}
+    \caption{Code with and without a breakpoint. The breakpoint is highlighted
+    by the blue color. The red color shows invalid instruction.} 
     \label{fig:with-and-without-bp}
 \end{figure}
 
@@ -501,7 +504,8 @@ ability to single step as well.
 \begin{figure}
     \centering
     \includegraphics[scale=0.5]{media/DIAGRAM}
-    \caption{Continue sketch}
+    \caption{A diagram of how a continue operation might be performed. The
+    arrow signalizes an instruction pointer.}
     \label{fig:continue}
 \end{figure}
 
@@ -526,7 +530,7 @@ an error. In lieu of the breakpoint dance mentioned earlier, the singlestep
 command will be used in our implementation because x86-64 supports it.
 Implementation is described in figure~\ref{fig:singlestep}. We presume that the
 instruction pointer was moved when the breakpoint was hit, eliminating the need
-to return one byte backward. This is more reasonable anyway since you want to
+to return one byte backward. This is more reasonable anyway since we want to
 show the user at which address the breakpoint hit happened. The
 LLDB~\cite{lldb} debugger uses hardware support if there is one, else it uses
 an instruction emulator. For instance for the ARM architecture, LLDB uses an
@@ -548,7 +552,7 @@ void step_over_bp(pid_t pid) {
     enable(pid, bp);
 }
     \end{minted}
-    \caption{Stepping over breakpoint, abbreviated.}
+    \caption{Stepping over an active breakpoint.}
     \label{fig:singlestep}
 \end{figure}
 
@@ -728,7 +732,8 @@ while it is waiting, like GUI updates.
         \draw[dashed,->] (-7,-10.5) -- node[midway,above] {Exception} (0,-10.5);
     \end{tikzpicture}
     }
-    \caption{A diagram representing the communication between the debuggee, the Windows operating system and the debugger~\cite{windows-dbg-api-rev}.}
+    \caption{A diagram representing the communication between the debuggee, the
+    Windows operating system and the debugger~\cite{windows-dbg-api-rev}.}
     \label{fig:win32debugger}
 \end{figure}
  
@@ -764,7 +769,7 @@ typedef struct _DEBUG_EVENT {
   } u;
 } DEBUG_EVENT, *LPDEBUG_EVENT;
 \end{minted}
-\caption{A structure which contains an information about debugging event.}
+\caption{A structure which contains an information about a debugging event.}
 \label{fig:DebugEvent}
 \end{figure}
 
@@ -993,7 +998,8 @@ int main(int argc, char* argv[]) {
     1181:	c9                   	leave
     1182:	c3                   	ret
     \end{lstlisting}
-    \caption{A program in the C programming language and the generated machine code by a GCC compiler.}
+    \caption{A program in the C programming language and the same program
+    compiled into x86-64 assembly via the GCC compiler.}
     \label{fig:c-program-and-its-assembly}
 \end{figure}
 
@@ -1041,7 +1047,7 @@ is owned by a function in which it was defined. There are also other relations
 among the entries, not only ownership. With those relations in place, the
 relation is a graph, not just a tree.
 
-An example of DWARF entries can be seen in figure \ref{fig:dwarf-die}. The
+An example of DWARF entries can be seen in figure~\ref{fig:dwarf-die}. The
 \verb|DW_TAG_pointer_type| is simple, its attributes are only the size of
 the type and which type it points to, this is encoded as an address to another
 entry. The type it points to is another entry. It only contains information that
@@ -1108,7 +1114,9 @@ DW_TAG_subprogram
       DW_AT_type	    (0x0000008f "const char *")
       DW_AT_location	(DW_OP_fbreg -24)
     \end{lstlisting}
-    \caption{A part of DWARFs DIEs for program in figure \ref{fig:c-program-and-its-assembly}}
+    \caption{A part of DWARF debugging information entries for the program in
+    figure~\ref{fig:c-program-and-its-assembly}. The indentation of the entries
+    shows a hierarchy.}
     \label{fig:dwarf-die}
 \end{figure}
 
@@ -1208,7 +1216,7 @@ of a stack frame can be described either by a register and a signed offset
 which are added together, or a DWARF expression may be used (the ones used to
 describe variable locations).
 
-Figure \ref{fig:dwarf-stack-frames} contains an example of the encoding of this
+Figure~\ref{fig:dwarf-stack-frames} contains an example of the encoding of this
 information and also the decoded values for the program in figure
 \ref{fig:prologue-and-epilogue}. The \texttt{advance\_location} adds a new row
 to the matrix, with the only thing changing from the previous row being the
@@ -1238,14 +1246,14 @@ debuggee.
     % history!
     \begin{lstlisting}
 0000000000001183 <foo>:
-0x1183:	push   %rbp          ; Save old stack frame pointer
-0x1184:	mov    %rsp,%rbp     
-0x1187:	sub    \$0x18,%rsp   ; Allocate space on the stack
-                                <body ...>
+0x1183:	push   rbp          ; Save old stack frame pointer
+0x1184:	mov    rbp, rsp     
+0x1187:	sub    rsp, 0x18    ; Allocate space on the stack
+        <body ...>
 0x11b1:	leave                ; deallocate and restore regs
 0x11b2:	ret
     \end{lstlisting}
-    \caption{A prologue and epilogue of a function in assembly.}
+    \caption{A prologue and epilogue of a function, shown in assembly.}
     \label{fig:prologue-and-epilogue}
 \end{figure}
 
@@ -1361,7 +1369,8 @@ Those are split into different categories, we present some of the most common:
             DW_AT_type	(0x153 "int (*)(int, double)")
             ...
     \end{lstlisting}
-    \caption{Example of subroutine type and pointer to function in DWARF, abbreviated.}
+    \caption{Example of a subroutine type and a pointer to function type in
+    DWARF, abbreviated.}
     \label{fig:dwarf-ptr-to-fun}
 \end{figure}
 
@@ -1464,7 +1473,8 @@ intermediate representation.
           ret i32 %5
         }
     \end{minted}
-    \caption{Simplified example of LLVM IR.}
+    \caption{Simplified example of LLVM IR, showing a function that calculates
+    a square of two numbers.}
     \label{fig:llvm-ir-example}
 \end{figure}
 
@@ -1609,7 +1619,8 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 !22 = !DILocation(line: 5, column: 18, scope: !18)
 !23 = !DILocation(line: 5, column: 9, scope: !18)
     \end{minted}
-    \caption{An example of LLVM IR with debugging information, abbreviated.}
+    \caption{An example of LLVM IR with debugging information. The lines
+    beginning with exclamation mark are metadatas.}
     \label{fig:llvm-ir-debug}
 \end{figure}
 
@@ -1624,7 +1635,7 @@ breakpoints, single-stepping, reading and writing into program memory and
 registers.
 
 \subsection{GDB}
-The GNU Project debugger (GDB) \cite{gdb-manual} is a source and
+The GNU Project debugger (GDB)~\cite{gdb-manual} is a source and
 instruction-level debugger. It supports languages like C, C++, D, Fortran, Go,
 Objective-C, Pascal, Rust, and some others. GDB is written in C/C++. It offers
 a CLI application through which one might interact with the debugger. It also

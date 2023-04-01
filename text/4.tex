@@ -74,26 +74,6 @@ loop based, while the quicksort one uses recursion. This will make a difference
 since some of the algorithms are making decisions based on the \texttt{CALL}
 instruction, like step over.
 
-\begin{table}[]
-\centering
-\begin{tabular}{||c c c||}
-\hline
-Test Case & Quicksort - Time & Prime numbers - Time \\
-\hline\hline
-1. & $7.91$            & $10.51$  \\
-2. & $8.89$            & $12.33$  \\
-3. & $8.73$            & $30.32$  \\
-4. & $9.98$             & $31.85$  \\
-5. & $8.91$            & $11.53$  \\
-6. & $8.36$            & $130.81$ \\
-\hline
-\end{tabular}
-\caption{Performance comparison when using various features of the debugger.
-    Each case was run five times and average was taken. The time is in
-    seconds.}
-\label{table:benchmark}
-\end{table}
-
 % Intel Core i5 8265U Whiskey Lake
 % 4 cores, 1.6GHz, 3.9GHz under Core Boost
 % 6 MB cache
@@ -116,6 +96,26 @@ We will measure the speed on the following cases:
         Remove the breakpoint on the first hit and step out of the function.
         The expensive functions are the same as in the previous test.
 \end{enumerate}
+
+\begin{table}[]
+\centering
+\begin{tabular}{||c c c||}
+\hline
+Test Case & Quicksort - Time & Prime numbers - Time \\
+\hline\hline
+1. & $7.91$            & $10.51$  \\
+2. & $8.89$            & $12.33$  \\
+3. & $8.73$            & $30.32$  \\
+4. & $9.98$             & $31.85$  \\
+5. & $8.91$            & $11.53$  \\
+6. & $8.36$            & $130.81$ \\
+\hline
+\end{tabular}
+\caption{Performance comparison when using various features of the debugger.
+    Each case was run five times and average was taken. The time is in
+    seconds.}
+\label{table:benchmark}
+\end{table}
 
 The results are in table~\ref{table:benchmark}. It is apparent that just having
 the debugger connected introduces a minor slowdown. The breakpoints, however,

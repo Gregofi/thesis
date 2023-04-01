@@ -38,9 +38,9 @@ allowed addressing modes also change for each instruction. For example the
 \texttt{MOV} instruction allows a vast range of addressing modes, while the
 \texttt{PUSH} instruction only allows register and immediate number. For a full
 list, refer to~\cite{ivo2021tiny}. The instructions that are taken over from
-x86-64 have more restrictive addressing modes than in x86-64. For example, the
-\verb|add| instruction can take a memory offset as a destination operand in
-x64-86, but in T86, it can only take registers.
+x86-64 often have more restrictive addressing modes than in x86-64. For
+example, the \verb|add| instruction can take a memory offset as a destination
+operand in x64-86, but in T86, it can only take registers.
 
 Other than that, the ISA is mainly a subset of the x86-64 most used
 instructions, many of which we have already seen in various examples throughout
@@ -54,12 +54,11 @@ program can be seen in figure~\ref{fig:t86-example}.
 
 \begin{figure}
     \begin{lstlisting}
-SUB SP, 1
-MOV R0, 5
-MOV [BP - 2], R0
-LEA R1, [BP - 2]
-MOV [BP - 1], R1
-MOV R2, 4
+MOV  R0, 1
+MOV  R1, 50
+ADD  R0, R1
+MUL  R0, 5
+HALT
     \end{lstlisting}
     \caption{A small example of a program in the T86 architecture.}
     \label{fig:t86-example}
