@@ -474,7 +474,7 @@ for the virtual machine:
 There is also a dereference instruction, which dereferences a value in memory.
 That can be useful for tracking location of pointed variables. This virtual
 machine is also easily extendable. With this kind of power, the location of
-variables can almost be arbitrary, and not only tied to a register or an offset
+variables can almost be arbitrary and not only tied to a register or an offset
 from the base register. This information is stored in a variable entry
 attribute called \texttt{ATTR\_location}. If all this information is provided,
 we know where the variable is stored and may look up its value. Together with
@@ -490,23 +490,22 @@ struct member or a value at which pointer points.
 
 The debugger has a built-in interpreter for such expressions. It builds an AST
 from the expression and interprets it using an
-AST-walk~\cite{crafting-interpreters}. The AST interpreter leverages the
+AST walk~\cite{crafting-interpreters}. The AST interpreter leverages the
 \texttt{Native} class to fetch variable values. The interpreter supports almost
-all C operators, including the assignment operator. It, however, has a stricter
+all C operators, including the assignment operator. It, however, has stricter
 typing than C. An example of such an expression is \texttt{foo[2]->bar + 3}.
-This is a very powerful feature, as it allows to easily inspect or modify
-various variables or expressions. If an user wishes to modify part of an array,
+This is a very powerful feature, as it allows one to easily inspect or modify
+various variables or expressions. If a user wishes to modify part of an array,
 there is no need to use the raw memory or register setters. Instead, it is
-possible to just write \texttt{array[x] = y}.
+possible to write \texttt{array[x] = y}.
 
 The AST nodes are distinguished by types. They also need to store the location
-of the expression, if it is an expression that can appear on the left hand
+of the expression  if it is an expression that can appear on the left-hand
 side of the assignment operator. Examples of expressions that must store the
 location: \texttt{a}, \texttt{*(a + 1)}, \texttt{a[5]}, while the following
-expressions do not have any locations, because they cannot appear on the left
+expressions do not have any locations because they cannot appear on the left
 side of the assignment operator: \texttt{a + 1}, \texttt{5}, \texttt{array[0]
 * y}.
-
 
 \section{Frontend}
 We provide two command line interface programs. First one is for the T86, is
