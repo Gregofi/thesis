@@ -51,7 +51,7 @@ architektura nemá žádný procesor, který by ji implementoval. Místo toho po
 virtuální stroj.
 
 Aby byl programovací jazyk použitelný, potřebuje vhodné nástroje, například
-ladicí programy. Aby ladící program fungovaly, musí překladač emitovat ladicí
+ladicí programy. Aby ladící program fungoval, musí překladač emitovat ladicí
 informace popisující vazby mezi generovaným kódem a zdrojovým kódem. Virtuální
 stroj pro Tiny x86 nenabízí téměř žádnou podporu pro ladění. Studenti tedy
 nemají žádný důvod generovat ladicí informace.
@@ -61,8 +61,9 @@ jako je procesor, operační systém a překladač. Popisuje také, jak vytvoři
 velmi jednoduchý ladicí program za použití rozhraní systému Linux a Windows.
 Dále je popsána podpora ladění virtuálního stroje Tiny x86, která byla v rámci
 práce přídána. Ladící podpora byla inspirována rozhraním které nabízí systém
-Linux. Nakonec je vytvořen debugger na úrovni assembleru a zdrojového kódu
-inspirovaný návrhem ladících programů z reálného světa.}
+Linux. Nakonec je vytvořen ladící program pracující na úrovni assembleru a
+zdrojového kódu. Návrh programu je inspirovaný ladícími programy z reálného
+světa.}
 
 \ctufitabstractENG{Many university courses teach compiler design. One such
 course is taught at FIT CTU. The students are tasked to create a compiler from
@@ -72,19 +73,19 @@ virtual machine.
 
 To make a programming language usable, it needs proper tooling, like debuggers.
 For debuggers to work, the compiler must emit debugging information describing
-the connections between generated machine code and the source code. The virtual
-machine has almost no debugging support. Hence the students do not have any
-reason to generate debugging information.
+the connections between generated machine code and the source code. The Tiny
+x86 virtual machine has almost no debugging support. Hence the students do not
+have any reason to generate debugging information.
 
 That is about to change. This thesis describes how debugging support is
 provided at various levels, like the central processing unit and the operating
-system. It also describes how to create a very simple debugger on Linux. We
-then add debugging support to the Tiny x86 virtual machine itself, which is
-partially inspired by the studied Linux debugging interface. Finally, we create
-an assembly and source-level debugger inspired by real-world debuggers'
-design.}
+system. It also describes how to create a very simple debugger on Linux and
+Windows. We then add debugging support to the Tiny x86 virtual machine itself,
+which is partially inspired by the debugging interface provided by Linux.
+Finally, we create an assembly and source-level debugger inspired by real-world
+debuggers' design.}
 
-\ctufitkeywordsCZE{Ladění, ladící program, Překladač, Implementace ladícího programu, LLVM,
+\ctufitkeywordsCZE{Ladění, Ladící program, Překladač, Implementace ladícího programu, LLVM,
 Linux, Windows, Tiny x86, Podpora pro ladění, Chyby v programech}
 \ctufitkeywordsENG{Debugging, Debugger, Debug, Debugger implementation, Compiler, LLVM,
 Linux, Windows, Tiny x86, Debugging support, Errors in programs}

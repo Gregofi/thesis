@@ -1,4 +1,38 @@
-\chapter{Nějaká příloha}
+\chapter{Source Debugging Information format}
+This chapter presents the format about source debugging information used by the
+debugger. The format closely represents the JSON~\cite{json} format. It is made
+up of debugging information entries (DIEs) and their attributes. Each DIE has a
+tag that identifies its purpose. The tag is part of the name. Additionaly, each
+DIE can have attributes, which describe some property of the DIE. Finally, a
+DIE can have an arbitrary many children DIEs. The general grammar for DIE:
+\begin{lstlisting}
+DIE = "DIE_", tag "{" ({DIE | Attr}  "," "}"
+Attr = "ATTR_", attr_name, ":", AttrValue
+\end{lstlisting}
 
+A concrete example of debugging information:
+\begin{lstlisting}
+DIE_compilation_unit: {
+DIE_function: {
+  ATTR_name: main,
+  ATTR_begin_addr: 0,
+  ATTR_end_addr: 8,
+  DIE_scope: {
+    ATTR_begin_addr: 0,
+    ATTR_end_addr: 8, 
+    DIE_variable: {
+      ATTR_name: d,
+      ATTR_type: double,
+      ATTR_location: `BASE_REG_OFFSET -2`,
+    },
+  },
+},
+}
+\end{lstlisting}
 
-Sem přijde to, co nepatří do hlavní části.
+\section{Tags}
+The allowed value of attributes changes based on the DIE they are in. We will
+describe each DIE tag and the allowed attributes.
+
+\subsection{Compilation Unit}
+

@@ -11,10 +11,10 @@ To help programmers better understand written programs, a text mapping was
 created, called \textit{assembly language}. Each instruction is now assigned an
 text representation, as are the operands of the instruction. The control flow
 instructions now doesn't have to jump to address offset, but can instead use
-labels. Example of a simple program in assembly language can be seen in figure
-\ref{fig:simple-assembly}. If a programmer knows the instruction set
-architecture~\cite{isa} of the processor he can easily recognize the
-instructions the program is made of.
+labels. Example of a simple program in both an assembly language and a machine
+code can be seen in figure~\ref{fig:simple-assembly}. If a programmer knows the
+instruction set architecture~\cite{isa} of the processor he can easily
+recognize the instructions the program is made of.
 
 \begin{figure}
     \begin{minipage}{.45\textwidth}
@@ -147,17 +147,16 @@ were made from relays. They literally had to debug the machine by taking the
 bug out.}. The process of finding these mistakes and correcting them is called
 \textit{debugging}~\cite{art-of-testing}.
 
-We should fix this bug. Otherwise, users of our program will probably not be
-happy if their program gets stuck. We could try to look at the source code and
-find the mistake this way. This is a valid strategy. Here we could assume that
-the condition \texttt{lo < hi} never comes to be since it is the most obvious
-place where we could get stuck forever. Now, it would be helpful if we could
-see the states of \texttt{lo} and \texttt{hi} in each iteration of the cycle.
-We could resort to print statements, but that is not very flexible. If we
-changed our minds and wanted to also see the value of variable \texttt{i}, we
-would have to recompile the program and rerun it. The output can also quickly
-get overwhelming, especially in an infinite loop. However, all is not lost, as
-a special program was created to inspect running programs, called a
+There are several ways approaches to debugging. We could try to look at the
+source code and find the mistake this way. Here we could assume that the
+condition \texttt{lo < hi} never comes to be since it is the most obvious place
+where we could get stuck forever. Now, it would be helpful if we could see the
+states of \texttt{lo} and \texttt{hi} in each iteration of the cycle. We could
+resort to print statements, but that is not very flexible. If we changed our
+minds and wanted to also see the value of variable \texttt{i}, we would have to
+recompile the program and rerun it. The output can also quickly get
+overwhelming, especially in an infinite loop. However, all is not lost, as a
+special program was created to inspect running programs, called a
 \textit{debugger}.
 
 Debugger is able to inspect the state of another program, like the values of
@@ -188,19 +187,19 @@ flow of the program.
 \end{itemize}
 
 Now, back to our program. Let us put a breakpoint on line $8$ after $i$ is set.
-We will monitor how the \texttt{lo} and \texttt{hi} change. If you run the
-program with the debugger attached, you will see an output similar to what is
-displayed in figure \ref{fig:lldb-debug1}. Here, you can see the line on which
-the execution was stopped. It is also possible to print the state of variables.
-In each loop, you can print the value of a variable and then continue execution
-until another breakpoint. There is only one set, so the execution will again be
-stopped on line $8$. The value of \texttt{hi} will not change, which is
-expected. Value of \texttt{lo} will gain following values: $0, 1, 2, 2, 2,
-\dots$. The value apparently gets stuck at $2$ and never change. The value of
-variable $i$ is computed as $i = (\text{lo} + \text{hi})/2 = (2 + 3)/2 = 2$,
-because division in C rounds the value down. The fix is to change the line $9$
-to \texttt{lo = i + 1}. With the debugger, it was simple to find out where the
-error came from and we didn't have to recompile the program.
+We will monitor how the \texttt{lo} and \texttt{hi} change. If the program is
+run with the debugger attached, an output similar to what is displayed in
+figure~\ref{fig:lldb-debug1} will be seen. Here, it is possible to see the line
+on which the execution was stopped. It is also possible to print the state of
+variables. In each loop, we could print the value of a variable and then
+continue execution until another breakpoint is hit. There is only one set, so
+the execution will again be stopped on line $8$. The value of \texttt{hi} will
+not change, which is expected. Value of \texttt{lo} will gain following values:
+$0, 1, 2, 2, 2, \dots$ The value apparently gets stuck at $2$ and never change.
+The value of variable $i$ is computed as $i = (\text{lo} + \text{hi})/2 = (2 +
+3)/2 = 2$, because division in C rounds the value down. The fix is to change
+the line $9$ to \texttt{lo = i + 1}. With the debugger, it was simple to find
+out where the error came from and we didn't have to recompile the program.
 
 \begin{figure}
 \begin{minted}{c}
