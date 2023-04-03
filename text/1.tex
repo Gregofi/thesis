@@ -19,7 +19,7 @@ talk about the API that various operating systems provide. Finally, we will
 discuss how compilers and debuggers can allow us to debug source code, although
 the program we debug was compiled into a machine code program.
 
-\section{CPU level support}\label{section:cpu-debug-support}
+\section{CPU Level Support}\label{section:cpu-debug-support}
 The CPU can only execute machine code which is made of instructions. It also
 has several registers to help with computations. Which instructions and
 registers the CPU has can differ from CPU to CPU. This is specified by an
@@ -145,7 +145,7 @@ sets them as a result of some instruction. For example, the instruction
 \texttt{cmp} compares its two operands, and if they are the same, the
 \textit{zero} flag in the \texttt{eflags} register will be set.
 
-\subsection{Interrupts}\label{section:interrupt}
+\subsection{Interrupts}\label{section:interrupts}
 An interrupt is a special request to the CPU to stop the execution of the
 current program and to quickly react to the reason that caused the
 request~\cite{computer-architecture}. An example of such event can be a
@@ -1219,18 +1219,18 @@ which are added together, or a DWARF expression may be used (the ones used to
 describe variable locations).
 
 Figure~\ref{fig:dwarf-stack-frames} contains an example of the encoding of this
-information and also the decoded values for the program in figure
-\ref{fig:prologue-and-epilogue}. The \texttt{advance\_location} adds a new row
-to the matrix, with the only thing changing from the previous row being the
-location value. The \texttt{def\_cfa\_offset} specifies that the CFA (current
-stack frame) is at the provided offset from the same register it was offseted
-in previous row. We can see that in the example on line $2$ the offset changes
-from $8$ to $16$, but the register stays the same. This is apparent in the
-decoded information where on the address \texttt{0x1184} the \texttt{CFA}
-changed from \texttt{RSP + 8} to \texttt{RSP + 16}. This happened because
-the \texttt{push \%rbp} advanced the stack pointer by eight bytes.
+information and also the decoded values for the program in
+figure~\ref{fig:prologue-and-epilogue}. The \texttt{advance\_location} adds a
+new row to the matrix, with the only thing changing from the previous row being
+the location value. The \texttt{def\_cfa\_offset} specifies that the CFA
+(current stack frame) is at the provided offset from the same register it was
+offseted in previous row. We can see that in the example on line $2$ the offset
+changes from $8$ to $16$, but the register stays the same. This is apparent in
+the decoded information where on the address \texttt{0x1184} the \texttt{CFA}
+changed from \texttt{RSP + 8} to \texttt{RSP + 16}. This happened because the
+\texttt{push \%rbp} advanced the stack pointer by eight bytes.
 
-On the contrary, the \texttt{def\_cfa\_register} changes the register but keeps
+On the contrary, the \verb|def_cfa_register| changes the register but keeps
 the offset. This happens when the instruction \texttt{mov \%rsp, \%rbp} is
 executed. From that point the stack frame is at sixteen byte offset from the
 base pointer. This holds until the epilogue, where the old stack pointer is
@@ -1308,7 +1308,7 @@ square/.style = {draw=black!60, fill=white!5, very thick,
     \label{fig:stack-layout}
 \end{figure}
 
-\subsubsection{Other informations}
+\subsubsection{Other Debugging Informations}
 The DWARF standard has information about compilation units, since object files
 may be derived from multiple compilation units~\cite{dwarf}. It also has
 information about subroutines and inlined subroutines, lexical blocks,
@@ -1534,7 +1534,7 @@ following:
     \item LLVM optimizations may be upgraded to be aware of debugging
         information. This is sometimes necessary, especially if the
         optimizations are aggressive~\cite{llvm-debug-info}. LLVM provides a
-        guide for developers of optimization passes specifiying how to handle
+        guide for developers of optimization passes specifying how to handle
         certain situations~\cite{llvm-debug-optimizations}. For example,
         an accurate stack trace is desired even though inlining or tail call
         optimization was applied~\cite{llvm-debug-info}.
@@ -1663,7 +1663,7 @@ an example of an iterative factorial function disassembled via IDA in figure
 \ref{fig:ida}. In the figure, the variable locations were renamed to represent
 their semantic meaning. This has to be done by hand. IDA itself can sometimes
 know that a variable is stored in some location but it does not know its
-semantical meaning. IDA is an invaluable asset in reverse engineer's toolkit
+semantic meaning. IDA is an invaluable asset in reverse engineer's toolkit
 for static analysis.
 
 \begin{figure}
