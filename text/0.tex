@@ -246,15 +246,15 @@ discomforting than debugging source code directly.
 
 \section{Teaching Compilers}
 Many schools about computer science have a compiler course, and the Faculty of
-Information Technology, CTU\todo{cite?} is no exception. The course is called
-\textit{Code Generators} (NI-GEN). In this course, students are tasked to build
-a simple compiler from a C-like language called TinyC. The target of the
-compiler is the Tiny x86 (T86) architecture. This architecture does not have a
-processor that implements it. Instead, a virtual machine, a program that reads
-the assembly and executes it, was created for it. The architecture is supposed
-to ease the code generation and let the students focus on the more interesting
-parts of the compiler, like register allocation or optimization, instead of the
-nitty gritty detail of real CPU architectures.
+Information Technology, CTU is no exception. The course is called \textit{Code
+Generators} (NI-GEN). In this course, students are tasked to build a simple
+compiler from a C-like language called TinyC. The target of the compiler is the
+Tiny x86 (T86) architecture. This architecture does not have a processor that
+implements it. Instead, a virtual machine, a program that reads the assembly
+and executes it, was created for it. The architecture is supposed to ease the
+code generation and let the students focus on the more interesting parts of the
+compiler, like register allocation or optimization, instead of the nitty gritty
+detail of real CPU architectures.
 
 There is, however, a problem with using T86, as it has almost non-existing
 debugging support. So if a compiler of some student generates the code badly,

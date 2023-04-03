@@ -613,7 +613,7 @@ There are other systems based on UNIX, however, the implementation is very
 similar to the Linux one. For example, MacOS, FreeBSD, and OpenBSD also have
 the \texttt{ptrace} system call. The call itself is a little different on each
 operating system but it can be used to achieve the same functionality as on the
-Linux operating system.\todo{Kratky, asi nema cenu aby to byla subsection}
+Linux operating system.
 
 \subsection{Windows}
 The Microsoft Windows operating system also offers built-in support for
@@ -849,16 +849,17 @@ which are
     \item various debug sections like \verb|.debug_info|, \verb|.debug_line|
         etc.
 \end{itemize}
-For inspecting the ELF files, commands \texttt{readelf} and \texttt{objdump}
-may be used on Linux systems. The ELF format also has a header, and all
-sections have their header too. This contains information like the name of the
-section, the size of the section, etc. The ELF format is not only used for
-executables, but also for \textit{relocatable} file, \textit{executable} file
-and \textit{shared object} file~\cite{elf}. The sections themselves are often
-protected. For example, the \texttt{.text} section can only be read and
-executed, but cannot be written into. The \texttt{.data} section can be read
-and written to, but cannot be executed. The ELF also contains various debug
-sections, so the debugging information is embedded in the executable itself.
+For inspecting the ELF files, commands \texttt{readelf}~\cite{readelf} and
+\texttt{objdump}~\cite{objdump} may be used on Linux systems. The ELF format
+also has a header, and all sections have their header too. This contains
+information like the name of the section, the size of the section, etc. The ELF
+format is not only used for executables, but also for \textit{relocatable}
+file, \textit{executable} file and \textit{shared object} file~\cite{elf}. The
+sections themselves are often protected. For example, the \texttt{.text}
+section can only be read and executed, but cannot be written into. The
+\texttt{.data} section can be read and written to, but cannot be executed. The
+ELF also contains various debug sections, so the debugging information is
+embedded in the executable itself.
 
 ELF is not the only one executable format. Others include the \textit{COFF} and
 \textit{PE} format, which are used by Microsoft Windows, or the
@@ -879,12 +880,13 @@ version 2, since the others mainly add features to accommodate newer language
 features. We will not get that far even with version 2. The complete changelog
 can be found in the text describing DWARF version 5~\cite{dwarf-5}. We provide
 many examples of the information that DWARF encodes. For reading the DWARF
-information from object files, we used the \texttt{llvm-dwarfdump},
-\texttt{objdump}, and \texttt{readelf} tools to construct these
-examples\todo{Should I cite all of these guys?}. The information DWARF encodes
-is stored in various debug sections if used in conjunction with the ELF
-standard. The Mach-O format stores debugging information into separate file.
-This file is still however split into several sections.
+information from object files, we used the
+\texttt{llvm-dwarfdump}~\cite{dwarfdump}, \texttt{objdump}~\cite{objdump}, and
+\texttt{readelf}~\cite{readelf} tools to construct these examples\todo{Should I
+cite all of these guys?}. The information DWARF encodes is stored in various
+debug sections if used in conjunction with the ELF standard. The Mach-O format
+stores debugging information into separate file. This file is still however
+split into several sections.
 
 \subsubsection{Line Number Information}\label{section:line-number-information}
 Line number information needs to convey which line of code corresponds to an
