@@ -404,7 +404,7 @@ then fills up this structure with the value in registers. To save registers,
 \texttt{PTRACE\_SETREGS} can be used. One has to pass the whole structure, so
 if we want to modify only some registers we first need to fetch the structure,
 fill the registers we want with values, and then finally use \texttt{SETREGS}.
-An implementation can be seen in figure \ref{fig:set-register}, the
+An implementation can be seen in figure~\ref{fig:set-register}, the
 \texttt{get\_register} functions maps the structure members to register name.
 Since the address of the current instruction to be executed is also stored in a
 register (\texttt{rsp}), we now have access to it.
@@ -499,12 +499,85 @@ the program counter for few architectures.
 Additionally, if we just moved back and resumed the program, we would again hit
 the breakpoint which is still set. We need to temporarily unset it, move one
 instruction forward, and set it again. The general idea behind it can be found
-in figure \ref{fig:continue}. With breakpoints, we essentially gained the
+in figure~\ref{fig:continue}. With breakpoints, we essentially gained the
 ability to single step as well.
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.5]{media/DIAGRAM}
+    \begin{tikzpicture}[
+dot/.style = {circle, fill, minimum size=#1,
+              inner sep=0pt, outer sep=0pt},
+dot/.default = 0pt,
+node distance = 0pt,
+square/.style = {draw=black!60, fill=white!5, very thick, 
+                 minimum height=1.2cm,
+                 text width=1.0cm,
+                 outer sep=0pt,
+                 trapezium stretches=true}, % To make all nodes of the same height
+]
+        \node (pro21) [square] {\texttt{0x01 add}};
+        \node (pro31) [square,
+                      right=of pro21] {\texttt{0xd0}};
+        \node (pro41) [square, right=of pro31] {\texttt{0xcc int3}};
+        \node (pro51) [square, right=of pro41] {\texttt{0x45}};
+        \node (pro61) [square, right=of pro51] {\texttt{0xfd}};
+        \node (pro71) [square, right=of pro61] {\texttt{0xff jmp}};
+        \node (pro81) [square, right=of pro71] {\texttt{0xe0}};
+        \node (text1) [text width=5cm,
+                       right=0.1cm of pro81,align=justify]
+                       {Just before hitting a breakpoint.};
+        \node (ip1)   [dot, above=0.65cm of pro41] {};
+        \draw[->] (ip1) -- (pro41);
+        % second row
+        \node (pro22) [square,
+                      below=1cm of pro21] {\texttt{0x01 add}};
+        \node (pro32) [square,
+                      right=of pro22] {\texttt{0xd0}};
+        \node (pro42) [square, right=of pro32] {\texttt{0xcc int3}};
+        \node (pro52) [square, right=of pro42] {\texttt{0x45}};
+        \node (pro62) [square, right=of pro52] {\texttt{0xfd}};
+        \node (pro72) [square, right=of pro62] {\texttt{0xff jmp}};
+        \node (pro82) [square, right=of pro72] {\texttt{0xe0}};
+        \node (text2) [text width=5cm,
+                       right=0.1cm of pro82,align=justify]
+                       {After software breakpoint is executed.};
+        \node (ip2)   [dot, above=0.65cm of pro52] {};
+        \draw[->] (ip2) -- (pro52);
+        % third row
+        \node (pro23) [square,
+                      below=1cm of pro22] {\texttt{0x01 add}};
+        \node (pro33) [square,
+                      right=of pro23] {\texttt{0xd0}};
+        \node (pro43) [square, right=of pro33] {\texttt{0x88 mov}};
+        \node (pro53) [square, right=of pro43] {\texttt{0x45}};
+        \node (pro63) [square, right=of pro53] {\texttt{0xfd}};
+        \node (pro73) [square, right=of pro63] {\textcolor{red}{\texttt{0xcc int3}}};
+        \node (pro83) [square, right=of pro73] {\texttt{0xe0}};
+        \node (text3) [text width=5cm,
+                       right=0.1cm of pro83,align=justify]
+                       {Move instruction pointer back,
+                       replace the \texttt{int3} instruction
+                       with the original one and set a breakpoint
+                       at the next instruction.};
+        \node (ip3)   [dot, above=0.65cm of pro43] {};
+        \draw[->] (ip3) -- (pro43);
+        % fourth row
+        \node (pro24) [square,
+                      below=1cm of pro23] {\texttt{0x01 add}};
+        \node (pro34) [square,
+                      right=of pro24] {\texttt{0xd0}};
+        \node (pro44) [square, right=of pro34] {\texttt{0xcc int3}};
+        \node (pro54) [square, right=of pro44] {\texttt{0x45}};
+        \node (pro64) [square, right=of pro54] {\texttt{0xfd}};
+        \node (pro74) [square, right=of pro64] {\texttt{0xff jmp}};
+        \node (pro84) [square, right=of pro74] {\texttt{0xe0}};
+        \node (text4) [text width=5cm,
+                       right=0.1cm of pro84,align=justify]
+                       {Resume the execution, remove the newly set breakpoint
+                       and restore the old one.};
+        \node (ip4)   [dot, above=0.65cm of pro74] {};
+        \draw[->] (ip4) -- (pro74);
+    \end{tikzpicture}
     \caption{A diagram of how a continue operation might be performed. The
     arrow signalizes an instruction pointer.}
     \label{fig:continue}
