@@ -24,7 +24,7 @@ s o
 c
 > debugee finished execution
 ```
-Since the bp inserted by the `__asm__` directive weren't set by the debugger,
+Since the bp inserted by the `__asm__` directive was not set by the debugger,
 we need to manually unset them. Otherwise as seen with the breakpoint set with
 `b`, those will be properly skipped when `c` is used. Try to call `c` on the
 first breakpoint and see what happens.
