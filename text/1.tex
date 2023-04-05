@@ -8,8 +8,8 @@
   \end{flushright}
 \end{quote}
 
-To debug a program written in a high-level programming language, we need the
-compiler to emit debugging information. Without this information, we can debug
+We need the compiler to emit debugging information to debug a program written
+in a high-level programming language. Without this information, we can debug
 the program at the assembly level. This can still be useful, for example, for
 reverse engineering. Furthermore, without assembly-level debugging, there is no
 source-level debugging since it builds upon it. This chapter describes at which
@@ -119,14 +119,14 @@ Some of these are
     \item \texttt{rbp} - Pointer to data on the stack.
 \end{itemize}
 Although there is a special role for each register, it is more of a convention
-for some. It is not necessary to use the \texttt{rcx} register only for loop
-operations. Although the \texttt{rsp} and \texttt{rbp} are called general
+for some. It is not necessary to use the \texttt{rcx} register exclusively for
+loop operations. Although the \texttt{rsp} and \texttt{rbp} are called general
 purpose, they are often only used for pointing at the top of the stack,
 respectively to the base of the stack. Stack is a special part of program
 memory with LIFO semantics. It can be used to store the intermediate result,
 arguments to functions, return address, etc. The \texttt{rbp} register is weird
-because it has this very special purpose but is still considered part of the
-general purpose registers~\cite{intel-manual}. One might use it for storing
+one because it has this very special purpose but is still considered part of
+the general purpose registers~\cite{intel-manual}. One might use it for storing
 calculations, but it would make the rest of the instructions that work with
 stack behave unexpectedly.
 

@@ -15,11 +15,11 @@ the RAM size, or the length of each instruction. This allows the student to
 develop their compilers incrementally.
 
 The T86 uses a Harvard architecture, meaning the data and instructions are
-physically separated. The author doesn't specify the reason for this.
+physically separated. The author does not specify the reason for this.
 Presumably, it is to ease the implementation of the virtual machine since the
 memory and instructions can be represented as two separate array-like members
 of the virtual machine. Memory is addressable by 64-bit blocks, not by 8-bit
-blocks as is the custom in modern computers.
+blocks, as is the custom in modern computers.
 
 It shares some of the registers we saw on x86-64: the program counter (PC), the
 stack pointer (SP), the base pointer (BP), and the flags register. The intended
@@ -34,11 +34,11 @@ immediate values, registers, and memory accesses. They can also be combined in
 various ways, like \texttt{[R0 + R1 * 2]}, or \texttt{[R0 + 10 + R1 * 2]}. The
 addressing modes are, however, not arbitrary, \texttt{[R0 + R1 + R2]} is not a
 correct addressing mode for any instruction in the T86 architecture. The
-allowed addressing modes also change for each instruction. For example the
+allowed addressing modes also change for each instruction. For example, the
 \texttt{MOV} instruction allows a vast range of addressing modes, while the
-\texttt{PUSH} instruction only allows register and immediate number. For a full
-list, refer to~\cite{ivo2021tiny}. The instructions that are taken over from
-x86-64 often have more restrictive addressing modes than in x86-64. For
+\texttt{PUSH} instruction only allows a register and an immediate number. For a
+full list, refer to~\cite{ivo2021tiny}. The instructions that are taken over
+from x86-64 often have more restrictive addressing modes than in x86-64. For
 example, the \verb|add| instruction can take a memory offset as a destination
 operand in x64-86, but in T86, it can only take registers.
 
@@ -77,17 +77,17 @@ much they influenced the speed of the generated program.
 The virtual machine (VM) is implemented in C++, using the newer standards up to
 C++17. The VM offers only a single interface, and that is the
 \texttt{ProgramBuilder}. This is a class through which one may construct a
-program for the T86 VM. An example of how to use this class is in figure
-\ref{fig:t86-intro}. Currently, there is no other way for users to run programs
-in the VM. This means that the students are tied to the C++ language, or use
-some bindings if they want to use other language.
+program for the T86 VM. An example of how to use this class is in
+figure~\ref{fig:t86-intro}. Currently, there is no other way for users to run
+programs in the VM. This means that the students are tied to the C++ language,
+or use some bindings if they want to use other language.
 
 The \texttt{Cpu} class is the backbone of the interpreter. It is responsible
 for running the program. It has a \texttt{halted} function, which returns true
 if the \texttt{Cpu} executed a \texttt{HALT} instruction. The \texttt{tick}
 performs one tick of the CPU. This does not mean that one instruction gets
 executed. The \texttt{Cpu} simulates a superscalar CPU, so one tick is one move
-in the pipeline. The \texttt{while} loop in the figure \ref{fig:t86-intro}
+in the pipeline. The \texttt{while} loop in the figure~\ref{fig:t86-intro}
 shows to run a T86 program via the \texttt{Cpu} class.
 
 \begin{figure}
