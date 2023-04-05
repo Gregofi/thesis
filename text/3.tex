@@ -95,7 +95,8 @@ real-world debuggers.
 
 The format of the communication is a text one, merely because of the ease
 of use as opposed to binary format, it is also clearer to see what is
-happening. The commands that the virtual machine API offers are
+happening. The commands that the debugging API of the virtual machine offers
+are
 \begin{itemize}
     \item \texttt{PEEKREG x} - Return values of all normal registers.
     \item \texttt{POKEREG x y} - Set the value in register \texttt{x} to
@@ -191,17 +192,18 @@ mentioned previously.
 We also added debug registers. These are a special type of registers designed
 for triggering breaks on memory access. There are a total of five debug
 registers, with the first four containing the memory cell addresses. The fifth
-register, called the control register, contains four bits that indicate the
-status of each of the first four registers. If a register is active and the
-program writes to a memory cell with the same address as is stored in the
-register, an interrupt \texttt{2} is generated. Furthermore, the control
-register's bits from 8 to 11 reveal which register caused the interrupt. For
-instance, if bit 10 is set to 1, the third register is responsible for the
-interrupt and the address stored in that register is the one that was written
-into.
+register, called the control register, contains information about the debug
+registers. The first four bits of this register indicate the state of each of
+the first four registers. If the bit is set to one, then the register is
+active. If a register is active and the program writes to a memory cell with
+the same address as is stored in the register, an interrupt \texttt{2} is
+generated. Furthermore, the control register's bits from 8 to 11 reveal which
+register caused the interrupt. For instance, if bit 10 is set to 1, the third
+register is responsible for the interrupt and the address stored in that
+register is the one that was written into.
 
 \section{Native Debugger}
-The implementation is done in the C++ language. It uses newer standards up to
+The implementation was done in the C++ language. It uses newer standards up to
 the C++20 standard. The debugger is implemented as a library. We will call this
 the backend of the debugger. A command line interface was also developed,
 through which the users might interact with the debugger. This will be called
@@ -245,6 +247,22 @@ get from the debuggee, it might contain the \texttt{BKPT} instructions we set
 earlier. We need to mix it with the backup code stored in breakpoints to show
 the assembly of the program correctly.
 
+The debugger also has a step-out and step-over functionality. The step-over
+sets a breakpoint at the next instruction if the current instruction is a call
+instruction. There is, however, one big problem with this approach, and that is
+a recursive function. If a function is recursive, the recursive call might hit
+this breakpoint. To prevent that, we look at the current value of the
+\texttt{BP} register. The value of this register should be different in the
+recursive calls because it is set in each function prologue. If the value of
+the register is the same when the break happens, we consider the step-out
+procedure complete. Otherwise, we will ignore the breakpoint hit and continue
+the program execution.
+
+With the step-out, we do single steps until we find a \texttt{RET} instruction.
+We cannot use normal single steps but must use the step-over functionality.
+Normal steps would cause us to enter a function and execute the \texttt{RET}
+instruction there, which would mess with the algorithm.
+
 The Native class uses a \texttt{DebugEvent} structure which indicates what
 caused the VM to stop. It is implemented as a \texttt{variant} of multiple
 structures, for instance, the \texttt{BreakpointHit} or the
@@ -275,7 +293,7 @@ SoftwareBreakpoint CreateSoftwareBreakpoint(uint64_t address) {
     \label{t86dbg:breakpoint}
 \end{figure}
 
-The native debugger has the following features:
+Here is a summarization of the features the native debugger offers:
 \begin{itemize}
     \item Breakpoints - Can set, unset, enable and disable software breakpoints.
     \item Watchpoints - Can set and unset watchpoints on memory writes.
@@ -328,8 +346,9 @@ debugging information in the thesis attachment on path
 The logic behind the source level debugging is mostly handled by the
 \texttt{Source} class. It also stores all of the source level mapping, which we
 are about to describe below. Some of the methods work closely with the
-\texttt{Native} class to achieve functionality. That shouldn't be surprising, as
-we said, source-level debugging is built upon native-level debugging.
+\texttt{Native} class to achieve functionality. That should not come as a
+surprise, as we said, source-level debugging is built upon native-level
+debugging.
 
 \subsection{Line Information and Source Code}
 The line information is encoded in a table, where every row is:
@@ -353,10 +372,10 @@ executable.
 \subsection{Debugging Information Format}
 In the line information, we provided a straightforward format. However, we will
 need a more sophisticated structure to describe some advanced constructs of the
-source code. We will draw inspiration from the Dwarf Debugging Information
-(DIE). Take a look at figure~\ref{fig:t86dbg-die}, which shows an example of
-such debugging information. It has a tree-like structure which, in some ways,
-mimics the original program. The nodes of this tree are also called debugging
+source code. We will draw inspiration from the DWARF debugging information entries.
+Take a look at figure~\ref{fig:t86dbg-die}, which shows an example of such
+debugging information. It has a tree-like structure which, in some ways, mimics
+the original program. The nodes of this tree are also called debugging
 information entries (DIEs). Those entries can have other entries as their
 children, and each entry has a tag that is part of its name (for example, the
 \verb|compilation_unit| tag). They can also have attributes that describe their
@@ -400,19 +419,20 @@ DIE_function: {
     \label{fig:t86dbg-die}
 \end{figure}
 
-The type information is encoded as a standalone DIE. Currently, three type
+The type information is encoded as a standalone entry. Currently, four type
 entries are present, one for primitive types (\texttt{int}, \texttt{double}, or
-\texttt{char}), one for pointers, and one for structured types (\texttt{struct}
-or \texttt{class} in C++). Other types can be easily added in the future. The
-types are saved as separate entries, and as such, we need some way to link them
-together with the variables. We will use the \verb|ATTR_id| attribute to
-achieve this. This attribute should be unique for every entry, having similar
-role to the \texttt{id} attribute of HTML elements~\cite{html4}. The variables
-themselves have the \verb|ATTR_type| attribute, which will have an id of the
-type as its value. An example of a pointer type that points to an int type is
-in figure~\ref{fig:t86dbg-types}. If we had a variable that is a pointer to
-int, it would need to have the \verb|ATTR_type: 1| attribute because the id of
-a pointer type to integer is one.
+\texttt{char}), one for pointers, one for structured types (\texttt{struct} or
+\texttt{class} in C++), and one for static arrays. Other types can be easily
+added in the future. The types are saved as separate entries, and as such, we
+need some way to link them together with the variables. We will use the
+\verb|ATTR_id| attribute to achieve this. This attribute should be unique for
+every entry, having similar role to the \texttt{id} attribute of HTML
+elements~\cite{html4}. The variables themselves have the \verb|ATTR_type|
+attribute, which will have an id of the type as its value. An example of a
+pointer type that points to an int type is in figure~\ref{fig:t86dbg-types}. If
+we had a variable that is a pointer to an \texttt{int} type, it would need to
+have the \verb|ATTR_type: 1| attribute because the id of a pointer type to
+integer is one.
 
 The primitive types need to have their size. For T86, this is the number of
 memory cells it occupies, which will almost always be one since one memory cell
