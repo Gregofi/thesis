@@ -202,7 +202,6 @@
 \DeclareCaptionLabelFormat{boxed}{%0.61,0.61,0.61
   \kern0.05em{\color{decoration}\rule{0.73em}{0.73em}}%
   \hspace*{0.67em}\bothIfFirst{#1}{~}#2}
-\captionsetup[table]{position=top}
 % captions settings end
 
 % lists settings
