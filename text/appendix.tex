@@ -1,38 +1,70 @@
-\chapter{Source Debugging Information format}
-This chapter presents the format about source debugging information used by the
-debugger. The format closely represents the JSON~\cite{json} format. It is made
-up of debugging information entries (DIEs) and their attributes. Each DIE has a
-tag that identifies its purpose. The tag is part of the name. Additionaly, each
-DIE can have attributes, which describe some property of the DIE. Finally, a
-DIE can have an arbitrary many children DIEs. The general grammar for DIE:
-\begin{lstlisting}
-DIE = "DIE_", tag "{" ({DIE | Attr}  "," "}"
-Attr = "ATTR_", attr_name, ":", AttrValue
-\end{lstlisting}
+\chapter{GDB to T86 Debugger Command Map}
 
-A concrete example of debugging information:
-\begin{lstlisting}
-DIE_compilation_unit: {
-DIE_function: {
-  ATTR_name: main,
-  ATTR_begin_addr: 0,
-  ATTR_end_addr: 8,
-  DIE_scope: {
-    ATTR_begin_addr: 0,
-    ATTR_end_addr: 8, 
-    DIE_variable: {
-      ATTR_name: d,
-      ATTR_type: double,
-      ATTR_location: `BASE_REG_OFFSET -2`,
-    },
-  },
-},
-}
-\end{lstlisting}
+\begin{table}[h]
+\centering
+\setlength\doublerulesep{0.15cm} 
+\begin{tabular}{|p{6cm}|p{6cm}|}
+    \hline
+    GDB & T86 Debugger \\
+    \hline
+    \hline
+    
+    \multicolumn{2}{|c|}{Setting a breakpoint at line \texttt{5}}\\
+    \hline
+    \texttt{b 5} & \texttt{b s 5} \\
+    \hline
+    \hline
+    
+    \multicolumn{2}{|c|}{Run the process and immediately stop}\\
+    \hline
+    \texttt{start} & \texttt{run} \\
+    \hline
+    \hline
+    
+    \multicolumn{2}{|c|}{Do an instruction level step}\\
+    \hline
+    \multirow{2}{*}{\texttt{stepi}} & \texttt{istep} \\
+    & \texttt{is} \\
+    \hline
+    \hline
+        
+    \multicolumn{2}{|c|}{Set breakpoint on a function named \textit{main}}\\
+    \hline
+    \texttt{break main} & \texttt{br s main} \\
+    \hline
+    \hline
+        
+    \multicolumn{2}{|c|}{List all breakpoints}\\
+    \hline
+    \texttt{info break} & \texttt{br list} \\
+    \hline
+    \hline
+        
+    \multicolumn{2}{|c|}{Show the contents of variable named \textit{a}}\\
+    \hline
+    \multirow{2}{*}{\texttt{p a}} & \texttt{p a} \\
+    & \texttt{expr a} \\
+    \hline
+    \hline
+        
+    \multicolumn{2}{|c|}{Disable a breakpoint}\\
+    \hline
+    \texttt{disable <breakpoint-id>} & \texttt{br disable <breakpoint-addr>} \\
+    \hline
+    \hline
 
-\section{Tags}
-The allowed value of attributes changes based on the DIE they are in. We will
-describe each DIE tag and the allowed attributes.
+    \multicolumn{2}{|c|}{List values of registers}\\
+    \hline
+    \texttt{info registers} & \texttt{register} \\
+    \hline
+    \hline
 
-\subsection{Compilation Unit}
-
+    \multicolumn{2}{|c|}{Display value stored in instruction pointer}\\
+    \hline
+    \texttt{info registers rip} & \texttt{reg get IP} \\
+    \hline
+\end{tabular}
+\caption{List of examples of how some actions can be achieved in the GDB debugger and in
+the debugger presented by this thesis.}
+\label{table:gdb-vs-dbg}
+\end{table}

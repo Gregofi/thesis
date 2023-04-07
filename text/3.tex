@@ -529,13 +529,13 @@ side of the assignment operator: \texttt{a + 1}, \texttt{5}, \texttt{array[0]
 * y}.
 
 \section{Frontend}
-We provide two command line interface programs. First one is for the T86, is
-runs the given T86 program on the virtual machine. The second application
+We provide two command-line interface programs. The first one is for the T86.
+It runs the given T86 program on the virtual machine. The second application
 leverages the debugger library to create a command line interface for the
 debugger. It provides many commands, and its manual can be found in the thesis
-attachment under path \texttt{impl/docs/debugging.md}. In this file, a table
-can be found showing how some of the commands the application accepts differ
-from the GDB debugger.
+attachment under path \texttt{impl/docs/debugging.md}. Additionally,
+table~\ref{table:gdb-vs-dbg} shows examples of usage of the CLI compared to the
+GDB debugger.
 
 The main priority of the CLI is to make the debugger easy to use. It consists
 of several commands, one of them is \texttt{breakpoint set 5}, which will set a
