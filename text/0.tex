@@ -16,44 +16,62 @@ knows the instruction set architecture of the processor, they can easily
 recognize the instructions the program is made of.
 
 \begin{figure}
-    \begin{minipage}{.45\textwidth}
-    \begin{lstlisting}
-positive:
-        push    rbp
-        mov     rbp, rsp
-        mov     -4[rbp], edi
-        cmp     -4[rbp], 0
-        jle     neg
-        mov     eax, 1
-        jmp     pos
-neg:
-        mov     eax, 0
-pos:
-        pop     rbp
-        ret
-    \end{lstlisting}
-    \end{minipage}
-    \hfill\vline\hfill
-    \begin{minipage}{.45\textwidth}
-    \begin{lstlisting}
-   01010101 01001000
-   10001001 11100101
-   10001001 01111101
-   11111100 10000011
-   01111101 11111100
-   00000000 01111110
-   00000111 10111000
-   00000001 00000000
-   00000000 00000000
-   11101011 00000101
-   10111000 00000000
-   00000000 00000000
-   00000000 01011101
-   11000011
-    \end{lstlisting}
-    \end{minipage}
+    \begin{subfigure}{1.0\textwidth}
+        \begin{lstlisting}
+    01010101 01001000
+    10001001 11100101
+    10001001 01111101
+    11111100 10000011
+    01111101 11111100
+    00000000 01111110
+    00000111 10111000
+    00000001 00000000
+    00000000 00000000
+    11101011 00000101
+    10111000 00000000
+    00000000 00000000
+    00000000 01011101
+    11000011
+        \end{lstlisting}
+        \caption{A machine code program.}
+        \label{subfig:machine-code}
+    \end{subfigure}
+    \begin{subfigure}{1.0\textwidth}
+        \begin{lstlisting}
+    positive:
+            push    rbp
+            mov     rbp, rsp
+            mov     -4[rbp], edi
+            cmp     -4[rbp], 0
+            jle     neg
+            mov     eax, 1
+            jmp     pos
+    neg:
+            mov     eax, 0
+    pos:
+            pop     rbp
+            ret
+        \end{lstlisting}
+        \caption{An assembly program.}
+        \label{subfig:assembly}
+    \end{subfigure}\vspace{0.5cm}
+    \begin{subfigure}{1.0\textwidth}
+        \begin{minted}[]{c}
+    bool positive(int n) {
+        if (n > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+        \end{minted}
+        \caption{A program in the C language.}
+        \label{subfig:c}
+    \end{subfigure}
+    \vspace{0.5cm}
     \caption{An example of a program that checks if a number is positive, shown
-    in both an assembly language and a machine code.}
+    in an assembly language, in a machine code, and in the C programming
+    language.}
     \label{fig:simple-assembly}
 \end{figure}
 
@@ -64,29 +82,13 @@ programmer must have extensive knowledge of the processor's internal workings.
 To spare the programmers from this, high-level programming languages were
 created. These are designed to abstract from the specific machine the program
 will run on, allowing programmers to focus more on their tasks. As shown in
-figure~\ref{fig:c-positive}, even a simple program written in the C programming
+figure~\ref{subfig:c}, even a simple program written in the C programming
 language~\cite{krc}, one of the oldest programming languages around, provides a
 clear understanding of the functionality. In contrast, examining the equivalent
-program in assembly language, as seen in figure~\ref{fig:simple-assembly},
-requires knowledge of the specific architecture of the machine. High-level
-languages also introduce control flow statements, which makes the code easier
-to follow than when jumps are used~\cite{gotobad}.
-
-\begin{figure}
-\begin{minted}[
-]{c}
-bool positive(int n) {
-    if (n > 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-\end{minted}
-\caption{A function written in the C programming language that check if a
-    number is positive.}
-\label{fig:c-positive}
-\end{figure}
+program in assembly language, as seen in figure~\ref{subfig:assembly}, requires
+knowledge of the specific architecture of the machine. High-level languages
+also introduce control flow statements, which makes the code easier to follow
+than when jumps are used~\cite{gotobad}.
 
 But processors only understand machine code, and high-level languages are far
 from it. Therefore, a translation of a high-level language program into a
