@@ -43,18 +43,18 @@ the same ISA, then they should be able to run the same machine code program.
 For example, personal computers often use the x86-64 while mobile devices like
 smartphones or tablets use the ARM architecture~\cite{riscvscisc2}. The ARM
 architecture is also beginning to find its way into the computer space. For
-example, Apple Silicon uses ARM architecture.
+example, Apple Silicon is based on the ARM architecture.
 
-The x86-64 architecture is so called \textit{Complex Instruction Set
-Architecture} (CISC). The CISC instructions often perform many actions at once,
-have varying lengths, and take multiple clock cycles to
+The x86-64 architecture is an example of the so called \textit{Complex
+Instruction Set Architecture} (CISC). The CISC instructions often perform many
+actions at once, have varying lengths, and take multiple clock cycles to
 complete~\cite{intel-manual}. On the other hand, the ARM architecture is
-\textit{Reduced Instruction Set Architecture} (RISC). The number of
-instructions is smaller. They are intended to be small building blocks from
-which complex operations may be created by using many of them. Each instruction
-in RISC also has the same length. Both architectures have their pros and cons,
-although some literature suggests that in modern days the choice of
-architecture is irrelevant if one is only considering performance and power
+an example of the \textit{Reduced Instruction Set Architecture} (RISC). The
+number of instructions is smaller. They are intended to be small building
+blocks from which complex operations may be created by using many of them. Each
+instruction in RISC also has the same length. Both architectures have their
+pros and cons, although some literature suggests that in modern days the choice
+of architecture is irrelevant if one is only considering performance and power
 consumption~\cite{riscvscisc1, riscvscisc2}. Unless specified otherwise, the
 rest of this chapter will be talking about x86-64. This is because the T86
 architecture, described in section ~\ref{section:T86}, is loosely based on
@@ -110,7 +110,8 @@ max:
 
 \subsection*{Registers}\label{subsection:registers}
 
-The x86-64 architecture has a set of general purpose registers.
+The main advantage of registers is that they are much faster to access than the
+main memory. The x86-64 architecture has a set of general purpose registers.
 Some of these are
 \begin{itemize}
     \item \texttt{rax} - Accumulator for operands and results data,
@@ -118,17 +119,10 @@ Some of these are
     \item \texttt{rsp} - Stack pointer,
     \item \texttt{rbp} - Pointer to data on the stack.
 \end{itemize}
-Although there is a special role for each register, it is more of a convention
-for some. It is not necessary to use the \texttt{rcx} register exclusively for
-loop operations. Although the \texttt{rsp} and \texttt{rbp} are called general
-purpose, they are often only used for pointing at the top of the stack,
-respectively to the base of the stack. Stack is a special part of program
-memory with LIFO semantics. It can be used to store the intermediate result,
-arguments to functions, return address, etc. The \texttt{rbp} register is weird
-one because it has this very special purpose but is still considered part of
-the general purpose registers~\cite{intel-manual}. One might use it for storing
-calculations, but it would make the rest of the instructions that work with
-stack behave unexpectedly.
+The \texttt{rsp} and \texttt{rbp} registers are used for pointing at the top of
+the stack, respectively to the base of the stack. Stack is a special part of
+program memory with LIFO semantics. It can be used to store the intermediate
+result, arguments to functions, return address, etc.
 
 The instruction pointer register (\texttt{rip}) contains the address of the
 current instruction to be executed. Programs are executed sequentially from top
@@ -153,8 +147,9 @@ keyboard press or an error in a program (division by zero). There are two main
 categories~\cite{intel-manual}
 \begin{itemize}
     \item An \textbf{interrupt} is an asynchronous\footnote{Meaning that the
-        interrupt may happen when another instruction is being processed (not
-        on the CPU clock edge).} event that is typically triggered by an
+        interrupt may happen when another instruction is being processed, and
+        not at the CPU clock edge. However, The handling of the interrupt
+        happens at the clock edge.} event that is typically triggered by an
         Input/Output (IO) device.
     \item An \textbf{exception} is a synchronous event that is
         generated when the processor detects one or more predefined conditions
@@ -167,7 +162,7 @@ For the rest of this thesis, we will use the word interrupt interchangeably for
 both interrupt and exception, although we will mainly talk about exceptions.
 This is to disambiguate the exceptions at a programming language level (like
 C++) and Microsoft structured exceptions, which are the subject of
-section~\ref{section:seh}. When an interrupt or exception happens, the
+section~\ref{section:seh}. When an interrupt (or exception) happens, the
 processor halts the execution of a current program and switches to a specific
 interrupt handler. An interrupt handler is just a sequence of instructions that
 gets executed when the interrupt happens. 
@@ -211,7 +206,7 @@ Modern CPUs do not execute instructions strictly one by one. They instead use
 computer-architecture}. This means that they can execute several instructions
 at once and can execute them in non-sequential order. The observable behavior
 of the program has to be the same as if it was run sequentially. The CPU has to
-be careful about which instruction it can run in parallel and out of order. The
+be careful about which instructions it can run in parallel and out of order. The
 execution of an instruction consists of several stages, which together form an
 \textit{execution pipeline}. The stages can be \textit{Fetch}, \textit{Decode},
 \textit{Execute}, \textit{Memory}, and \textit{Writeback}; this may vary
@@ -233,17 +228,18 @@ all executed and that none were executed after. Otherwise, it would be very
 confusing for the user that tries to debug the program.
 
 \section{Operating System Support}
-Operating system is a layer between computer components (CPU, memory,
-input/output devices, \dots) and software. It is responsible for handling all
+An operating system is a layer between computer components (CPU, memory,
+input/output devices, etc.) and software. It is responsible for handling all
 the resources so programmers do not have to think about it~\cite{modern-os,
 os-concepts}. Managing resources is not only to make writing programs easier
 but to make sure that the programs are safe from each other. Modern operating
-system allows to run multiple programs at once (or at least offer the illusion
-that it can) and they make sure that one program cannot overwrite data or
-otherwise interfere with other programs. Normal programs run in so-called
-\textit{user space}, which has limited capabilities. The kernel on the other
-hand runs in \textit{kernel space}. It has full access to the hardware of the
-computer, can use all instructions, can permit or mask interrupts, and so on.
+systems allow running multiple programs at once (or at least offer the illusion
+that they can) and they make sure that one program cannot overwrite data or
+otherwise interfere with other programs. The kernel runs in the so-called
+\textit{kernel space}. It has full access to the hardware of the computer, can
+use all instructions, can permit or mask interrupts, and so on. On the other
+hand, regular programs run in the \textit{user space}, where they have limited
+capabilities.
 
 However, if programs were kept to user space all the time they would be very
 limited. Sometimes, they need to escape the confinement of the OS, for example,
@@ -269,11 +265,11 @@ signature: \texttt{ptrace(request, PID, void* addr, void* data)}. The request
 is a \texttt{PTRACE\_COMMAND}, which specifies the behavior of the function
 (for example \texttt{PTRACE\_SINGLESTEP}), process id (PID) of some process
 (presumably the debuggee) and two other parameters, whose meaning change
-depending on the \texttt{PTRACE\_COMMAND} that was chosen\footnote{Peak API
-design!}. It allows one to observe and control the execution of another
-process; this process will be the debuggee. In the context of this chapter, we
-will sometimes use the word tracee for the debuggee, and tracer for the
-debugger, to be consistent with ptrace documentation.
+depending on the \texttt{PTRACE\_COMMAND} that was chosen. It allows one to
+observe and control the execution of another process; this process will be the
+debuggee. In the context of this chapter, we will sometimes use the word tracee
+for the debuggee, and tracer for the debugger, to be consistent with ptrace
+documentation.
 
 The \texttt{ptrace} function has many commands, here are some of the most important:
 \begin{itemize}
@@ -295,8 +291,7 @@ happened. To this end, \textit{signals} are used. They serve as an abstraction
 on top of the CPU interrupts. Interrupts are sent by the CPU and processed by
 the operating system kernel. Signals are sent by the operating system kernel
 and received by processes. They can also be sent by a process, that however
-happens via system calls and the kernel is the one who sends the signal, so the
-statement still stands.
+happens via system calls and the kernel is the one who sends the signal.
 
 A signal is used in UNIX and Linux systems to notify a process that a
 particular event has occurred~\cite{os-concepts}. When a process receives a
@@ -489,17 +484,19 @@ expected. This is because \texttt{int3} is an instruction with size $1$. It
 gets executed, the instruction pointer is advanced by the size ($1$), and an
 interrupt is issued. However, after the \texttt{int3}, there were operands to
 the \texttt{mov} instruction (the red text in the figure). We definitely do not
-want to interpret them as instruction. We found out that on some architectures,
-advancing PC does not happen when an instruction that issues an interrupt is
-executed, such as the ARM \texttt{BKPT} instruction. This was later confirmed
-by looking at the LLDB code (under \verb|NativeProcessProtocol.cpp|), as it
-only moves back the program counter for a few architectures.
+want to interpret them as instruction. Because of this, we should move the
+instruction pointer before the breakpoint instruction. Additionaly, we found
+out that on some architectures, advancing PC does not happen when an
+instruction that issues an interrupt is executed, such as the ARM \texttt{BKPT}
+instruction. This was later confirmed by looking at the LLDB code (under
+\verb|NativeProcessProtocol.cpp|), as it only moves back the program counter
+for a few architectures.
 
-Additionally, if we just moved back and resumed the program, we would again hit
-the breakpoint, which is still set. We need to temporarily unset it, move one
-instruction forward and set it again. The general idea behind it can be found
-in figure~\ref{fig:continue}. With breakpoints, we essentially gained the
-ability to single step as well.
+If we resumed the program after moving back, we would again hit the breakpoint,
+which is still set. We need to temporarily unset it, move one instruction
+forward and set it again. The general idea behind it can be found in
+figure~\ref{fig:continue}. With breakpoints, we essentially gained the ability
+to single step as well.
 
 \begin{figure}
     \centering
@@ -712,10 +709,10 @@ When an exception is triggered, control is transferred to the system. It saves
 all necessary information that can later be used to continue execution from the
 point where the exception was thrown. It also contains information about which
 type of exception was thrown, if the execution can continue after handling the
-exception, the address where the exception occurred, and some other bits of
-information\footnote{Refer to~\cite{windows-msdn-seh} for a full list.}. The
-system then searches for an exception handler that will handle the exception.
-The search is performed in this order:
+exception, the address where the exception occurred, and more\footnote{Refer
+to~\cite{windows-msdn-seh} for a full list.}. The system then searches for an
+exception handler that will handle the exception. The search is performed in
+this order:
 
 \begin{enumerate}
     \item If the process is being debugged the debugger is notified.
@@ -906,9 +903,8 @@ machine code. For instance, we somehow need to tell the debugger that the
 instruction at address \textit{0xABCD} belongs to line \texttt{5} in the source
 code so that we may properly set a breakpoint at this line. We also need to
 provide information about where some variable is located so that we may display
-its value to the user. Before we get into that, we will briefly examine the
-layout of executables and where those pieces of debugging information are
-stored.
+its value to the user. All this information is passed to the debugger together
+with the executable, whose format we will describe next.
 
 \subsection{Executable File Formats}\label{section:elf}
 ELF is one of the executable file formats. The abbreviation ELF means
@@ -953,10 +949,9 @@ complex.
 
 There are five versions of the standard, we will be mainly talking about
 version 2, since the others mainly add features to accommodate newer language
-features. We will not get that far even with version 2. The complete changelog
-can be found in the text describing DWARF version 5~\cite{dwarf-5}. We provide
-many examples of the information that DWARF encodes. For reading the DWARF
-information from object files, we used the
+features. The complete changelog can be found in the text describing DWARF
+version 5~\cite{dwarf-5}. We provide many examples of the information that
+DWARF encodes. For reading the DWARF information from object files, we used the
 \texttt{llvm-dwarfdump}~\cite{dwarfdump}, \texttt{objdump}~\cite{objdump}, and
 \texttt{readelf}~\cite{readelf} tools to construct these examples. The
 information DWARF encodes is stored in various debug sections if used in
@@ -1314,10 +1309,9 @@ restored. In the example in the decoded information, many more registers were
 missing. This is because their value didn't change across the function, so
 there was no need to save information about them.
 
-The DWARF offers more instructions for manipulation, for a complete overview
-and another example consult~\cite{dwarf}. With this information, DWARF can
-describe a way to simulate a stack unwinding without touching the state of the
-debuggee.
+DWARF offers more instructions for manipulation, for a complete overview and
+another example consult~\cite{dwarf}. With this information, DWARF can describe
+a way to simulate a stack unwinding without touching the state of the debuggee.
 
 \begin{figure}
     % In case supervisor will want the opcodes in binary then just use git
@@ -1469,20 +1463,23 @@ stages.
 \begin{figure}
     {\centering
     \begin{tikzpicture}
-    \node (lexer)[compilerblock]{Lexical analyzer};
-    \node (syntax)[compilerblock,below=of lexer]{Syntactic analyzer};
-    \node (semantic)[compilerblock,below=of syntax]{Semantic analyzer};
+    \node (lexer)[compilerblock]{Lexical Analyzer};
+    \node (syntax)[compilerblock,below=of lexer]{Syntactic Analyzer};
+    \node (semantic)[compilerblock,below=of syntax]{Semantic Analyzer};
     \node (imc)[compilerblock,below=of semantic]{Intermediate Code Generator};
-    \node (gen)[compilerblock,below=of imc]{Code Generator};
-    \node (symbol)[tables, left=of semantic]{Symbol table};
+    \node (miopt)[compilerblock,below=of imc,text width=4cm,align=center]{Machine-Independent Optimizations};
+    \node (gen)[compilerblock,below=of miopt]{Code Generator};
+    \node (mdopt)[compilerblock,below=of gen]{Machine-Dependent Optimizations};
+    \node (symbol)[tables, left=of imc]{Symbol Table};
     \draw[->] (lexer) -- node[below] {} (syntax);
     \draw[->] (syntax) -- node[below] {} (semantic);
     \draw[->] (semantic) -- node[below] {} (imc);
-    \draw[->] (imc) -- node[below] {} (gen);
+    \draw[->] (imc) -- node[below] {} (miopt);
+    \draw[->] (miopt) -- node[below] {} (gen);
+    \draw[->] (gen) -- node[below] {} (mdopt);
     \end{tikzpicture} 
     \par}
-    \caption{Simplified structure of a compiler, some parts were left out, like
-    optimizations~\cite{dragon-book}.}
+    \caption{Simplified structure of a compiler~\cite{dragon-book}.}
     \label{fig:compiler-structure}
 \end{figure}
 
@@ -1507,6 +1504,8 @@ it needs to be kept in the AST together with the nodes.
 
 The \textit{Semantic analysis} then checks that the program is semantically
 consistent. For example, that used variable has been declared before.
+Additionaly, it gathers type information and saves it for later use during the
+the IR generation~\cite{dragon-book}.
 
 \begin{figure}
     \centering
@@ -1617,8 +1616,8 @@ following:
     \item The LDI is optimized with the rest of the program (e.g., unused
         information is removed).
 \end{enumerate}
-So, if one compiles the code with optimizations and with debugging information,
-the same optimizations must be applied that would be applied if no debugging
+If one compiles the code with optimizations and with debugging information, the
+same optimizations must be applied that would be applied if no debugging
 information was generated (running \texttt{clang -O3 -g} and \texttt{clang -O3}
 must result in the same optimizations applied). The code must also be
 debuggable with optimizations enabled and provide correct information. For
@@ -1706,84 +1705,22 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 In this section, we will focus on existing debugger implementations and what
 each brings to the table. We will not be discussing every feature of said
 debuggers since even some of the manuals are longer than this
-thesis\footnote{Most notably the GDB manual~\cite{gdb-manual}, which has
-whooping 930 pages!}, but point out the ones that were interesting to this
-thesis. Each debugger discussed here implements, at the very least,
-breakpoints, single-stepping, reading and writing into program memory and
-registers.
-
-\subsection{GDB}
-The GNU Project debugger (GDB)~\cite{gdb-manual} is a source and
-instruction-level debugger. It supports languages like C, C++, D, Fortran, Go,
-Objective-C, Pascal, Rust, and some others. GDB is written in C/C++. It offers
-a CLI application through which one might interact with the debugger. It also
-has an API for Python. It is one of the oldest debugging software, and from our
-experience, the most reliable one on the Linux systems.
-
-An interesting feature GDB offers is \textit{reverse debugging}. This allows us
-to go back in the execution flow. For example, the command
-\textit{reverse-next} returns to the previous line. A command to record
-executed instructions must be explicitly invoked. GDB then sets the state of
-the program depending on the record. It still is not fully supported, and from
-our limited testing, cannot handle even some basic statements, like the usage
-of \texttt{printf} function in a program written in the C language.
-
-\subsection{IDA Free}
-The primary role of IDA is to be an interactive disassembler, but it also
-offers some instruction-level debugging capabilities. It is a tool that is
-mainly used for reverse engineering. An example of interactivity is that it is
-possible to rename a location like \texttt{[RBP + 4]} to \texttt{counter} to
-make the assembly more readable. It can also follow references (like jumps or
-calls), create a control flow graph from the assembly, and much more. We show
-an example of an iterative factorial function disassembled via IDA in figure
-\ref{fig:ida}. In the figure, the variable locations were renamed to represent
-their semantic meaning. This has to be done by hand. IDA itself can sometimes
-know that a variable is stored in some location but it does not know its
-semantic meaning. IDA is an invaluable asset in reverse engineer's toolkit
-for static analysis.
-
-\begin{figure}
-    \centering{
-    \includegraphics[height=\textwidth,keepaspectratio]{./media/ida}
-}
-    \caption{An example of a factorial program disassembled with IDA.}
-    \label{fig:ida}
-\end{figure}
-
-\subsection{Microsoft Visual Studio Debugger}
-Microsoft Visual Studio is an Integrated Development Environment. It packs
-together many tools that help develop programs for the Windows Operating
-System. It mainly supports the C\# and C++ languages. It also has a built-in
-debugger. It is both a source and assembly-level debugger.
-
-In figure \ref{fig:msvc}, we show an example of how the GUI looks. On the left
-side, we can see the program's source code. The red points are the breakpoints.
-The arrow signalizes the current point in the execution. On the right side, we
-can see the corresponding assembly. The assembly contains the lines from the
-source code to make the mapping between them more apparent. The value and type
-of every variable in the scope are displayed on the bottom left. A call stack
-is shown in the middle, currently only having main and factorial calls and
-locations from where those calls happened. On the right side, values in
-registers can be seen. This is only a basic overview of the features, as there
-are many more.
-
-\begin{figure}
-    \centering{
-    \includegraphics[width=\textwidth,keepaspectratio]{./media/msvc-debugger}
-    }
-    \caption{An example of debugging factorial program with MSVC debugger.}
-    \label{fig:msvc}
-\end{figure}
+thesis\footnote{Most notably the GDB manual~\cite{gdb-manual}.}, but point out
+the ones that were interesting to this thesis. Each debugger discussed here
+implements, at the very least, breakpoints, single-stepping, reading and
+writing into program memory and registers.
 
 \subsection{LLDB}\label{section:case-study}
-In this section, we go into more significant details about the LLDB~\cite{lldb}
-debugger. It is a part of the LLVM tools collection~\cite{llvm}. Supported
-languages for debugging are the C, Objective-C, and C++ languages (LLVM tools
-support mainly those three languages) on desktop and iOS devices. It works
-closely with the Clang compiler, which is also part of LLVM, and the LLVM
-disassembler. Thanks to this, it stays very up-to-date with current C++
-standards. The source code is kept modular with a plug-in architecture. LLDB is
-both a source and instruction-level debugger.
+The LLDB~\cite{lldb} debugger is part of the LLVM tools collection~\cite{llvm}.
+We will describe the LLDB debugger more thoroughly than the other ones, mainly
+because it is a modern piece of software compared to the GDB debugger and we
+are most familiar with it. Supported languages for debugging are the C,
+Objective-C, and C++ languages (LLVM tools support mainly those three
+languages) on desktop and iOS devices. It works closely with the Clang
+compiler, which is also part of LLVM, and the LLVM disassembler. Thanks to
+this, it stays very up-to-date with current C++ standards. The source code is
+kept modular with a plug-in architecture. LLDB is both a source and
+instruction-level debugger.
 
 LLDB offers an API through which one can interact with the debugger. For
 example, the command line application through which one can use LLDB uses this
@@ -1824,3 +1761,68 @@ map\_var["Value"]} command. The debugger uses Clang, the C++ compiler, for
 parsing expressions. This can be used in conjunction with backticks in
 commands. For example, the \texttt{register write rax `loc`} command will write
 the value of variable \texttt{loc} into the register \texttt{rax}.
+
+\subsection{GDB}
+The GNU Project debugger (GDB)~\cite{gdb-manual} is a source and
+instruction-level debugger. It is very similar to the LLDB debugger.
+It however supports more languages, like C, C++, D, Fortran, Go, Objective-C,
+Pascal, Rust, and some others. GDB is written in C/C++. Like LLDB, it offers a
+CLI application and also has an API for Python. It is one of the oldest
+debugging software, and from our experience, the most reliable one on the Linux
+systems.
+
+An interesting feature GDB offers is \textit{reverse debugging}. This allows us
+to go back in the execution flow. For example, the command
+\textit{reverse-next} returns to the previous line. A command to record
+executed instructions must be explicitly invoked. GDB then sets the state of
+the program depending on the record. It still is not fully supported, and from
+our limited testing, cannot handle even some basic statements, like the usage
+of \texttt{printf} function in a program written in the C language.
+
+\subsection{IDA Free}
+The primary role of IDA is to be an interactive disassembler, but it also
+offers some instruction-level debugging capabilities. It is a tool that is
+mainly used for reverse engineering. An example of interactivity is that it is
+possible to rename a location like \texttt{[RBP + 4]} to \texttt{counter} to
+make the assembly more readable. It can also follow references (like jumps or
+calls), create a control flow graph from the assembly, and much more. We show
+an example of an iterative factorial function disassembled via IDA in figure
+\ref{fig:ida}. In the figure, the variable locations were renamed to represent
+their semantic meaning. This has to be done by hand. IDA itself can sometimes
+know that a variable is stored in some location but it does not know its
+semantic meaning. IDA is an invaluable asset in reverse engineer's toolkit
+for static analysis.
+
+\begin{figure}
+    \centering{
+    \includegraphics[height=\textwidth,keepaspectratio]{./media/ida}
+}
+    \caption{An example of a factorial program disassembled with IDA.}
+    \label{fig:ida}
+\end{figure}
+
+\subsection{Microsoft Visual Studio Debugger}
+Microsoft Visual Studio is an Integrated Development Environment. It packs
+together many tools that help develop programs for the Windows Operating
+System. It mainly supports the C\# and C++ languages. It also has a built-in
+debugger. It is both a source and assembly-level debugger.
+
+In figure~\ref{fig:msvc}, we show an example of how the GUI looks. On the left
+side, we can see the program's source code. The red points are the breakpoints.
+The arrow signalizes the current point in the execution. On the right side, we
+can see the corresponding assembly. The assembly contains the lines from the
+source code to make the mapping between them more apparent. The value and type
+of every variable in the scope are displayed on the bottom left. A call stack
+is shown in the middle, currently only having main and factorial calls and
+locations from where those calls happened. On the right side, values in
+registers can be seen. This is only a basic overview of the features, as there
+are many more~\cite{windows-msdn-visual-studio-debugger}.
+
+\begin{figure}
+    \centering{
+    \includegraphics[width=\textwidth,keepaspectratio]{./media/msvc-debugger}
+    }
+    \caption{An example of debugging factorial program with MSVC debugger.}
+    \label{fig:msvc}
+\end{figure}
+
