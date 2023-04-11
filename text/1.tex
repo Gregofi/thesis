@@ -1,4 +1,4 @@
-\chapter{Debugging support}
+\chapter{Debugging Techniques}
 
 \begin{quote}
   \textit{Debugging is twice as hard as writing the code in the first place.
@@ -232,7 +232,7 @@ we hit the breakpoint, we want to make sure that instructions before it were
 all executed and that none were executed after. Otherwise, it would be very
 confusing for the user that tries to debug the program.
 
-\section{Operating system support}
+\section{Operating System Support}
 Operating system is a layer between computer components (CPU, memory,
 input/output devices, \dots) and software. It is responsible for handling all
 the resources so programmers do not have to think about it~\cite{modern-os,
@@ -751,7 +751,7 @@ first-chance:
         single step was completed.
 \end{itemize}
 
-\subsubsection*{Debugging events and functions}
+\subsubsection*{Debugging Events and Functions}
 Now that we have explained how a breakpoint may be signaled, let us look at
 other tools that the Windows API gives us to allow debugger implementation. On
 Linux, we had a single function called \texttt{ptrace}. The behavior of this
@@ -910,7 +910,7 @@ its value to the user. Before we get into that, we will briefly examine the
 layout of executables and where those pieces of debugging information are
 stored.
 
-\subsection{Executable file formats}
+\subsection{Executable File Formats}\label{section:elf}
 ELF is one of the executable file formats. The abbreviation ELF means
 Executable and Linkable format. The file itself consists of sections, some of
 which are
@@ -1384,7 +1384,7 @@ square/.style = {draw=black!60, fill=white!5, very thick,
     \label{fig:stack-layout}
 \end{figure}
 
-\subsubsection{Other Debugging Informations}
+\subsubsection{Other Debugging Information}
 The DWARF standard has information about compilation units, since object files
 may be derived from multiple compilation units~\cite{dwarf}. It also has
 information about subroutines and inlined subroutines, lexical blocks,
@@ -1563,7 +1563,7 @@ example, SSA IR doesn't have registers. It uses an unlimited number of
 variables. Other architectures might have some other traits that differentiate
 them from the IR, and they all have to be accounted for when generating code.
 
-\subsection{Modularity of compilers}
+\subsection{Modular Design}
 The main advantage of using an IR is that there is a common ground for every
 language. Imagine we write a compiler for the C language. We need to write all
 five parts from figure~\ref{fig:compiler-structure}. If we later decided that
@@ -1588,7 +1588,7 @@ to the LLVM IR. Other frontends for LLVM also include \textit{ghc}, which is a
 Haskell compiler, or \textit{rustc}, which is a Rust compiler. With LLVM,
 creating a new programming language comes down to just writing the front end.
 
-\subsection{IR Debugging information}
+\subsection{Preserving Debugging Information}
 With IR translation, some of the information from the AST is stripped away. The
 IR must encode how some of the properties of the AST map onto the IR. We will
 give a glimpse of how LLVM IR handles this.
@@ -1702,7 +1702,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
     \label{fig:llvm-ir-debug}
 \end{figure}
 
-\section{Existing debuggers and disassemblers}
+\section{Existing Debuggers}
 In this section, we will focus on existing debugger implementations and what
 each brings to the table. We will not be discussing every feature of said
 debuggers since even some of the manuals are longer than this
@@ -1775,7 +1775,7 @@ are many more.
     \label{fig:msvc}
 \end{figure}
 
-\subsection{Case study - LLDB}\label{section:case-study}
+\subsection{LLDB}\label{section:case-study}
 In this section, we go into more significant details about the LLDB~\cite{lldb}
 debugger. It is a part of the LLVM tools collection~\cite{llvm}. Supported
 languages for debugging are the C, Objective-C, and C++ languages (LLVM tools
