@@ -1,20 +1,19 @@
 \chapter{Introduction}
 At the core of every computer program lies the Central Processing Unit (CPU),
 which is responsible for executing programs. The CPU excels at performing very
-primitive operations very fast. These operations are called instructions, they
-can perform simple arithmetics, move values from and to memory, and change the
-control flow of the program. The instructions are encoded as a sequence of
-binary numbers, which are easy for the CPU to understand, but for humans, they
-are rather incomprehensible.
+primitive operations very fast. These operations, called instructions, perform
+simple arithmetics, move values from and to memory, and change the control flow
+of the program. They are encoded as a sequence of binary numbers, which are
+easy for the CPU to understand, but are rather incomprehensible for humans.
 
 To help programmers better understand written programs, a text mapping was
-created called \textit{assembly language}. Each instruction is now assigned a
-text representation, as are the operands of the instruction. The control flow
-instructions now do not have to jump to address offset but can instead use
+created called \textit{assembly language}. Each instruction is assigned a text
+representation, as are the operands of the instruction. The control flow
+instructions do not have to jump to an address offset but can instead use
 labels. An example of a simple program in both an assembly language and a
 machine code can be seen in figure~\ref{fig:simple-assembly}. If a programmer
-knows the instruction set architecture~\cite{isa} of the processor, he can
-easily recognize the instructions the program is made of.
+knows the instruction set architecture of the processor, they can easily
+recognize the instructions the program is made of.
 
 \begin{figure}
     \begin{minipage}{.45\textwidth}
@@ -89,19 +88,19 @@ bool positive(int n) {
 \label{fig:c-positive}
 \end{figure}
 
-However, we previously said that processors could only understand machine code,
-and high-level languages are far from it. Therefore, a translation of a
-high-level language program into a machine code program is necessary. This is a
-task for a \textit{compiler}. A compiler is a program that reads some source
-code of high-level language and produces machine code. Compilers are highly
-complex software; we will discuss them in detail in chapter
-\ref{section:source-level-debugging}. For now, it is crucial to understand that
-the computer cannot directly run the source code of a high-level language and
-that it is translated into machine code. Additionally, compilers often take
-advantage of unique features of the architecture to make the programs
-faster~\cite{dragon-book}.
+But processors only understand machine code, and high-level languages are far
+from it. Therefore, a translation of a high-level language program into a
+machine code program is necessary. This is a task for a \textit{compiler}. A
+compiler is a program that reads a source code of high-level language and
+produces machine code. Compilers are highly complex software; we will discuss
+them in detail in chapter~\ref{section:source-level-debugging}. For now, it is
+crucial to understand that the computer cannot directly run the source code of
+a high-level language and that it is translated into machine code.
+Additionally, compilers often take advantage of unique features of the
+architecture to make the programs faster~\cite{dragon-book}.
 
-\begin{figure}[H]
+\section{Debugging}
+\begin{figure}
     \begin{minted}[
             linenos,
 ]{c}
@@ -133,30 +132,29 @@ numbers and some number $n$ and checks if that number $n$ is in the sequence.
 This algorithm is widely used when searching in sorted sequence because of its
 $\mathcal{O}(\text{log}_2(n))$ complexity~\cite{pruvodce}.
 
-\section{Debugging}
 Programs are mostly written by humans, who tend to make
 mistakes~\cite{human-error}. We are no exception, as we have also made a
 mistake in the binary search program. Let us try to run the program with a
 \texttt{[1,2,3]} sequence and search for the number $4$. This number is not in
 the sequence, so the expected output would be $0$. Instead, if we ran the
 program, it would run forever because of a mistake we made in the source code.
-Such mistakes are called a \textit{bug}\footnote{The term \textit{bug} actually
+Such mistakes are called \textit{bugs}\footnote{The term \textit{bug} actually
 comes from an actual bug that got stuck in relays back when computers were made
 from relays. They literally had to debug the machine by taking the bug out.}.
 The process of finding these mistakes and correcting them is called
 \textit{debugging}~\cite{art-of-testing}.
 
-There are several ways approaches to debugging. We could try to look at the
-source code and find the mistake this way. Here we could assume that the
-condition \texttt{lo < hi} never comes to be since it is the most obvious place
-where we could get stuck forever. Now, it would be helpful if we could see the
-states of \texttt{lo} and \texttt{hi} in each iteration of the cycle. We could
-resort to print statements, but that is not very flexible. If we changed our
-minds and wanted to also see the value of variable \texttt{i}, we would have to
-recompile the program and rerun it. The output can also quickly get
-overwhelming, especially in an infinite loop. However, all is not lost, as a
-special program was created to inspect running programs, called a
-\textit{debugger}.
+There are several approaches to debugging. We could try to look at the source
+code and find the mistake this way\footnote{Do note that this approach does not
+scale well with bigger programs.}. Here we could assume that the condition
+\texttt{lo < hi} never comes to be since it is the most obvious place where we
+could get stuck forever. Now, it would be helpful if we could see the states of
+\texttt{lo} and \texttt{hi} in each iteration of the cycle. We could resort to
+print statements, but that is not very flexible. If we changed our minds and
+wanted to also see the value of variable \texttt{i}, we would have to recompile
+the program and rerun it. The output can also quickly get overwhelming,
+especially in an infinite loop. However, all is not lost, as a special program
+was created to inspect running programs, called a \textit{debugger}.
 
 Debugger is able to inspect the state of another program, like the values of
 its variables. It is also able to control the flow of the program. They allow
@@ -170,8 +168,8 @@ are also conditional breakpoints, which only trigger when some condition holds.
 An example of such a condition can be that the breakpoint gets activated only
 when \texttt{i == 3}.
 
-Finally, debuggers also allow \textit{stepping}. This also modifies the control
-flow of the program.
+Finally, debuggers also allow \textit{stepping}. There are several kinds of
+steps:
 \begin{itemize}
     \item \textit{step in} - Executes current statement and stops on the next
         one. If the current statement is a function call then it will be
@@ -185,21 +183,22 @@ flow of the program.
         after the function returns.
 \end{itemize}
 
-Now, back to our program. Let us put a breakpoint on line $8$ after $i$ is set.
-We will monitor how the \texttt{lo} and \texttt{hi} change. If the program is
-run with the debugger attached, an output similar to what is displayed in
-figure~\ref{fig:lldb-debug1} will be seen. Here, it is possible to see the line
-on which the execution was stopped. It is also possible to print the state of
-variables. In each loop, we could print the value of a variable and then
-continue execution until another breakpoint is hit. There is only one set, so
-the execution will again be stopped on line $8$. The value of \texttt{hi} will
-not change, which is expected. Value of \texttt{lo} will gain the following
-values: $0, 1, 2, 2, 2, \dots$ The value apparently gets stuck at $2$ and never
-change. The value of variable $i$ is computed as $i = (\text{lo} + \text{hi})/2
-= (2 + 3)/2 = 2$, because division in C rounds the value down. The fix is to
-change the line $9$ to \texttt{lo = i + 1}. With the debugger, it was simple to
-find out where the error came from, and we did not have to recompile the
-program.
+To illustrate the workings of the debugger, let us look back at the program in
+figure~\ref{fig:binary-search}. We will place a breakpoint on line $8$ after
+$i$ is set and we will monitor how the values in variables \texttt{lo} and
+\texttt{hi} change. If the program is run with the debugger attached, an output
+similar to what is displayed in figure~\ref{fig:lldb-debug1} will be seen.
+Here, it is possible to see the line on which the execution was stopped. It is
+also possible to print the state of variables. In each loop, we could print the
+value of a variable and then continue execution until another breakpoint is
+hit. If we continue, the execution will again be stopped on line $8$. The value
+of \texttt{hi} will not change, which is expected. Value of \texttt{lo} will
+gain the following values: $0, 1, 2, 2, 2, \dots$ The value apparently gets
+stuck at $2$. The value of variable $i$ is computed as $i = (\text{lo} +
+\text{hi})/2 = (2 + 3)/2 = 2$, because division in C rounds the value down. The
+fix is to change the line $9$ to \texttt{lo = i + 1}. With the debugger, it was
+simple to find out where the error came from, and we did not have to recompile
+the program.
 
 \begin{figure}
 \begin{minted}{c}
@@ -225,13 +224,13 @@ We previously mentioned that processors themselves only understand machine
 code. Hence, the question arises as to how the debugger can know about lines,
 variables, and similar traits of the source code when the program itself is
 just machine code. The compiler has to lend a hand here. It embeds information
-about the source code. For example, it maps lines of source code to machine
-code instructions. Thanks to this mapping, the debugger knows that line $x$
-corresponds to instruction $y$ in the machine code and can put a breakpoint
-there. If the compiler does not emit any information into the executable, the
-debugger would only work with assembly, as seen in
-figure~\ref{fig:lldb-debug2}. This is a lot more discomforting than debugging
-source code directly.
+about the source code, either into the executable itself or into a separate
+file. For example, it maps lines of source code to machine code instructions.
+Thanks to this mapping, the debugger knows that line $x$ corresponds to
+instruction $y$ in the machine code and can put a breakpoint there. If the
+compiler does not emit any information into the executable, the debugger would
+only work with assembly, as seen in figure~\ref{fig:lldb-debug2}. This can be
+very difficult to work with.
 
 \begin{figure}
 \begin{lstlisting}
@@ -283,7 +282,7 @@ debugging information generated by real compilers.
 \begin{enumerate}
     \item The \textit{Introduction} is the motivation behind the thesis and
         introduces basic terms with which should the reader be familiar.
-    \item \textit{Debugging techniques} describes how are debuggers implemented
+    \item \textit{Debugging Techniques} describes how are debuggers implemented
         and what support is required on various levels (OS, processors,
         compilers) to make their implementation possible.
     \item \textit{Tiny x86} describes the T86 architecture and discusses some
