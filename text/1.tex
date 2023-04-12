@@ -1649,7 +1649,7 @@ optimizations like instruction scheduling and register selection. This is
 beyond the scope of this thesis and is described in~\cite{llvm-debug-info}.
 
 \begin{figure}
-    \begin{minted}{llvm}
+    \begin{lstlisting}
 define dso_local i32 @main() #0 !dbg !10 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
@@ -1694,7 +1694,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 !21 = !DILocation(line: 5, column: 20, scope: !18)
 !22 = !DILocation(line: 5, column: 18, scope: !18)
 !23 = !DILocation(line: 5, column: 9, scope: !18)
-    \end{minted}
+    \end{lstlisting}
     \caption{An example of LLVM IR with debugging information. The lines
     beginning with exclamation mark are metadatas.}
     \label{fig:llvm-ir-debug}
