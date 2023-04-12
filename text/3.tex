@@ -76,8 +76,7 @@ In the debugger implementation for Linux, the subject of section
 the debugger's implementation via a specific API. There is no operating system
 between the virtual machine and the program. Still, we will strive to make the
 API similar to the ptrace API. The debugger and the VM will have to communicate
-together somehow. For interprocess communication, there are several
-possibilities.
+together somehow.
 
 Both the VM and the debugger use an abstract class representing an interface
 that provides two methods, \texttt{Send} and \texttt{Receive}. The
@@ -89,7 +88,7 @@ to an existing process, even on an entirely different computer. It, however,
 has a disadvantage. The messages sent are often short and we need to send a lot
 of them. This proved too slow, even with few messages being sent. The second
 implementation is via threads. The debugger runs the VM in another thread, and
-they communicate via shared queues. This is far faster and allows the debugger
+they communicate via shared queues. This is much faster and allows the debugger
 to run the process by himself, making it easier to use and behave like
 real-world debuggers.
 
@@ -211,10 +210,10 @@ through which the users might interact with the debugger. This will be called
 the frontend of the debugger.
 
 The implemented debugger consists of two main parts. The first one aims to
-support native (instruction) level debugging. This part work without
-\textbf{any} debugging information whatsoever. The second part focuses on
-source-level debugging, and is described in
-section~\ref{section:source-debugger}.
+support native (instruction) level debugging. This part works without
+\textbf{any} debugging information whatsoever, ensuring it can be used by the
+students immediately. The second part focuses on source-level debugging and is
+described in section~\ref{section:source-debugger}.
 
 The native debugger is split into two additional layers to make it more
 modular. The first layer is called a \texttt{Process}. It is an interface
@@ -312,8 +311,8 @@ Here is a summarization of the features the native debugger offers:
 With the solid foundation represented by the native part of the debugger, we
 can extend it by providing some form of source-level debugging. For this part,
 we need to remember that the debugger will only be used by students. As such,
-we ought to have gentler debugging information than DWARF, but we certainly can
-take inspiration from it.
+we ought to have somewhat simpler debugging information format than DWARF, but
+we certainly can take inspiration from it.
 
 As we previously mentioned, the executable with T86 code is separated into
 sections. The \texttt{.text} and \texttt{.data} sections are for the VM. We
