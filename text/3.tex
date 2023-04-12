@@ -361,12 +361,12 @@ information that DWARF had, like columns. It still however proves quite
 sufficient for most cases. The information should be stored in the
 \verb|.debug_line| section.
 
-With this information, we are able to do source-level breakpoints. If the
-source code is also provided, we can show the user on which line is the
-debugged program currently paused. It is not necessary to specify every line in
-the program. The debugger will refuse to put a source-level breakpoint on some
-line if it does not have the necessary information. The source code should be
-under the \verb|.debug_source| section, which must be the last section in the
+With this information, we are able to do source-level breakpoints. It is not
+necessary to specify every line in the program. The debugger will refuse to put
+a source-level breakpoint on some line if it does not have the necessary
+information. If the source code is also provided, we can show the user on which
+line is the debugged program currently paused. The source code should be under
+the \verb|.debug_source| section, which must be the last section in the
 executable.
 
 \subsection{Debugging Information Format}
@@ -381,7 +381,7 @@ children, and each entry has a tag that is part of its name (for example, the
 \verb|compilation_unit| tag). They can also have attributes that describe their
 properties. As can be seen, this is very similar to the DWARF debugging
 information format. Unlike DWARF, it will be a text format. This allows us to
-generate the format easily and to spot mistakes quickly. We don't want the
+generate the format easily and to spot mistakes quickly. We do not want the
 students to debug their generated debugging information.
 
 For instance, the tag \verb|DIE_function| represents a function. As attributes,

@@ -31,8 +31,8 @@ ISA specifies the following:
     \item Set of machine code instructions - Specifies instructions the ISA has
         and what operands each instruction has.
     \item Register set - Which registers the ISA has\footnote{Strictly speaking
-        ISA doesn't have to use registers. It's possible to use only stack or
-        accumulator, but most used ISAs use registers, so we'll ignore those
+        ISA does not have to use registers. It is possible to use only stack or
+        accumulator, but most used ISAs use registers, so we will ignore those
         architectures. }.   
     \item Addressing modes - Possible methods to refer to memory or register. 
 \end{itemize}
@@ -395,7 +395,7 @@ void write_memory(pid_t pid, uint64_t address, uint8_t data) {
 Registers are similar to a memory in regards to how to read them. Linux
 contains a predefined structure \texttt{user\_regs\_struct}, which maps all
 registers on the current architecture. The command \texttt{PTRACE\_GETREGS}
-then fills up this structure with the value in registers. To save registers,
+then fills up this structure with the values in registers. To save registers,
 \texttt{PTRACE\_SETREGS} can be used. One has to pass the whole structure, so
 if we want to modify only some registers, we first need to fetch the structure,
 fill the registers we want with values, and then finally use \texttt{SETREGS}.
@@ -627,19 +627,10 @@ void step_over_bp(pid_t pid) {
 \end{figure}
 
 To perform a step in, the \verb|PTRACE_SINGLESTEP| command can be used.
-However, in the case where the current line contains an active breakpoint, the
-debugger would treat it as a breakpoint hit, reverting the program counter back
-before the breakpoint, rendering it impossible to step over. Therefore, a check
-for the presence of an active breakpoint must be performed prior to the
-execution of the single step \texttt{ptrace} call. If a breakpoint exists, the
-code from figure~\ref{fig:singlestep} will be used. Otherwise, the
-\verb|PTRACE_SINGLESTEP| command will suffice.
-
-To perform a step in, the \verb|PTRACE_SINGLESTEP| command can be used.
-However, in the case where the current line contains an active breakpoint, the
-debugger would treat it as a breakpoint hit, reverting the program counter back
-before the breakpoint, rendering it impossible to step over. Therefore, a check
-for the presence of an active breakpoint must be performed prior to the
+However, in the case where the current address contains an active breakpoint,
+the debugger would treat it as a breakpoint hit, reverting the program counter
+back before the breakpoint, rendering it impossible to step over. Therefore, a
+check for the presence of an active breakpoint must be performed prior to the
 execution of the single step \texttt{ptrace} call. If a breakpoint exists, the
 code from figure~\ref{fig:singlestep} will be used. Otherwise, the
 \verb|PTRACE_SINGLESTEP| command will suffice.
@@ -761,7 +752,7 @@ us with many functions, some of which are:
         occur in the specified process. This passes control of the process to
         the debugger if there is one.
     \item \mintinline{c}{WaitForDebugEvent} - Waits for new debugging events
-        (on Linux, we used \texttt{waitpid}, which is more a general purpose
+        (on Linux, we used \texttt{waitpid}, which is more of a general purpose
         function).
     \item \mintinline{c}{ContinueDebugEvent} - Continue the process execution
         after processing a debugging event (on Linux, we used the
@@ -914,7 +905,7 @@ which are
     \item \texttt{.data} - allocated space and values of initialized
         static\footnote{In this context, static means that the variable exists
         for the entire lifetime of the program.} variables and other objects.
-    \item \texttt{.bss} - allocated space for uninitialized static variables,
+    \item \texttt{.bss} - allocated space for uninitialized static variables.
     \item \texttt{.rodata} - data that do not change for the entirety of the
         program lifetime, like strings literals in the C language.
     \item various debug sections like \verb|.debug_info|, \verb|.debug_line|
@@ -998,7 +989,7 @@ following operations:
 \begin{itemize}
     \item Add a signed integer to the \texttt{line} register.
     \item Multiply an unsigned integer by the smallest length of instruction
-        and add the result to the \textit{address} register.
+        and add the result to the \texttt{address} register.
     \item Append a row to the matrix consisting of the current values in
         registers.
     \item Set the \texttt{basic\_block} register to false.
@@ -1244,8 +1235,7 @@ from~\cite{dwarf}:
 
 With this computational power, we can save any information we need. There are
 many more expressions, all of which can be found in~\cite{dwarf}. An example of
-an interpreter for this can be found in the LLDB source code in file
-\texttt{source/Expression/DWARFExpression.cpp}.
+an interpreter for this can be found in the LLDB source code~\cite{lldb-vm}.
 
 \subsubsection{Call frames}\label{section:call-frames}
 Debuggers often need to know through which function calls the executed program
@@ -1298,14 +1288,14 @@ offseted in previous row. We can see that in the example on line $2$ the offset
 changes from $8$ to $16$, but the register stays the same. This is apparent in
 the decoded information where on the address \texttt{0x1184} the \texttt{CFA}
 changed from \texttt{RSP + 8} to \texttt{RSP + 16}. This happened because the
-\texttt{push \%rbp} advanced the stack pointer by eight bytes.
+\texttt{push rbp} advanced the stack pointer by eight bytes.
 
 On the contrary, the \verb|def_cfa_register| changes the register but keeps
-the offset. This happens when the instruction \texttt{mov \%rsp, \%rbp} is
+the offset. This happens when the instruction \texttt{mov rbp, rsp} is
 executed. From that point the stack frame is at sixteen byte offset from the
 base pointer. This holds until the epilogue, where the old stack pointer is
 restored. In the example in the decoded information, many more registers were
-missing. This is because their value didn't change across the function, so
+missing. This is because their value did not change across the function, so
 there was no need to save information about them.
 
 DWARF offers more instructions for manipulation, for a complete overview and
@@ -1504,7 +1494,7 @@ it needs to be kept in the AST together with the nodes.
 The \textit{Semantic analysis} then checks that the program is semantically
 consistent. For example, that used variable has been declared before.
 Additionaly, it gathers type information and saves it for later use during the
-the IR generation~\cite{dragon-book}.
+IR generation~\cite{dragon-book}.
 
 \begin{figure}
     \centering
@@ -1557,7 +1547,7 @@ intermediate representation.
 Finally, IR is translated directly to the target machine code or possibly
 assembly. This stage is called \textit{code generation}. Even though IR can
 seem very similar to assembly, there are still some things to take care of. For
-example, SSA IR doesn't have registers. It uses an unlimited number of
+example, SSA IR does not have registers. It uses an unlimited number of
 variables. Other architectures might have some other traits that differentiate
 them from the IR, and they all have to be accounted for when generating code.
 
@@ -1762,9 +1752,9 @@ commands. For example, the \texttt{register write rax `loc`} command will write
 the value of variable \texttt{loc} into the register \texttt{rax}.
 
 \subsection{GDB}
-The GNU Project debugger (GDB)~\cite{gdb-manual} is a source and
+The GNU Project Debugger (GDB)~\cite{gdb-manual} is a source and
 instruction-level debugger. It is very similar to the LLDB debugger.
-It however supports more languages, like C, C++, D, Fortran, Go, Objective-C,
+It, however, supports more languages, like C, C++, D, Fortran, Go, Objective-C,
 Pascal, Rust, and some others. GDB is written in C/C++. Like LLDB, it offers a
 CLI application and also has an API for Python. It is one of the oldest
 debugging software, and from our experience, the most reliable one on the Linux
