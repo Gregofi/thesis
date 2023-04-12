@@ -11,23 +11,19 @@ debugging capabilities of said virtual machine.
 \section{The T86 Instruction Set Architecture}
 The primary goal of the T86 architecture is to be an educational one. The
 Virtual Machine made for the ISA allows configuring the number of registers,
-the RAM size, or the length of each instruction. This allows the student to
+the RAM size, or the length of each instruction. This allows the students to
 develop their compilers incrementally.
 
 The T86 uses a Harvard architecture, meaning the data and instructions are
-physically separated. The author does not specify the reason for this.
-Presumably, it is to ease the implementation of the virtual machine since the
-memory and instructions can be represented as two separate array-like members
-of the virtual machine. Memory is addressable by 64-bit blocks, not by 8-bit
-blocks, as is the custom in modern computers.
-
-It shares some of the registers we saw on x86-64: the program counter (PC), the
-stack pointer (SP), the base pointer (BP), and the flags register. The intended
-roles for these registers are the same as on x86-64 architecture. It also has
-other general-purpose registers. As previously said, the amount of these is
-configurable. The registers store a 64-bit value. It also has float registers,
-which can store 64-bit float values. These are separated from the standard
-registers, similarly to x86-64.
+physically separated. Memory is addressable by 64-bit blocks, not by 8-bit
+blocks, as is the custom in modern computers. It shares some of the registers
+we saw on x86-64: the program counter (PC), the stack pointer (SP), the base
+pointer (BP), and the flags register. The intended roles for these registers
+are the same as on x86-64 architecture. It also has other general-purpose
+registers. As previously said, the amount of these is configurable. The
+registers stores 64-bit values. It also has float registers, which can store
+64-bit float values. These are separated from the standard registers, similarly
+to x86-64.
 
 The addressing modes, or what kind of operands instructions can have, include
 immediate values, registers, and memory accesses. They can also be combined in
