@@ -138,5 +138,9 @@ presented case here might happen in production usage. Besides that, most
 debugger features did not cause significant slowdowns, so the debugger is
 suitable for use.
 
-Besides that, most debugger features did not cause significant slowdowns, so
-the debugger is suitable for use.
+We tried the prime numbers case with the GDB debugger. We used the same
+program, albeit with a much higher prime number, to make the computation time
+similar to the T86. We compiled the program with the GCC compiler with no
+optimizations enabled. The GDB introduced no slowdown or a very minor one in
+all listed cases, most notably the step out and step over resulted in the same
+runtime as running the program itself without the GDB.
