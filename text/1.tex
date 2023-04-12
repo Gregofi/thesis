@@ -488,9 +488,8 @@ want to interpret them as instruction. Because of this, we should move the
 instruction pointer before the breakpoint instruction. Additionaly, we found
 out that on some architectures, advancing PC does not happen when an
 instruction that issues an interrupt is executed, such as the ARM \texttt{BKPT}
-instruction. This was later confirmed by looking at the LLDB code (under
-\verb|NativeProcessProtocol.cpp|), as it only moves back the program counter
-for a few architectures.
+instruction. This was later confirmed by looking at the LLDB code, as it only
+moves back the program counter for a few architectures~\cite{lldb-ip}.
 
 If we resumed the program after moving back, we would again hit the breakpoint,
 which is still set. We need to temporarily unset it, move one instruction
