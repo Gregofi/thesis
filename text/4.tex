@@ -81,41 +81,42 @@ instruction, like step over.
 % 8 GB RAM
 
 We will measure the speed on the following cases:
-\begin{enumerate}
-    \item Run the T86 Virtual machine without the debugger.
-    \item Connect the debugger and let the program continue.
-    \item Connect the debugger and set breakpoint at hot spot of the program.
-        For quicksort, this will be the main recursive function. For primes, it
-        will be the body of the loop. When the breakpoint is hit the program is
-        continued, no further action is taken.
-    \item Same as before, but at every breakpoint, hit read a $100$ cells of
-        memory and the \texttt{IP} register.
-    \item  Step over a computationally expensive function. For quicksort, it is
-        the \texttt{quicksort} function; for primes, it is the \verb|is_prime|
-        function.
-    \item Set a breakpoint in the most expensive function and run the program.
-        Remove the breakpoint on the first hit and step out of the function.
-        The expensive functions are the same as in the previous test.
-\end{enumerate}
+\begin{itemize}
+    \item No debugger - Run the T86 Virtual machine without the debugger.
+    \item Connected - Connect the debugger and let the program continue.
+    \item Breakpoint - Connect the debugger and set breakpoint at hot spot of
+        the program. For quicksort, this will be the main recursive function.
+        For primes, it will be the body of the loop. When the breakpoint is hit
+        the program is continued, no further action is taken.
+    \item Breakpoint and memory - Same as before, but at every breakpoint, hit
+        read a $100$ cells of memory and the \texttt{IP} register.
+    \item Step over - Step over a computationally expensive function. For
+        quicksort, it is the \texttt{quicksort} function; for primes, it is the
+        \verb|is_prime| function.
+    \item Step out - Set a breakpoint in the most expensive function and run
+        the program. Remove the breakpoint on the first hit and step out of the
+        function. The expensive functions are the same as in the previous test.
+\end{itemize}
 
 \begin{table}[]
 \centering
-\begin{tabular}{||c c c||}
-\hline
-Test Case & Quicksort - Time & Prime numbers - Time \\
-\hline\hline
-1. & $7.91$            & $10.51$  \\
-2. & $8.89$            & $12.33$  \\
-3. & $8.73$            & $30.32$  \\
-4. & $9.98$             & $31.85$  \\
-5. & $8.91$            & $11.53$  \\
-6. & $8.36$            & $130.81$ \\
-\hline
-\end{tabular}
-\caption{Performance comparison when using various features of the debugger.
-    Each case was run five times, and the average was taken. The time is in
-    seconds.}
-\label{table:benchmark}
+    \begin{tabular}{||p{4.5cm} c c>{\hspace{1cm}}c c||}
+        \hline
+        \multirow{2}{4.5cm}{Test Case} & \multicolumn{2}{c}{Quicksort} & \multicolumn{2}{c||}{\ \ \ \ \ \ \ \ \ Prime numbers} \\
+        & Time & Slowdown & Time & Slowdown \\
+        \hline\hline
+        No debugger           & $7.91\text{s}$  &  $-$     &  $10.51\text{s}$   &  $-$     \\
+        Connected             & $8.89\text{s}$  &  $1.12$  &  $12.33\text{s}$   &  $1.17$  \\
+        Breakpoint            & $8.73\text{s}$  &  $1.10$  &  $30.32\text{s}$   &  $2.88$  \\
+        Breakpoint and memory & $9.98\text{s}$  &  $1.26$  &  $31.85\text{s}$   &  $3.03$  \\
+        Step over             & $8.91\text{s}$  &  $1.12$  &  $11.53\text{s}$   &  $1.09$  \\
+        Step out              & $8.36\text{s}$  &  $1.05$  &  $130.81\text{s}$  &  $12.37$ \\
+        \hline
+    \end{tabular}
+    \caption{Performance comparison when using various features of the debugger.
+        Each case was run five times, and the average was taken. The time is in
+        seconds.}
+    \label{table:benchmark}
 \end{table}
 
 The results are in table~\ref{table:benchmark}. It is apparent that just having
