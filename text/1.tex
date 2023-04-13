@@ -360,13 +360,13 @@ if (pid == 0) {
     }
 }
     \end{minted}
-    \caption{Linux debugger implementation - Initialization of the debuggee
+    \caption{Linux debugger implementation - Initialization of the tracee
     process.}
     \label{fig:debugger-init}
 \end{figure}
 
-Reading and writing to memory is simple. The \texttt{PTRACE\_PEEKTEXT} and
-\texttt{PTRACE\_POKETEXT} are used for this purpose. This call reads or writes
+The \texttt{PTRACE\_PEEKTEXT} and \texttt{PTRACE\_POKETEXT} commands can be
+used for reading and writing into tracee's memory. This call reads or writes
 a word (32 or 64 bits, depending on the Linux variant) into the tracee's
 memory. However, if we want to write an arbitrary amount of bytes, we have to
 work around the word limitation. We need to write by blocks, and for the last

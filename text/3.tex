@@ -263,12 +263,13 @@ Normal steps would cause us to enter a function and execute the \texttt{RET}
 instruction there, which would mess with the algorithm.
 
 The Native class uses a \texttt{DebugEvent} structure which indicates what
-caused the VM to stop. It is implemented as a \texttt{variant} of multiple
-structures, for instance, the \texttt{BreakpointHit} or the
-\texttt{WatchpointTrigger} structure. It is a variant because the watchpoint
-also needs to convey information about an address that caused the break, as do
-breakpoints. It could also signal if the break was caused by reading or writing
-to the memory cell, although for now, the T86 VM only interrupts on writing.
+caused the VM to stop. It is implemented as a \texttt{variant} object
+consisting of multiple structures, for instance, the \texttt{BreakpointHit} or
+the \texttt{WatchpointTrigger} structure. It is a variant because the
+watchpoint also needs to convey information about an address that caused the
+break, as do breakpoints. It could also signal if the break was caused by
+reading or writing to the memory cell, although for now, the T86 VM only
+interrupts on writing.
 
 \begin{figure}
     \begin{minted}{c++}
