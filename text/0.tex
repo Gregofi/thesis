@@ -90,7 +90,7 @@ knowledge of the specific architecture of the machine. High-level languages
 also introduce control flow statements, which makes the code easier to follow
 compared to assembly jumps~\cite{gotobad}.
 
-But processors only understand machine code, and high-level languages are far
+But processors only understand machine code and high-level languages are far
 from it. Therefore, a translation of a high-level language program into a
 machine code program is necessary. This is a task for a \textit{compiler}. A
 compiler is a program that reads a source code of high-level language and
@@ -173,14 +173,14 @@ when \texttt{i == 3}.
 Finally, debuggers also allow \textit{stepping}. There are several kinds of
 steps:
 \begin{itemize}
-    \item \textit{step in} - Executes current statement and stops on the next
-        one. If the current statement is a function call then it will be
-        executed and the program will be paused on the first statement in that
+    \item \textit{step-in} - Executes the current statement and stops on the
+        next one. If the current statement is a function call, it will be
+        executed, and the program will be paused on the first statement in that
         function.
-    \item \textit{step over} - Same as a step in, but if the current statement
-        is a function call then the program will be paused on the next
-        statement after the call.
-    \item \textit{step out} -  Executes as much as needed to return from the
+    \item \textit{step-over} - Same as a step-in, but if the current statement
+        is a function call, the program will be paused on the next statement
+        after the call.
+    \item \textit{step-out} - Executes as much as needed to return from the
         current function. Stops on the next statement that should be executed
         after the function returns.
 \end{itemize}

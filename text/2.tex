@@ -62,13 +62,13 @@ HALT
 
 \section{T86 Virtual Machine}\label{section:t86-vm}
 The primary objective of the virtual machine is to replicate the CPU as
-accurately as possible, without prioritizing execution speed. For instance, the
+accurately as possible without prioritizing execution speed. For instance, the
 virtual machine simulates the out-of-order technique briefly described in
 section~\ref{section:superscalar-cpu}. The purpose of the virtual machine is to
 allow the students to gain a deeper understanding of the effects of pipeline
 stalls and similar events on program speed. The virtual machine is able to
-generate statistics that provide information about these factors and how
-much they influenced the speed of the generated program.
+generate statistics that provide information about these factors and how much
+they influenced the speed of the generated program.
 
 The virtual machine (VM) is implemented in C++, using the newer standards up to
 C++17. The VM offers only a single interface, and that is the
@@ -76,7 +76,7 @@ C++17. The VM offers only a single interface, and that is the
 program for the T86 VM. An example of how to use this class is in
 figure~\ref{fig:t86-intro}. Currently, there is no other way for users to run
 programs in the VM. This means that the students are tied to the C++ language,
-or use some bindings if they want to use other language.
+or use some bindings if they want to use another language.
 
 The \texttt{Cpu} class is the backbone of the interpreter. It is responsible
 for running the program. It has a \texttt{halted} function, which returns true
