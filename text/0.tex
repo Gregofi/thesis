@@ -18,52 +18,52 @@ recognize the instructions the program is made of.
 \begin{figure}
     \begin{subfigure}{1.0\textwidth}
         \begin{lstlisting}
-    01010101 01001000
-    10001001 11100101
-    10001001 01111101
-    11111100 10000011
-    01111101 11111100
-    00000000 01111110
-    00000111 10111000
-    00000001 00000000
-    00000000 00000000
-    11101011 00000101
-    10111000 00000000
-    00000000 00000000
-    00000000 01011101
-    11000011
+01010101 01001000
+10001001 11100101
+10001001 01111101
+11111100 10000011
+01111101 11111100
+00000000 01111110
+00000111 10111000
+00000001 00000000
+00000000 00000000
+11101011 00000101
+10111000 00000000
+00000000 00000000
+00000000 01011101
+11000011
         \end{lstlisting}
         \caption{A machine code program.}
         \label{subfig:machine-code}
     \end{subfigure}
     \begin{subfigure}{1.0\textwidth}
         \begin{lstlisting}
-    positive:
-            push    rbp
-            mov     rbp, rsp
-            mov     -4[rbp], edi
-            cmp     -4[rbp], 0
-            jle     neg
-            mov     eax, 1
-            jmp     pos
-    neg:
-            mov     eax, 0
-    pos:
-            pop     rbp
-            ret
+positive:
+        push    rbp
+        mov     rbp, rsp
+        mov     -4[rbp], edi
+        cmp     -4[rbp], 0
+        jle     neg
+        mov     eax, 1
+        jmp     pos
+neg:
+        mov     eax, 0
+pos:
+        pop     rbp
+        ret
         \end{lstlisting}
         \caption{An assembly program.}
         \label{subfig:assembly}
     \end{subfigure}\vspace{0.5cm}
     \begin{subfigure}{1.0\textwidth}
         \begin{minted}[]{c}
-    bool positive(int n) {
-        if (n > 0) {
-            return true;
-        } else {
-            return false;
-        }
+bool positive(int n) {
+    if (n > 0) {
+        return true;
+    } else {
+        return false;
     }
+}
         \end{minted}
         \caption{A program in the C language.}
         \label{subfig:c}

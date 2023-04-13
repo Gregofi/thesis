@@ -851,31 +851,31 @@ debuggee.
     \begin{minted}{c}
 void EnterDebugLoop(const LPDEBUG_EVENT DebugEv)
 {
-   DWORD dwContinueStatus = DBG_CONTINUE; // exception cont.
-   for(;;)
-   {
-      WaitForDebugEvent(DebugEv, INFINITE);
-      switch (DebugEv->dwDebugEventCode)
-      {
+    DWORD dwContinueStatus = DBG_CONTINUE; // exception cont.
+    for(;;)
+    {
+        WaitForDebugEvent(DebugEv, INFINITE);
+        switch (DebugEv->dwDebugEventCode)
+        {
             case EXCEPTION_ACCESS_VIOLATION: 
-               // First chance: Pass this on to the system.
-               // Last chance: Display an appropriate error.
-                  break;
-
-               case EXCEPTION_BREAKPOINT:
-               // First chance: Display the current
-               // instruction and register values.
-                  break;
-
+                // First chance: Pass this on to the system.
+                // Last chance: Display an appropriate error.
+                break;
+      
+            case EXCEPTION_BREAKPOINT:
+                // First chance: Display the current
+                // instruction and register values.
+                break;
+      
               // Other exception types like singlestep ...
               ...
-          }
-          // Other debug events
-          ...
-      }
-   ContinueDebugEvent(DebugEv->dwProcessId,
-                      DebugEv->dwThreadId,
-                      dwContinueStatus);
+            }
+            // Other debug events
+            ...
+       }
+       ContinueDebugEvent(DebugEv->dwProcessId,
+                          DebugEv->dwThreadId,
+                          dwContinueStatus);
    }
 }
     \end{minted}
@@ -1248,6 +1248,32 @@ is a \textit{stack frame} saved on the stack. A Stack frame is a part of the
 stack memory that contains information relevant to the function invocation. An
 example of a stack frame can be seen in figure \ref{fig:stack-layout}.
 
+% Inspired from
+% https://tex.stackexchange.com/questions/583197/
+% how-can-i-put-two-boxes-right-next-to-each-other-that-have-the-exact-same-size
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+node distance = 0pt,
+square/.style = {draw=black!60, fill=white!5, very thick, 
+                 minimum height=1.6cm,
+                 outer sep=0pt,
+                 trapezium stretches=true}, % To make all nodes of the same height
+]
+        \node (pro2) [square,
+                      text width=3cm] {Return address (8B)};
+        \node (pro3) [square,
+                      right=of pro2,
+                      text width=3cm] {BP backup (8B)}; 
+        \node (pro4) [square, right=of pro3,
+                      text width=3cm] {Potential backup of other registers}; 
+        \node (pro5) [square, right=of pro4,
+                       text width=3cm] {Allocated space for variables}; 
+    \end{tikzpicture}
+    \caption{Basic stack layout after function prologue, disproportional.}
+    \label{fig:stack-layout}
+\end{figure}
+
 Stack frames mostly consist of the following:
 \begin{itemize}
     \item Return address - This contains the location from which the program
@@ -1344,32 +1370,6 @@ DW_CFA_def_cfa: RSP +8
              program for virtual machine, bottom part contains the decoded
              table from interpreting the program. Abbreviated.}
     \label{fig:dwarf-stack-frames}
-\end{figure}
-
-% Inspired from
-% https://tex.stackexchange.com/questions/583197/
-% how-can-i-put-two-boxes-right-next-to-each-other-that-have-the-exact-same-size
-\begin{figure}
-    \centering
-    \begin{tikzpicture}[
-node distance = 0pt,
-square/.style = {draw=black!60, fill=white!5, very thick, 
-                 minimum height=1.6cm,
-                 outer sep=0pt,
-                 trapezium stretches=true}, % To make all nodes of the same height
-]
-        \node (pro2) [square,
-                      text width=3cm] {Return address (8B)};
-        \node (pro3) [square,
-                      right=of pro2,
-                      text width=3cm] {BP backup (8B)}; 
-        \node (pro4) [square, right=of pro3,
-                      text width=3cm] {Potential backup of other registers}; 
-        \node (pro5) [square, right=of pro4,
-                       text width=3cm] {Allocated space for variables}; 
-    \end{tikzpicture}
-    \caption{Basic stack layout after function prologue, disproportional.}
-    \label{fig:stack-layout}
 \end{figure}
 
 \subsubsection{Other Debugging Information}
@@ -1535,14 +1535,14 @@ intermediate representation.
 
 \begin{figure}
     \begin{minted}{llvm}
-        define dso_local i32 @_Z6squarei(i32 %0) {
-          %2 = alloca i32, align 4
-          store i32 %0, i32* %2, align 4
-          %3 = load i32, i32* %2, align 4
-          %4 = load i32, i32* %2, align 4
-          %5 = mul nsw i32 %3, %4
-          ret i32 %5
-        }
+define dso_local i32 @_Z6squarei(i32 %0) {
+  %2 = alloca i32, align 4
+  store i32 %0, i32* %2, align 4
+  %3 = load i32, i32* %2, align 4
+  %4 = load i32, i32* %2, align 4
+  %5 = mul nsw i32 %3, %4
+  ret i32 %5
+}
     \end{minted}
     \caption{Simplified example of LLVM IR, showing a function that calculates
     a square of two numbers.}

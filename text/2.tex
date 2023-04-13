@@ -88,16 +88,16 @@ shows to run a T86 program via the \texttt{Cpu} class.
 
 \begin{figure}
     \begin{minted}{cpp}
-        ProgramBuilder pb;
-        pb.add(MOV{Reg(0), 50);
-        pb.add(PUTCHAR{Reg(0)});
-        pb.add(HALT{});
-        auto program = pb.program();
-        Cpu cpu;
-        cpu.start(std::move(program));
-        while (!cpu.halted()) {
-            cpu.tick();
-        }
+ProgramBuilder pb;
+pb.add(MOV{Reg(0), 50);
+pb.add(PUTCHAR{Reg(0)});
+pb.add(HALT{});
+auto program = pb.program();
+Cpu cpu;
+cpu.start(std::move(program));
+while (!cpu.halted()) {
+    cpu.tick();
+}
     \end{minted}
     \caption{Simple example of how to create and run a simple program using the
     T86 virtual machine.}
@@ -117,11 +117,11 @@ then always runs this function when hit.
 
 \begin{figure}
     \begin{minted}{cpp}
-    pb.add(DBG{[](Cpu& cpu) {
-        if (cpu.getRegister(Reg{0}) == 0) {
-            std::cerr << "Register 0 is set to zero!\n";
-        }
-    });
+pb.add(DBG{[](Cpu& cpu) {
+    if (cpu.getRegister(Reg{0}) == 0) {
+        std::cerr << "Register 0 is set to zero!\n";
+    }
+});
     \end{minted}
     \caption{Adding a \texttt{DBG} instruction into the T86 program using the
     \texttt{ProgramBuilder}.}
@@ -137,24 +137,24 @@ illustrated in~\ref{fig:t86-pocket-debugger} via the \texttt{BRK} instruction.
 
 \begin{figure}
     \begin{minted}{cpp}
-    cpu.connectBreakHandler([](Cpu& cpu) {
-        char command;
-        std::cin >> command;
-        if (command == 'c') return; // continue
-        else if (command == 'r') { // Read register
-            int num;
-            std::cin >> num;
-            int regval = cpu.getRegister(num);
-            std::cerr << std::format("Register {} = {}\n",
-                                     num, regval);
-        } else if (command == 'w') { // Write register
-            int num;
-            int val;
-            std::cin >> num >> val;
-            cpu.setRegister(Reg{num}, Reg{val});
-        }
-        ... // Other commands
-    });
+cpu.connectBreakHandler([](Cpu& cpu) {
+    char command;
+    std::cin >> command;
+    if (command == 'c') return; // continue
+    else if (command == 'r') { // Read register
+        int num;
+        std::cin >> num;
+        int regval = cpu.getRegister(num);
+        std::cerr << std::format("Register {} = {}\n",
+                                 num, regval);
+    } else if (command == 'w') { // Write register
+        int num;
+        int val;
+        std::cin >> num >> val;
+        cpu.setRegister(Reg{num}, Reg{val});
+    }
+    ... // Other commands
+});
     \end{minted}
     \caption{Small debugger implementation using T86 \texttt{BRK} instruction,
     abbreviated.}
