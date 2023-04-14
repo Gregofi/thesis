@@ -17,7 +17,7 @@ develop their compilers incrementally.
 The T86 uses a Harvard architecture, meaning the data and instructions are
 physically separated. Memory is addressable by 64-bit blocks, not by 8-bit
 blocks, as is the custom in modern computers. It shares some of the registers
-we saw on x86-64: the program counter (PC), the stack pointer (SP), the base
+we saw on x86-64: the program counter (IP), the stack pointer (SP), the base
 pointer (BP), and the flags register. The intended roles for these registers
 are the same as on x86-64 architecture. It also has other general-purpose
 registers. As previously said, the amount of these is configurable. The
@@ -36,7 +36,7 @@ allowed addressing modes also change for each instruction. For example, the
 full list, refer to~\cite{ivo2021tiny}. The instructions that are taken over
 from x86-64 often have more restrictive addressing modes than in x86-64. For
 example, the \verb|add| instruction can take a memory offset as a destination
-operand in x64-86, but in T86, it can only take registers.
+operand in x86-64, but in T86, it can only take registers.
 
 Other than that, the ISA is mainly a subset of the x86-64 most used
 instructions, many of which we have already seen in various examples throughout

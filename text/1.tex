@@ -57,7 +57,7 @@ although some literature suggests that in modern days the choice of
 architecture is irrelevant if one is only considering performance and power
 consumption~\cite{riscvscisc1, riscvscisc2}. Unless specified otherwise, the
 rest of this chapter will be talking about x86-64. This is because the T86
-architecture, described in section ~\ref{section:T86}, is loosely based on
+architecture, described in section~\ref{section:T86}, is loosely based on
 x86-64, so it is most relevant for us.
 
 In the first chapter, we briefly mentioned that machine code programs could be
@@ -424,15 +424,15 @@ breakpoint, so we will distinguish between setting a breakpoint and enabling
 it. Setting a breakpoint just means that the debugger needs to keep track of
 where the breakpoint was set and if it is enabled or disabled. Enabling a
 breakpoint means writing into the program memory the debug instruction (we will
-use the x86-64 \texttt{int3} instruction with opcode \texttt{0xCC}). Figure
-\ref{fig:with-and-without-bp} shows how code looks with and without enabled
-breakpoint. The blue color shows the new breakpoint. On line $2$, the opcode
-changes from \texttt{0x83} to \texttt{0xCC}. Since the breakpoint is set via
-the \texttt{PTRACE\_POKEDATA}, which only works data blocks, one has to pad the
-breakpoint opcode with already existing data. Also, the rewritten data (in this
-case, the \texttt{0x88} has to be kept so that the breakpoint may later be
-deactivated. Abbreviated implementation can be found on
-\ref{fig:breakpoint-enable}.
+use the x86-64 \texttt{int3} instruction with opcode \texttt{0xCC}).
+Figure~\ref{fig:with-and-without-bp} shows how code looks with and without
+enabled breakpoint. The blue color shows the new breakpoint. On line $2$, the
+opcode changes from \texttt{0x83} to \texttt{0xCC}. Since the breakpoint is set
+via the \texttt{PTRACE\_POKEDATA}, which only works with words, one has to pad
+the breakpoint opcode with already existing data. Also, the rewritten data (in
+this case, the \texttt{0x88}) has to be kept so that the breakpoint may later
+be deactivated. Abbreviated implementation can be found
+on~\ref{fig:breakpoint-enable}.
 
 \begin{figure}
     \begin{minipage}{0.45\textwidth}
@@ -485,7 +485,7 @@ expected. This is because \texttt{int3} is an instruction with size $1$. It
 gets executed, the instruction pointer is advanced by the size ($1$), and an
 interrupt is issued. However, after the \texttt{int3}, there were operands to
 the \texttt{mov} instruction (the red text in the figure). We definitely do not
-want to interpret them as instruction. Because of this, we should move the
+want to interpret them as instruction. Because of this, we need to move the
 instruction pointer before the breakpoint instruction. Additionally, we found
 out that on some architectures, advancing PC does not happen when an
 instruction that issues an interrupt is executed, such as the ARM \texttt{BKPT}
@@ -989,7 +989,7 @@ It also has several \textit{Special opcodes}, each of which does all of the
 following operations:
 \begin{itemize}
     \item Add a signed integer to the \texttt{line} register.
-    \item Multiply an unsigned integer by the smallest length of instruction
+    \item Multiply an unsigned integer by the smallest length of an instruction
         and add the result to the \texttt{address} register.
     \item Append a row to the matrix consisting of the current values in
         registers.
@@ -1012,7 +1012,7 @@ location more precise.
 \begin{itemize}
     \item \texttt{0x41} - Jump to the beginning of the \texttt{main} function
         (i.e. \texttt{0x1139}).
-    \item \texttt{0x4c} - Special opcode - Increment line by one and advance
+    \item \texttt{0x4c} - Special opcode - Increment line by 1 and advance
         address by zero. Although the advance address was essentially a noop,
         it was still more space efficient to use special opcode because the
         \texttt{advance\_pc} instruction DWARF offers would take up at least
@@ -1022,7 +1022,7 @@ location more precise.
         address by 15 to \texttt{0x1148}. This essentially skips the function
         prologue and advances to instruction \texttt{cmpl}, which represents
         line \lstinline{if (argc < 2)} of the program.
-    \item \texttt{0x52} - Special opcode - advance line by 1 to 4 and advance
+    \item \texttt{0x52} - Special opcode - Increment line by 1 to 4 and advance
         address by 6 to \texttt{0x114e}. This is the \lstinline{return 1;}
         line of the program.
 \end{itemize}
@@ -1325,7 +1325,7 @@ On the contrary, the \verb|def_cfa_register| changes the register but keeps the
 offset. This happens when the instruction \texttt{mov rbp, rsp} is executed.
 From that point, the stack frame is at sixteen byte offset from the base
 pointer. This holds until the epilogue, where the old stack pointer is
-restored. In the example in the decoded information, many more registers were
+restored. In the example in the decoded information, many more registers are
 missing. This is because their value did not change across the function, so
 there was no need to save information about them.
 
@@ -1627,7 +1627,7 @@ exclamation mark. LLVM IR also contains intrinsic functions to record debug
 information pertaining to variables. The function from the example
 \texttt{llvm.dbg.declare} receives the address of the variable, the description
 of the variable, and its location in the form of a complex expression. Complex
-expressions are similar to the Dwarf expressions used for locations described
+expressions are similar to the DWARF expressions used for locations described
 in section~\ref{section:dwarf-location}. There is also the
 \texttt{llvm.dbg.address}, which has the same role but can be used multiple
 times for one variable. This is primarily used after optimizations to describe
@@ -1640,7 +1640,7 @@ which are able to transform the LLVM IR debugging information into some other
 format, like DWARF.
 
 There are some more nuances that need to be dealt with, especially considering
-optimizations like instruction scheduling and register selection. This is
+operations like instruction scheduling and register selection. This is
 beyond the scope of this thesis and is described in~\cite{llvm-debug-info}.
 
 \begin{figure}

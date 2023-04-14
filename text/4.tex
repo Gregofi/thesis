@@ -14,8 +14,8 @@ request is accepted. The actions run on two operating systems, Ubuntu and
 MacOS, ensuring the project works on both.
 
 The project itself contains numerous tests. The code is tested via unit tests
-using the \texttt{GoogleTest}~\cite{gtest} framework. The unit tests cover
-almost all parts of the code. It also has integration tests for T86 CLI and the
+using the \texttt{GoogleTest}~\cite{gtest} framework. These tests cover almost
+all parts of the code. It also has integration tests for T86 CLI and the
 debugger CLI. Martin Prokopič created a TinyC to T86 compiler as part of his
 thesis~\cite{martintinyc}. He was kind enough to send the implementation to us
 so that we could generate various tests more easily. As a result, most of the
@@ -83,11 +83,12 @@ We will measure the speed on the following cases:
 \begin{itemize}
     \item No debugger - Run the T86 Virtual machine without the debugger.
     \item Connected - Connect the debugger and let the program continue.
-    \item Breakpoint - Connect the debugger and set breakpoint at hot spot of
-        the program. For quicksort, this will be the main recursive function.
-        For primes, it will be the body of the loop. When the breakpoint is hit
-        the program is continued, no further action is taken.
-    \item Breakpoint and memory - Same as before, but at every breakpoint, hit
+    \item Breakpoint -  Connect the debugger and set a breakpoint at a hot spot
+        of the program. For quicksort, this will be the main recursive
+        function. For primes, it will be the body of the loop. When a
+        breakpoint is hit, the program is continued, and no further action is
+        taken.
+    \item Breakpoint and memory - Same as before, but at every breakpoint hit,
         read a $100$ cells of memory and the \texttt{IP} register.
     \item Step over - Step over a computationally expensive function. For
         quicksort, it is the \texttt{quicksort} function; for primes, it is the

@@ -14,7 +14,7 @@ assembly we have shown in previous sections. Thanks to this, students can
 implement their compiler in any programming language they want and emit the T86
 program in this format as a text file. An unfortunate side effect is that we
 can no longer use the \texttt{DBG} instruction. However, the debugger we will
-later present will be much more powerful than the \texttt{DBG} instruction.
+later present will be much more powerful than the said instruction.
 
 As can be apparent from the example, we also use sections. The \texttt{.text}
 section is the only mandatory one. It contains the instructions that will be
@@ -102,20 +102,20 @@ The commands that the debugging API of the virtual machine offers are
     \item \texttt{PEEKFLOATREG} - Return values of all float registers.
     \item \texttt{POKEFLOATREG x y} - Set the value in float register
         \texttt{x} to \texttt{y}.
-    \item \texttt{PEEKDEBUGREG} - Return value in all debug registers.
+    \item \texttt{PEEKDEBUGREG} - Return values in all debug registers.
     \item \texttt{POKEDEBUGREG x y} - Set the value in debug register
         \texttt{x} to \texttt{y}.
-    \item \texttt{PEEKDATA x cnt} - Return value in memory at addresses
+    \item \texttt{PEEKDATA x cnt} - Return values in memory at addresses
         \texttt{x} to $\texttt{x} + \texttt{cnt} - 1$.
     \item \texttt{POKEDATA x y} - Write a value \texttt{y} into memory at
         address \texttt{x}.
-    \item \texttt{PEEKTEXT x cnt} - Return instruction from \texttt{x} to $\texttt{x} + \texttt{cnt} - 1$.
-    \item \texttt{POKETEXT x INS} - Rewrite the instruction at address
+    \item \texttt{PEEKTEXT x cnt} - Return instructions from \texttt{x} to $\texttt{x} + \texttt{cnt} - 1$.
+    \item \texttt{POKETEXT x ins} - Rewrite the instruction at address
         \texttt{x} with the newly supplied instruction.
     \item \texttt{CONTINUE} - Continue the execution.
     \item \texttt{TERMINATE} - Stop the execution, terminating the virtual machine.
     \item \texttt{REASON} - Return the reason why the program stopped.
-    \item \texttt{SINGLESTEP} - Do native level single step.
+    \item \texttt{SINGLESTEP} - Do a native level single step.
     \item \texttt{TEXTSIZE} - Return the size of the program.
 \end{itemize}
 
@@ -165,7 +165,7 @@ section~\ref{section:t86-vm}, has no support for interrupts. The
 \texttt{halted} method is kind of similar to interrupts but only allows for
 signaling the \texttt{HALT} instruction execution. We need more than that.
 
-We added another manager-like class called \textit{OS}. This class will take
+We added another manager-like class called \texttt{OS}. This class will take
 care of running the program via the \texttt{Cpu} class. We also added an
 \textit{interrupt} capability to the \texttt{Cpu}. To check if and which
 interrupt happened, the \texttt{Cpu} now provides a function similar to the
@@ -481,9 +481,9 @@ for the virtual machine:
         pops two values from the stack and adds them together. If the value is
         a register, the value that is stored in that register is taken. The
         result from the addition is pushed back onto the stack.
-    \item \verb|BASE_REG_OFFSET| - Does the exact same chain of operations as
-        the previous example. Since the variables are often stored in memory at
-        some offset from the base pointer, we provide this short hand.
+    \item \verb|BASE_REG_OFFSET -2| - Does the exact same chain of operations
+        as the previous example. Since the variables are often stored in memory
+        at some offset from the base pointer, we provide this short hand.
 \end{itemize}
 
 There is also a dereference instruction, which dereferences a value in memory.
