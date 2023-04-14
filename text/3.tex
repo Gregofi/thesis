@@ -107,14 +107,14 @@ The commands that the debugging API of the virtual machine offers are
         \texttt{x} to \texttt{y}.
     \item \texttt{PEEKDATA x cnt} - Return value in memory at addresses
         \texttt{x} to $\texttt{x} + \texttt{cnt} - 1$.
-    \item \texttt{POKEDATA x y} - Writes a value \texttt{y} into a memory at
+    \item \texttt{POKEDATA x y} - Write a value \texttt{y} into memory at
         address \texttt{x}.
     \item \texttt{PEEKTEXT x cnt} - Return instruction from \texttt{x} to $\texttt{x} + \texttt{cnt} - 1$.
     \item \texttt{POKETEXT x INS} - Rewrite the instruction at address
         \texttt{x} with the newly supplied instruction.
     \item \texttt{CONTINUE} - Continue the execution.
     \item \texttt{TERMINATE} - Stop the execution, terminating the virtual machine.
-    \item \texttt{REASON} - Get the reason why the program stopped.
+    \item \texttt{REASON} - Return the reason why the program stopped.
     \item \texttt{SINGLESTEP} - Do native level single step.
     \item \texttt{TEXTSIZE} - Return the size of the program.
 \end{itemize}
