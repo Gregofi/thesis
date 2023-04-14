@@ -1021,9 +1021,9 @@ location more precise.
     \item \texttt{0x4f} - Special opcode - Increment line by 2 to 3 and advance
         address by 15 to \texttt{0x1148}. This essentially skips the function
         prologue and advances to instruction \texttt{cmpl}, which represents
-        line \mintinline{c}{if (argc < 2)} of the program.
+        line \lstinline{if (argc < 2)} of the program.
     \item \texttt{0x52} - Special opcode - advance line by 1 to 4 and advance
-        address by 6 to \texttt{0x114e}. This is the \mintinline{c}{return 1;}
+        address by 6 to \texttt{0x114e}. This is the \lstinline{return 1;}
         line of the program.
 \end{itemize}
 Remember that each of the special opcodes also creates a line in the matrix. As
@@ -1706,21 +1706,20 @@ writing into program memory and registers.
 
 \subsection{LLDB}\label{section:case-study}
 The LLDB~\cite{lldb} debugger is part of the LLVM tools collection~\cite{llvm}.
-We will describe the LLDB debugger more thoroughly than the other ones, mainly
-because it is a modern piece of software compared to the GDB debugger, and we
-are most familiar with it. Supported languages for debugging are the C,
-Objective-C, and C++ languages (LLVM tools support mainly those three
-languages) on desktop and iOS devices. It works closely with the Clang
-compiler, which is also part of LLVM, and the LLVM disassembler. Thanks to
-this, it stays very up-to-date with current C++ standards. The source code is
-kept modular with a plug-in architecture. LLDB is both a source and
-instruction-level debugger.
+We will describe it more thoroughly than the other ones, mainly because it is a
+modern piece of software compared to the GDB debugger, and we are most familiar
+with it. Supported languages for debugging are the C, Objective-C, and C++
+languages (LLVM tools support mainly those three languages) on desktop and iOS
+devices. It works closely with the Clang compiler, which is also part of LLVM,
+and the LLVM disassembler. Thanks to this, it stays very up-to-date with
+current C++ standards. The source code is kept modular with a plug-in
+architecture. It is both a source and instruction-level debugger.
 
-LLDB offers an API through which one can interact with the debugger. For
-example, the command line application through which one can use LLDB uses this
-API. LLDB is written in modern C++, but a bridging interface to the API is
-provided for Python. Thanks to this, one can use LLDB for debugging and, for
-example, as a library to disassemble machine code~\cite{lldb}.
+LLDB offers a C++ API through which one can interact with the debugger. For
+instance, the command line application through which one can utilize the
+debugger uses this API. The API also offers a bridging interface for Python.
+Thanks to this, one can use LLDB not only as a debugger but also, for example,
+as a library to disassemble machine code~\cite{lldb}.
 
 LLDB provides a command line interface (CLI) through which one can use the
 debugger directly. The CLI provides a variety of commands that one can use.
@@ -1747,7 +1746,7 @@ Some of the commands have shorter forms, like \texttt{step} for \texttt{thread
 step-in}. Using an unambiguous prefix works as well, like \texttt{br s -M foo}
 for \texttt{breakpoint set --name foo}.
 
-The LLDB debugger has an expression parser. While debugging, one can write an
+The debugger also has an expression parser. While debugging, one can write an
 expression, and the debugger interprets that expression and prints the result
 back. An example of usage can be to look at some value in an \texttt{std::map}
 structure, which can be achieved by using the \texttt{frame variable
