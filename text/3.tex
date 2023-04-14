@@ -1,8 +1,8 @@
 \chapter{Implementation}
 In this chapter, we describe how we went about the implementation of the
 debugger and reason about the design choices we made. Also, we describe which
-parts of the virtual machine were modified or added to allow the
-implementation of the debugger.
+parts of the virtual machine were modified or added to allow the implementation
+of the debugger.
 
 \section{T86 ISA Extensions}\label{section:parser}
 In chapter~\ref{section:t86-vm}, we showed how to build a program for the T86
@@ -68,7 +68,7 @@ same philosophy.}. Because of this, we aim to simulate the real-world debuggers
 as closely as possible. The compilers may also have more targets in the future,
 not just the T86 VM. If we made the debugger part of the T86 VM, we could not
 use it for a possible new virtual machine. In conclusion, the virtual machine
-and the debugger will be two entirely different programs and as such, two
+and the debugger will be two entirely different programs and, as such, two
 completely different processes.
 
 In the debugger implementation for Linux, the subject of section
@@ -76,8 +76,7 @@ In the debugger implementation for Linux, the subject of section
 the debugger's implementation via a specific API. There is no operating system
 between the virtual machine and the program. Still, we will strive to make the
 API similar to the ptrace API. The debugger and the VM will have to communicate
-together somehow. For interprocess communication, there are several
-possibilities.
+together somehow.
 
 Both the VM and the debugger use an abstract class representing an interface
 that provides two methods, \texttt{Send} and \texttt{Receive}. The
@@ -89,14 +88,13 @@ to an existing process, even on an entirely different computer. It, however,
 has a disadvantage. The messages sent are often short and we need to send a lot
 of them. This proved too slow, even with few messages being sent. The second
 implementation is via threads. The debugger runs the VM in another thread, and
-they communicate via shared queues. This is far faster and allows the debugger
+they communicate via shared queues. This is much faster and allows the debugger
 to run the process by himself, making it easier to use and behave like
 real-world debuggers.
 
-The format of the communication is a text one, merely because of the ease
-of use as opposed to binary format, it is also clearer to see what is
-happening. The commands that the debugging API of the virtual machine offers
-are
+The format of the communication is a text one, merely because of the ease of
+use as opposed to binary format. Tt is also clearer to see what is happening.
+The commands that the debugging API of the virtual machine offers are
 \begin{itemize}
     \item \texttt{PEEKREG x} - Return values of all normal registers.
     \item \texttt{POKEREG x y} - Set the value in register \texttt{x} to
@@ -163,18 +161,18 @@ complex should be handled in the debugger itself.
     actual text message that is being sent.} \label{fig:dbg-vm-seq}
 \end{figure}
 
-The \texttt{Cpu} class, which we have described in section~\ref{section:t86-vm},
-has no support for interrupts. The \texttt{halted} method is kind of similar
-to interrupts, but only allows for signaling the \texttt{HALT} instruction
-execution. We need more than that.
+The \texttt{Cpu} class, which we have described in
+section~\ref{section:t86-vm}, has no support for interrupts. The
+\texttt{halted} method is kind of similar to interrupts but only allows for
+signaling the \texttt{HALT} instruction execution. We need more than that.
 
 We added another manager-like class called \textit{OS}. This class will take
 care of running the program via the \texttt{Cpu} class. We also added an
 \textit{interrupt} capability to the \texttt{Cpu}. To check if and which
-interrupt happened, the \texttt{Cpu} now provides a function, similar to the
+interrupt happened, the \texttt{Cpu} now provides a function similar to the
 \texttt{halted} function. The OS calls the \texttt{tick} method periodically,
 and after every tick, it checks if a halt or interrupt occurred. If it did,
-then it passes it to some handler. When interrupt happens, unrolling must be
+then it passes it to some handler. When an interrupt happens, unrolling must be
 done to display proper values in registers and memory. This was described in
 section \ref{section:superscalar-cpu}. The unrolling mechanism was fortunately
 already implemented by the T86 VM author. It was used for the \texttt{DBG} and
@@ -185,10 +183,10 @@ The \texttt{BKPT} instruction we added is used for software breakpoints.
 Executing this instruction causes an interrupt \texttt{3} to occur. It is also
 possible to set a special flag that causes the \texttt{Cpu} to send the
 interrupt \texttt{1} after every executed instruction. When an interrupt that
-is caused by some debugging features happens, the \texttt{OS} calls a method
-in the \texttt{Debug} class. This class is also a new addition and is
-responsible for communication with the debugger. It uses the text protocol we
-mentioned previously.
+is caused by some debugging features happens, the \texttt{OS} calls a method in
+the \texttt{Debug} class. This class is also a new addition and is responsible
+for communication with the debugger. It uses the text protocol we mentioned
+previously.
 
 We also added debug registers. These are a special type of registers designed
 for triggering breaks on memory access. There are a total of five debug
@@ -200,7 +198,7 @@ active. If a register is active and the program writes to a memory cell with
 the same address as is stored in the register, an interrupt \texttt{2} is
 generated. Furthermore, the control register's bits from 8 to 11 reveal which
 register caused the interrupt. For instance, if bit 10 is set to 1, the third
-register is responsible for the interrupt and the address stored in that
+register is responsible for the interrupt, and the address stored in that
 register is the one that was written into.
 
 \section{Native Debugger}
@@ -211,10 +209,10 @@ through which the users might interact with the debugger. This will be called
 the frontend of the debugger.
 
 The implemented debugger consists of two main parts. The first one aims to
-support native (instruction) level debugging. This part work without
-\textbf{any} debugging information whatsoever. The second part focuses on
-source-level debugging, and is described in
-section~\ref{section:source-debugger}.
+support native (instruction) level debugging. This part works without
+\textbf{any} debugging information whatsoever, ensuring it can be used by the
+students immediately. The second part focuses on source-level debugging and is
+described in section~\ref{section:source-debugger}.
 
 The native debugger is split into two additional layers to make it more
 modular. The first layer is called a \texttt{Process}. It is an interface
@@ -265,12 +263,13 @@ Normal steps would cause us to enter a function and execute the \texttt{RET}
 instruction there, which would mess with the algorithm.
 
 The Native class uses a \texttt{DebugEvent} structure which indicates what
-caused the VM to stop. It is implemented as a \texttt{variant} of multiple
-structures, for instance, the \texttt{BreakpointHit} or the
-\texttt{WatchpointTrigger} structure. It is a variant because the watchpoint
-also needs to convey information about an address that caused the break, as do
-breakpoints. It could also signal if the break was caused by reading or writing
-to the memory cell, although for now, the T86 VM only interrupts on writing.
+caused the VM to stop. It is implemented as a \texttt{variant} object
+consisting of multiple structures, for instance, the \texttt{BreakpointHit} or
+the \texttt{WatchpointTrigger} structure. It is a variant because the
+watchpoint also needs to convey information about an address that caused the
+break, as do breakpoints. It could also signal if the break was caused by
+reading or writing to the memory cell, although for now, the T86 VM only
+interrupts on writing.
 
 \begin{figure}
     \begin{minted}{c++}
@@ -312,8 +311,8 @@ Here is a summarization of the features the native debugger offers:
 With the solid foundation represented by the native part of the debugger, we
 can extend it by providing some form of source-level debugging. For this part,
 we need to remember that the debugger will only be used by students. As such,
-we ought to have gentler debugging information than DWARF, but we certainly can
-take inspiration from it.
+we ought to have a somewhat simpler debugging information format than DWARF,
+but we certainly can take inspiration from it.
 
 As we previously mentioned, the executable with T86 code is separated into
 sections. The \texttt{.text} and \texttt{.data} sections are for the VM. We
@@ -331,16 +330,16 @@ information incrementally.
 
 In the NI-GEN course, students are creating compilers from the TinyC language.
 This is a small subset of the C language. It has simpler grammar and only
-following types: \texttt{int}, \texttt{double}, \texttt{char}, pointers,
-structured types, and static arrays. We aim to support all of TinyC language in
-our source layer of the debugger.
+the following types: \texttt{int}, \texttt{double}, \texttt{char}, pointers,
+structured types, and static arrays. We aim to support all of the TinyC
+language in our source layer of the debugger.
 
 The debugger is, however, not only limited to TinyC language. Any imperative
 language that can be encoded with the following debugging information is
 suitable to be debugged at the source level. We show an example of this in a
 provided test case for the debugger where we debug the LLVM IR. It can be found
 as an attachment to the thesis on path \texttt{impl/src/dbg-cli/tests/llvm.ir}.
-We also provide a documentation for developers who wish to generate this
+We also provide documentation for developers who wish to generate this
 debugging information in the thesis attachment on path
 \texttt{impl/docs/source-info.md}.
 
@@ -353,36 +352,35 @@ debugging.
 
 \subsection{Line Information and Source Code}
 The line information is encoded in a table, where every row is:
-\texttt{<line>:<address>}. This is far simpler than the DWARF way which we
-described in section~\ref{section:line-number-information}. We do not care
-about being space efficient, so we did a table instead of virtual machine
-specification. We also feel like this should be an entry level debugging
-information, so that students are not discouraged outright. It misses some
-information that DWARF had, like columns. It still however proves quite
-sufficient for most cases. The information should be stored in the
-\verb|.debug_line| section.
+\texttt{<line>:<address>}. This is far simpler than the DWARF way, described in
+section~\ref{section:line-number-information}. We do not care about being space
+efficient, so we did a table instead of a virtual machine specification. We
+also feel like this should be entry-level debugging information so that
+students are not discouraged outright. It misses some information that DWARF
+had, like columns. It still, however, proves quite sufficient for most cases.
+The information should be stored in the \verb|.debug_line| section.
 
-With this information, we are able to do source-level breakpoints. If the
-source code is also provided, we can show the user on which line is the
-debugged program currently paused. It is not necessary to specify every line in
-the program. The debugger will refuse to put a source-level breakpoint on some
-line if it does not have the necessary information. The source code should be
-under the \verb|.debug_source| section, which must be the last section in the
+With this information, we are able to do source-level breakpoints. It is not
+necessary to specify every line in the program. The debugger will refuse to put
+a source-level breakpoint on some line if it does not have the necessary
+information. If the source code is also provided, we can show the user on which
+line is the debugged program currently paused. The source code should be under
+the \verb|.debug_source| section, which must be the last section in the
 executable.
 
 \subsection{Debugging Information Format}
 In the line information, we provided a straightforward format. However, we will
 need a more sophisticated structure to describe some advanced constructs of the
-source code. We will draw inspiration from the DWARF debugging information entries.
-Take a look at figure~\ref{fig:t86dbg-die}, which shows an example of such
-debugging information. It has a tree-like structure which, in some ways, mimics
-the original program. The nodes of this tree are also called debugging
+source code. We will draw inspiration from the DWARF debugging information
+entries. Take a look at figure~\ref{fig:t86dbg-die}, which shows an example of
+such debugging information. It has a tree-like structure which, in some ways,
+mimics the original program. The nodes of this tree are also called debugging
 information entries (DIEs). Those entries can have other entries as their
 children, and each entry has a tag that is part of its name (for example, the
 \verb|compilation_unit| tag). They can also have attributes that describe their
 properties. As can be seen, this is very similar to the DWARF debugging
 information format. Unlike DWARF, it will be a text format. This allows us to
-generate the format easily and to spot mistakes quickly. We don't want the
+generate the format easily and to spot mistakes quickly. We do not want the
 students to debug their generated debugging information.
 
 For instance, the tag \verb|DIE_function| represents a function. As attributes,
@@ -427,7 +425,7 @@ entries are present, one for primitive types (\texttt{int}, \texttt{double}, or
 added in the future. The types are saved as separate entries, and as such, we
 need some way to link them together with the variables. We will use the
 \verb|ATTR_id| attribute to achieve this. This attribute should be unique for
-every entry, having similar role to the \texttt{id} attribute of HTML
+every entry, having a similar role to the \texttt{id} attribute of HTML
 elements~\cite{html4}. The variables themselves have the \verb|ATTR_type|
 attribute, which will have an id of the type as its value. An example of a
 pointer type that points to an int type is in figure~\ref{fig:t86dbg-types}. If
@@ -437,8 +435,8 @@ integer is one.
 
 The primitive types need to have their size. For T86, this is the number of
 memory cells it occupies, which will almost always be one since one memory cell
-is 64 bits. It also has a name for its primitive type. Currently, three
-are supported:
+is 64 bits. It also has a name for its primitive type. Currently, three are
+supported:
 \begin{itemize}
     \item \texttt{int} - A signed integer.
     \item \texttt{float} - A floating point number.
@@ -446,11 +444,11 @@ are supported:
 \end{itemize}
 
 Additionally, we also support pointer types (including pointers to pointers),
-static arrays and structured types, which are a bit more complicated. They need
-to have a list of members which are stored in the structure. For each member,
-an offset from the beginning of the structure must also be specified. It also
-must provide a size because the compiler might align it, and it may be larger
-than the sum of the size of its members.
+static arrays, and structured types, which are a bit more complicated. They
+need to have a list of members which are stored in the structure. For each
+member, an offset from the beginning of the structure must also be specified.
+It also must provide a size because the compiler might align it, and it may be
+larger than the sum of the size of its members.
 
 \begin{figure}
     \begin{lstlisting}
@@ -470,14 +468,11 @@ DIE_pointer_type: {
     \label{fig:t86dbg-types}
 \end{figure}
 
-With this information, we can show the type of a variable. Nevertheless, the
-most valuable thing is its value. Variables are either stored in memory,
-registered, or optimized out completely. We will follow DWARF's footsteps and
-provide a virtual machine specification.
+With this information, we can show the type of a variable. Nevertheless, the most valuable thing is its value. Variables are either stored in memory, registered, or optimized out completely. We will follow DWARF's footsteps and provide a virtual machine specification.
 
-The virtual machine is stack-based one. After all instructions are executed,
+The virtual machine is a stack-based one. After all instructions are executed,
 the value at the top of the stack represents the resulting location. It can
-either be a register or an memory offset. We offer several examples of programs
+either be a register or a memory offset. We offer several examples of programs
 for the virtual machine:
 \begin{itemize}
     \item \texttt{PUSH R0} - Pushes the register \texttt{R0}. No instructions
@@ -493,7 +488,7 @@ for the virtual machine:
 \end{itemize}
 
 There is also a dereference instruction, which dereferences a value in memory.
-That can be useful for tracking location of pointed variables. This virtual
+That can be useful for tracking the location of pointed variables. This virtual
 machine is also easily extendable. With this kind of power, the location of
 variables can almost be arbitrary and not only tied to a register or an offset
 from the base register. This information is stored in a variable entry
@@ -510,8 +505,8 @@ some more complicated expressions. For example, we may want to display some
 struct member or a value at which pointer points.
 
 The debugger has a built-in interpreter for such expressions. It builds an AST
-from the expression and interprets it using an
-AST walk~\cite{crafting-interpreters}. The AST interpreter leverages the
+from the expression and interprets it using an AST
+walk~\cite{crafting-interpreters}. The AST interpreter leverages the
 \texttt{Native} class to fetch variable values. The interpreter supports almost
 all C operators, including the assignment operator. It, however, has stricter
 typing than C. An example of such an expression is \texttt{foo[2]->bar + 3}.
@@ -521,12 +516,12 @@ there is no need to use the raw memory or register setters. Instead, it is
 possible to write \texttt{array[x] = y}.
 
 The AST nodes are distinguished by types. They also need to store the location
-of the expression  if it is an expression that can appear on the left-hand
-side of the assignment operator. Examples of expressions that must store the
+of the expression if it is an expression that can appear on the left-hand side
+of the assignment operator. Examples of expressions that must store the
 location: \texttt{a}, \texttt{*(a + 1)}, \texttt{a[5]}, while the following
 expressions do not have any locations because they cannot appear on the left
-side of the assignment operator: \texttt{a + 1}, \texttt{5}, \texttt{array[0]
-* y}.
+side of the assignment operator: \texttt{a + 1}, \texttt{5}, \texttt{array[0] *
+y}.
 
 \section{Frontend}
 We provide two command-line interface programs. The first one is for the T86.
@@ -552,7 +547,7 @@ a breakpoint hit report. The debugger had all debugging information available
 here. It can show the line in the source code where the breakpoint happened,
 name the offending function, and variables in scope.
 
-When variable values are printed, the format tries to accomodate their type.
+When variable values are printed, the format tries to accommodate their type.
 For example, variables that are arrays or pointers to the \texttt{char} type
 print the value of the variable as a string literal.
 

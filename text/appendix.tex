@@ -1,68 +1,23 @@
 \chapter{GDB to T86 Debugger Command Map}
-
+\renewcommand{\arraystretch}{1.2}
 \begin{table}[h]
 \centering
-\setlength\doublerulesep{0.15cm} 
-\begin{tabular}{|p{6cm}|p{6cm}|}
-    \hline
-    GDB & T86 Debugger \\
-    \hline
-    \hline
-    
-    \multicolumn{2}{|c|}{Setting a breakpoint at line \texttt{5}}\\
-    \hline
-    \texttt{b 5} & \texttt{b s 5} \\
-    \hline
-    \hline
-    
-    \multicolumn{2}{|c|}{Run the process and immediately stop}\\
-    \hline
-    \texttt{start} & \texttt{run} \\
-    \hline
-    \hline
-    
-    \multicolumn{2}{|c|}{Do an instruction level step}\\
-    \hline
-    \multirow{2}{*}{\texttt{stepi}} & \texttt{istep} \\
-    & \texttt{is} \\
-    \hline
-    \hline
-        
-    \multicolumn{2}{|c|}{Set breakpoint on a function named \textit{main}}\\
-    \hline
-    \texttt{break main} & \texttt{br s main} \\
-    \hline
-    \hline
-        
-    \multicolumn{2}{|c|}{List all breakpoints}\\
-    \hline
-    \texttt{info break} & \texttt{br list} \\
-    \hline
-    \hline
-        
-    \multicolumn{2}{|c|}{Show the contents of variable named \textit{a}}\\
-    \hline
-    \multirow{2}{*}{\texttt{p a}} & \texttt{p a} \\
-    & \texttt{expr a} \\
-    \hline
-    \hline
-        
-    \multicolumn{2}{|c|}{Disable a breakpoint}\\
-    \hline
-    \texttt{disable <breakpoint-id>} & \texttt{br disable <breakpoint-addr>} \\
-    \hline
-    \hline
-
-    \multicolumn{2}{|c|}{List values of registers}\\
-    \hline
-    \texttt{info registers} & \texttt{register} \\
-    \hline
-    \hline
-
-    \multicolumn{2}{|c|}{Display value stored in instruction pointer}\\
-    \hline
-    \texttt{info registers rip} & \texttt{reg get IP} \\
-    \hline
+    \begin{tabular}{p{5cm}ll}
+        \hline
+Usecase                                                  & GDB                                    & T86 DBG                                     \\
+        \hline
+Set a breakpoint at line 5                           & \texttt{br 5}                                   & \texttt{br s 5}                                      \\
+Run the process and immediately stop                     & \texttt{start}                                  & \texttt{run}                                        \\
+\multirow{2}{=}{Do an instruction level single step}     & \multirow{2}{*}{\texttt{stepi}}                 & \texttt{istep}                                      \\
+                                                         &                                        & \texttt{is}                                         \\
+Set a breakpoint on a function named main                & \texttt{break main}                             & \texttt{br s main}                                   \\
+List all breakpoints                                     & \texttt{info break}                             & \texttt{br list}                                     \\
+\multirow{2}{=}{Show the contents of a variable named a} & \multirow{2}{*}{\texttt{p a}}                   & \texttt{p a}                                         \\
+                                                         &                                                 & \texttt{expr a}                                      \\
+Disable a breakpoint                                     & \texttt{disable <bp-id>} & \texttt{br disable <bp-addr>} \\
+List values of registers                                 & \texttt{info registers}                         & \texttt{register}                              \\
+Display value stored in the instruction pointer          & \texttt{info registers rip}                     & \texttt{reg get IP}\\
+        \hline
 \end{tabular}
 \caption{List of examples of how some actions can be achieved in the GDB debugger and in
 the debugger presented by this thesis.}

@@ -2,13 +2,12 @@
 \section{Summary}
 We explored debugging capabilities of modern CPU architectures. We also
 described how debugging is supported at various layers, from operating systems
-to compilers. Then, we discuss the T86 architecture and its lackluster
-debugging support. We remedy this by adding a debugging API inspired by modern
-architectures. We also created a native and source-level debugger, which is
-production ready and already used in the NI-GEN course at FIT CTU. This
-debugger is extensible enough that if a new architecture, virtual machine, or
-source language comes into play, it should be fairly easy to add debugging
-support.
+to compilers. Then, we discuss the T86 architecture and its debugging support.
+We remedy this by adding a debugging API inspired by modern architectures. We
+also created a native and source-level debugger, which is production ready and
+already used in the NI-GEN course at FIT CTU. This debugger is extensible
+enough that if a new architecture, virtual machines, or source language comes
+into play, it should be fairly easy to add debugging support.
 
 The debugger encourages students in the NI-GEN course to investigate how the
 debugger works, the connection between the generated machine code and the
@@ -18,7 +17,7 @@ since the debugger works at the native level without additional work, allowing
 them to debug the code their compiler generated.
 
 The tool is, along with the enhanced T86 virtual machine, openly available at \\  
-\verb|https://github.com/Gregofi/tinyverse-monorepo|.
+\verb|https://github.com/Gregofi/t86-with-debug|.
 
 \section{Future Work}
 There are many possible improvements to be made. We have created a new
@@ -29,17 +28,18 @@ could go a long way, especially for the most commonly used languages in the
 NI-GEN course.
 
 The native part of the debugger is fairly complete. It can always be extended
-for new architectures and virtual machines should they emerge. The source-level
-debugger can, however, be extended. The expression command, which evaluates a
-TinyC expression, can't handle function calls. There is also no way to format
-the output (for instance, to print an integer as a hexadecimal number).
+for new architectures and virtual machines should they emerge. The expression
+command, which evaluates a TinyC expression, cannot handle function calls.
+There is also no way to format the output (for instance, to print an integer as
+a hexadecimal number). The expression interpreter can always be extended to
+handle other languages.
 
-New types can always be added to the debugging information. For example, we're
+New types can always be added to the debugging information. For example, we are
 missing enums, qualifiers like \texttt{const} and \texttt{mutable}, or more
 advanced types that are in the C++ standard library. Those types are not in the
 TinyC language that is being taught in the NI-GEN course, but the debugger is
 not strictly tied to the language. Some parts of the program could be
-optimized, like the step out which can prove slow, as demonstrated in
+optimized, like the step out, which can prove slow, as demonstrated in
 section~\ref{section:benchmark}.
 
 The debugger currently does not handle frame information in any way. This could

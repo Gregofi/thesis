@@ -11,23 +11,19 @@ debugging capabilities of said virtual machine.
 \section{The T86 Instruction Set Architecture}
 The primary goal of the T86 architecture is to be an educational one. The
 Virtual Machine made for the ISA allows configuring the number of registers,
-the RAM size, or the length of each instruction. This allows the student to
+the RAM size, or the length of each instruction. This allows the students to
 develop their compilers incrementally.
 
 The T86 uses a Harvard architecture, meaning the data and instructions are
-physically separated. The author does not specify the reason for this.
-Presumably, it is to ease the implementation of the virtual machine since the
-memory and instructions can be represented as two separate array-like members
-of the virtual machine. Memory is addressable by 64-bit blocks, not by 8-bit
-blocks, as is the custom in modern computers.
-
-It shares some of the registers we saw on x86-64: the program counter (PC), the
-stack pointer (SP), the base pointer (BP), and the flags register. The intended
-roles for these registers are the same as on x86-64 architecture. It also has
-other general-purpose registers. As previously said, the amount of these is
-configurable. The registers store a 64-bit value. It also has float registers,
-which can store 64-bit float values. These are separated from the standard
-registers, similarly to x86-64.
+physically separated. Memory is addressable by 64-bit blocks, not by 8-bit
+blocks, as is the custom in modern computers. It shares some of the registers
+we saw on x86-64: the program counter (PC), the stack pointer (SP), the base
+pointer (BP), and the flags register. The intended roles for these registers
+are the same as on x86-64 architecture. It also has other general-purpose
+registers. As previously said, the amount of these is configurable. The
+registers stores 64-bit values. It also has float registers, which can store
+64-bit float values. These are separated from the standard registers, similarly
+to x86-64.
 
 The addressing modes, or what kind of operands instructions can have, include
 immediate values, registers, and memory accesses. They can also be combined in
@@ -66,13 +62,13 @@ HALT
 
 \section{T86 Virtual Machine}\label{section:t86-vm}
 The primary objective of the virtual machine is to replicate the CPU as
-accurately as possible, without prioritizing execution speed. For instance, the
+accurately as possible without prioritizing execution speed. For instance, the
 virtual machine simulates the out-of-order technique briefly described in
 section~\ref{section:superscalar-cpu}. The purpose of the virtual machine is to
 allow the students to gain a deeper understanding of the effects of pipeline
 stalls and similar events on program speed. The virtual machine is able to
-generate statistics that provide information about these factors and how
-much they influenced the speed of the generated program.
+generate statistics that provide information about these factors and how much
+they influenced the speed of the generated program.
 
 The virtual machine (VM) is implemented in C++, using the newer standards up to
 C++17. The VM offers only a single interface, and that is the
@@ -80,7 +76,7 @@ C++17. The VM offers only a single interface, and that is the
 program for the T86 VM. An example of how to use this class is in
 figure~\ref{fig:t86-intro}. Currently, there is no other way for users to run
 programs in the VM. This means that the students are tied to the C++ language,
-or use some bindings if they want to use other language.
+or use some bindings if they want to use another language.
 
 The \texttt{Cpu} class is the backbone of the interpreter. It is responsible
 for running the program. It has a \texttt{halted} function, which returns true
@@ -92,16 +88,16 @@ shows to run a T86 program via the \texttt{Cpu} class.
 
 \begin{figure}
     \begin{minted}{cpp}
-        ProgramBuilder pb;
-        pb.add(MOV{Reg(0), 50);
-        pb.add(PUTCHAR{Reg(0)});
-        pb.add(HALT{});
-        auto program = pb.program();
-        Cpu cpu;
-        cpu.start(std::move(program));
-        while (!cpu.halted()) {
-            cpu.tick();
-        }
+ProgramBuilder pb;
+pb.add(MOV{Reg(0), 50);
+pb.add(PUTCHAR{Reg(0)});
+pb.add(HALT{});
+auto program = pb.program();
+Cpu cpu;
+cpu.start(std::move(program));
+while (!cpu.halted()) {
+    cpu.tick();
+}
     \end{minted}
     \caption{Simple example of how to create and run a simple program using the
     T86 virtual machine.}
@@ -121,11 +117,11 @@ then always runs this function when hit.
 
 \begin{figure}
     \begin{minted}{cpp}
-    pb.add(DBG{[](Cpu& cpu) {
-        if (cpu.getRegister(Reg{0}) == 0) {
-            std::cerr << "Register 0 is set to zero!\n";
-        }
-    });
+pb.add(DBG{[](Cpu& cpu) {
+    if (cpu.getRegister(Reg{0}) == 0) {
+        std::cerr << "Register 0 is set to zero!\n";
+    }
+});
     \end{minted}
     \caption{Adding a \texttt{DBG} instruction into the T86 program using the
     \texttt{ProgramBuilder}.}
@@ -141,24 +137,24 @@ illustrated in~\ref{fig:t86-pocket-debugger} via the \texttt{BRK} instruction.
 
 \begin{figure}
     \begin{minted}{cpp}
-    cpu.connectBreakHandler([](Cpu& cpu) {
-        char command;
-        std::cin >> command;
-        if (command == 'c') return; // continue
-        else if (command == 'r') { // Read register
-            int num;
-            std::cin >> num;
-            int regval = cpu.getRegister(num);
-            std::cerr << std::format("Register {} = {}\n",
-                                     num, regval);
-        } else if (command == 'w') { // Write register
-            int num;
-            int val;
-            std::cin >> num >> val;
-            cpu.setRegister(Reg{num}, Reg{val});
-        }
-        ... // Other commands
-    });
+cpu.connectBreakHandler([](Cpu& cpu) {
+    char command;
+    std::cin >> command;
+    if (command == 'c') return; // continue
+    else if (command == 'r') { // Read register
+        int num;
+        std::cin >> num;
+        int regval = cpu.getRegister(num);
+        std::cerr << std::format("Register {} = {}\n",
+                                 num, regval);
+    } else if (command == 'w') { // Write register
+        int num;
+        int val;
+        std::cin >> num >> val;
+        cpu.setRegister(Reg{num}, Reg{val});
+    }
+    ... // Other commands
+});
     \end{minted}
     \caption{Small debugger implementation using T86 \texttt{BRK} instruction,
     abbreviated.}

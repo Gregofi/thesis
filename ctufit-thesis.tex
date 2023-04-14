@@ -42,51 +42,55 @@
 \ctufitsupervisor{Ing. Petr Máj} % replace with name of your supervisor/advisor (include academic degrees)
 \ctufitdepartment{Department of theoretical computer science} % replace with the department of your defence
 \ctufityear{2023} % replace with the year of your defence
-\ctufitdeclarationplace{Praze} % replace with the place where you sign the declaration
+\ctufitdeclarationplace{Prague} % replace with the place where you sign the declaration
 \ctufitdeclarationdate{\today} % replace with the date of signature of the declaration
-\ctufitabstractCZE{V mnoha univerzitních kurzech se vyučuje návrh překladače.
-Jeden takový předmět se vyučuje na FIT ČVUT. Studenti mají za úkol vytvořit
-kompilátor z jazyka TinyC podobnému jazyku C do architektury Tiny x86. Tato
-architektura nemá žádný procesor, který by ji implementoval. Místo toho používá
-virtuální stroj.
+\ctufitabstractCZE{
+Programátoři často potřebují kontrolovat stav svých programů za běhu. Právě pro
+tento účel byl vytvořen speciální nástroj zvaný debugger. Přestože je tento
+nástroj velmi rozšířen, málokdo ví, jak přesně funguje. Částečně je to proto,
+že musí být podporován na více úrovních, jako je procesor, operační systém a
+překladač. Většina kurzů, které o nich vyučují, se debugováním nezabývá.
 
-Aby byl programovací jazyk použitelný, potřebuje vhodné nástroje, například
-ladicí programy. Aby ladící program fungoval, musí překladač emitovat ladicí
-informace popisující vazby mezi generovaným kódem a zdrojovým kódem. Virtuální
-stroj pro Tiny x86 nenabízí téměř žádnou podporu pro ladění. Studenti tedy
-nemají žádný důvod generovat ladicí informace.
+Tato práce zkoumá, jakou podporu musí poskytovat procesor a operační systém,
+aby bylo možné provádět debugování na nativní úrovni. Implementace malého
+debuggeru je demonstrována na architektuře x86-64 a operačním systému Linux.
+Pozornost je poté přesunuta na podporu překladače pro debugování na úrovni
+zdrojového kódu.
 
-Tato práce popisuje, jak je podpora ladění poskytována na různých úrovních,
-jako je procesor, operační systém a překladač. Popisuje také, jak vytvořit
-velmi jednoduchý ladicí program za použití rozhraní systému Linux a Windows.
-Dále je popsána podpora ladění virtuálního stroje Tiny x86, která byla v rámci
-práce přídána. Ladící podpora byla inspirována rozhraním které nabízí systém
-Linux. Nakonec je vytvořen ladící program pracující na úrovni assembleru a
-zdrojového kódu. Návrh programu je inspirovaný ladícími programy z reálného
-světa.}
+Na základě těchto poznatků je v práci představen plně funkční debugger pro
+architekturu T86 a jazyk TinyC, které jsou využívány v kurzu překladačů NI-GEN
+na FIT ČVUT. Tento debugger je plně funkční a usnadňuje studentům práci s
+architekturou T86. Kromě toho práce představuje návrh a implementaci nového
+formátu debugovacích informací, který zachovává zajímavé koncepty z reálných
+debuggerů a zároveň je jeho použití extrémně jednoduché na strojové i lidské
+úrovni, což je ideální pro jeho zamýšlené použití ve výuce.
+}
 
-\ctufitabstractENG{Many university courses teach compiler design. One such
-course is taught at FIT CTU. The students are tasked to create a compiler from
-a C-like language called TinyC into the Tiny x86 architecture. This
-architecture does not have any processor that implements it. Instead, it uses a
-virtual machine.
+\ctufitabstractENG{
+Programmers often need to inspect the state of their programs at runtime. A
+special tool called a debugger exists precisely for this purpose. Despite its
+widespread use, very few know how exactly this tool works. This is partly
+because it must be supported at multiple layers, like the CPU, the operating
+system, and the compiler. Most of the courses that teach about these do not
+delve into debugging.
 
-To make a programming language usable, it needs proper tooling, like debuggers.
-For debuggers to work, the compiler must emit debugging information describing
-the connections between generated machine code and the source code. The Tiny
-x86 virtual machine has almost no debugging support. Hence the students do not
-have any reason to generate debugging information.
+This thesis explores what support must be provided by the CPU and operating
+system to enable native-level debugging. A small debugger implementation is
+demonstrated on the x86-64 architecture and the Linux operating system. Focus
+is then shifted onto compiler support for source-level debugging.
 
-That is about to change. This thesis describes how debugging support is
-provided at various levels, like the central processing unit and the operating
-system. It also describes how to create a very simple debugger on Linux and
-Windows. We then add debugging support to the Tiny x86 virtual machine itself,
-which is partially inspired by the debugging interface provided by Linux.
-Finally, we create an assembly and source-level debugger inspired by real-world
-debuggers' design.}
+Using this knowledge, the thesis presents a fully working debugger for the T86
+architecture and the TinyC language, both of which are used by the NI-GEN
+compilers course at FIT, CTU. This debugger is fully functional, making it
+easier for students to work with the T86. Additionally, the thesis presents a
+design and implementation of a novel format of embedding debug information in
+executables that keeps the interesting concepts from real-world debuggers while
+making its use extremely simple on both machine and human level, which is
+ideally suited for its intended classroom use.
+}
 
-\ctufitkeywordsCZE{Ladění, Ladící program, Překladač, Implementace ladícího programu, LLVM,
-Linux, Windows, Tiny x86, Podpora pro ladění, Chyby v programech}
+\ctufitkeywordsCZE{Debugování, Debugger, Překladač, Implementace debugeru,
+LLVM, Linux, Windows, Tiny x86, Podpora pro debugování, Chyby v programech}
 \ctufitkeywordsENG{Debugging, Debugger, Debug, Debugger implementation, Compiler, LLVM,
 Linux, Windows, Tiny x86, Debugging support, Errors in programs}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -140,6 +144,10 @@ Linux, Windows, Tiny x86, Debugging support, Errors in programs}
 \usemintedstyle{borland}
 % Tikz thingies
 \usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{array}
+% \usepackage{showframe}
 
 \captionsetup[table]{skip=10pt}
 
@@ -203,11 +211,11 @@ draw=black,
 % This is a place to thank people for helping you. It is common to thank your supervisor.
 %%%%%%%%%%%%%%%%%%%
 \begin{acknowledgmentpage}
-First and foremost, thanks to my parents, who have always supported me and
+    First and foremost, thanks to my parents, who have always supported me and
     enabled me to pursue my dreams, whatever they may be.
 
-    I would also like to thank my supervisor, who spent an ungodly amount of
-    time and patience to break through my stubbornness and make this thesis
+    I would also like to thank my supervisor, who spent an unbelievable amount
+    of time and patience to break through my stubbornness and make this thesis
     what it is.
 
     Last but not least, thanks to my girlfriend, Jana. Without her support,
@@ -226,24 +234,25 @@ First and foremost, thanks to my parents, who have always supported me and
 % ENG: choose one of approved texts of the declaration. DO NOT CREATE YOUR OWN. Find the approved texts at https://courses.fit.cvut.cz/SFE/download/index.html#_documents (document Declaration for FT in English)
 % CZE/SLO: Vyberte jedno z fakultou schvalenych prohlaseni. NEVKLADEJTE VLASTNI TEXT. Schvalena prohlaseni najdete zde: https://courses.fit.cvut.cz/SZZ/dokumenty/index.html#_dokumenty (prohlášení do ZP)
 \begin{declarationpage}
-Prohlašuji, že jsem předloženou práci vypracoval samostatně a že jsem uvedl veškeré
-použité informační zdroje v~souladu s~Metodickým pokynem o~do\-držo\-vání etických
-principů při přípravě vysokoškolských závěrečných prací.
+I hereby declare that the presented thesis is my own work and that I have cited all
+sources of information in accordance with the Guideline for adhering to ethical
+principles when elaborating an academic final thesis.
 
-Beru na vědomí, že se na moji práci vztahují práva a povinnosti vy\-plý\-va\-jící ze zákona
-č.\,121/2000~Sb., autorského zákona, ve znění pozdějších předpisů. V~souladu s~ust.\,§\,2373 odst.\,2 zákona č.\,89/2012~Sb., občanský zákoník, ve znění pozdějších předpisů,
-tímto uděluji nevýhradní oprávnění (licenci) k~užití této mojí práce, a to včetně všech 
-počítačových programů, jež jsou její součástí či přílohou a veškeré jejich
-dokumentace (dále souhrnně jen \uv{Dílo}), a to všem osobám, které si přejí Dílo užít.
-Tyto osoby jsou oprávněny Dílo užít jakýmkoli způsobem, který nesnižuje hodnotu
-Díla a za jakýmkoli účelem (včetně užití k~výdělečným účelům). Toto oprávnění je
-časově, teritoriálně i množstevně neomezené. Každá osoba, která využije výše
-uvedenou licenci, se však zavazuje udělit ke každému dílu, které vznikne (byť jen
-zčásti) na základě Díla, úpravou Díla, spojením Díla s~jiným dílem, zařazením Díla
-do díla souborného či zpracováním Díla (včetně překladu) licenci alespoň ve výše
-uvedeném rozsahu a zároveň zpřístupnit zdrojový kód takového díla alespoň
-srovnatelným způsobem a ve srovnatelném rozsahu, jako je zpřístupněn zdrojový
-kód Díla.
+I acknowledge that my thesis is subject to the rights and obligations stipulated by the
+Act No. 121/2000 Coll., the Copyright Act, as amended. In accordance with Article 46(6)
+of the Act, I hereby grant a nonexclusive authorization (license) to utilize this thesis,
+including any and all computer programs incorporated therein or attached thereto and
+all corresponding documentation (hereinafter collectively referred to as the “Work”), to
+any and all persons that wish to utilize the Work. Such persons are entitled to use the
+Work in any way (including for-profit purposes) that does not detract from its value.
+This authorization is not limited in terms of time, location and quantity. However, all
+persons that makes use of the above license shall be obliged to grant a license at least
+in the same scope as defined above with respect to each and every work that is created
+(wholly or in part) based on the Work, by modifying the Work, by combining the Work
+with another work, by including the Work in a collection of works or by adapting the
+Work (including translation), and at the same time make available the source code of
+such work at least in a way and scope that are comparable to the way and scope in
+which the source code of the Work is made available.
 \end{declarationpage}
 %%%%%%%%%%%%%%%%%%%
 % DECLARATION END
