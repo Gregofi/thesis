@@ -46,24 +46,24 @@
 \ctufitdeclarationdate{\today} % replace with the date of signature of the declaration
 \ctufitabstractCZE{
 Programátoři často potřebují kontrolovat stav svých programů za běhu. Právě pro
-tento účel byly vytvořeny speciální ladící nástroje. Přestože jsou tyto
-nástroje velmi rozšířené, málokdo ví, jak přesně fungují. Částečně je to proto,
-že musí být podporovány na více úrovních, jako je procesor, operační systém a
-překladač. Většina kurzů, které o nich vyučují, se laděním nezabývá.
+tento účel byl vytvořen speciální nástroj zvaný debugger. Přestože je tento
+nástroj velmi rozšířen, málokdo ví, jak přesně funguje. Částečně je to proto,
+že musí být podporován na více úrovních, jako je procesor, operační systém a
+překladač. Většina kurzů, které o nich vyučují, se debugováním nezabývá.
 
 Tato práce zkoumá, jakou podporu musí poskytovat procesor a operační systém,
-aby bylo možné provádět ladění na nativní úrovni. Malá implementace ladicího
-programu je demonstrována na architektuře x86-64 a operačním systému Linux.
-Pozornost je poté přesunuta na podporu překladače pro ladění na úrovni
+aby bylo možné provádět debugování na nativní úrovni. Implementace malého
+debuggeru je demonstrována na architektuře x86-64 a operačním systému Linux.
+Pozornost je poté přesunuta na podporu překladače pro debugování na úrovni
 zdrojového kódu.
 
-Na základě těchto poznatků je v práci představen plně funkční ladící program
-pro architekturu T86 a jazyk TinyC, které jsou využívány v kurzu překladačů
-NI-GEN na FIT ČVUT. Tento ladící program je plně funkční a usnadňuje studentům
-práci s architekturou T86. Kromě toho práce představuje návrh a implementaci
-nového formátu ladicích informací, který zachovává zajímavé koncepty z reálných
-ladících nástrojů a zároveň je jeho použití extrémně jednoduché na strojové i
-lidské úrovni, což je ideální pro jeho zamýšlené použití ve výuce.
+Na základě těchto poznatků je v práci představen plně funkční debugger pro
+architekturu T86 a jazyk TinyC, které jsou využívány v kurzu překladačů NI-GEN
+na FIT ČVUT. Tento debugger je plně funkční a usnadňuje studentům práci s
+architekturou T86. Kromě toho práce představuje návrh a implementaci nového
+formátu debugovacích informací, který zachovává zajímavé koncepty z reálných
+debuggerů a zároveň je jeho použití extrémně jednoduché na strojové i lidské
+úrovni, což je ideální pro jeho zamýšlené použití ve výuce.
 }
 
 \ctufitabstractENG{
@@ -89,8 +89,8 @@ making its use extremely simple on both machine and human level, which is
 ideally suited for its intended classroom use.
 }
 
-\ctufitkeywordsCZE{Ladění, Ladící program, Překladač, Implementace ladícího programu, LLVM,
-Linux, Windows, Tiny x86, Podpora pro ladění, Chyby v programech}
+\ctufitkeywordsCZE{Debugování, Debugger, Překladač, Implementace debugeru,
+LLVM, Linux, Windows, Tiny x86, Podpora pro debugování, Chyby v programech}
 \ctufitkeywordsENG{Debugging, Debugger, Debug, Debugger implementation, Compiler, LLVM,
 Linux, Windows, Tiny x86, Debugging support, Errors in programs}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
