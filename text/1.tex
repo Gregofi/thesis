@@ -144,7 +144,7 @@ An interrupt is a special request to the CPU to stop the execution of the
 current program and to quickly react to the reason that caused the
 request~\cite{computer-architecture}. An example of such an event can be a
 keyboard press or an error in a program (division by zero). There are two main
-categories~\cite{intel-manual}
+categories~\cite{intel-manual}:
 \begin{itemize}
     \item An \textbf{interrupt} is an asynchronous\footnote{Meaning that the
         interrupt may happen when another instruction is being processed, and
@@ -650,7 +650,7 @@ instruction.
 
 This concludes the implementation of a very basic assembly-level debugger for
 Linux on the x86-64 platform. The proof of concept implementation is provided
-as an extension to this thesis and can be found in the \texttt{/linux-debugger}
+as an extension to this thesis and can be found in the \texttt{linux-debugger/}
 folder. The implementation was partially inspired by~\cite{linux-debugger-blog}
 and~\cite{lldb}. It demonstrates the feasibility of building a very basic
 debugger with the \texttt{ptrace} API.

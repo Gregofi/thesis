@@ -186,7 +186,7 @@ steps:
 \end{itemize}
 
 To illustrate the workings of the debugger, let us look back at the program in
-figure~\ref{fig:binary-search}. We will place a breakpoint on line $8$ after
+figure~\ref{fig:binary-search}. We will place a breakpoint on line $6$ after
 $i$ is set and we will monitor how the values in variables \texttt{lo} and
 \texttt{hi} change. If the program is run with the debugger attached, an output
 similar to what is displayed in figure~\ref{fig:lldb-debug1} will be seen.
@@ -198,19 +198,19 @@ of \texttt{hi} will not change, which is expected. Variable \texttt{lo} will
 gain the following values: $0, 1, 2, 2, 2, \dots$ It apparently gets stuck at
 $2$. The value of variable $i$ is computed as $i = (\text{lo} + \text{hi})/2 =
 (2 + 3)/2 = 2$, because division in C rounds the value down. The fix is to
-change the line $9$ to \texttt{lo = i + 1}. With the debugger, it was simple to
+change the line $7$ to \texttt{lo = i + 1}. With the debugger, it was simple to
 find out where the error came from, and we did not have to recompile the
 program.
 
 \begin{figure}
 \begin{minted}{c}
-   5   	    int hi = len;
-   6   	    while (lo < hi) {
-   7   	        int i = (lo + hi)/2;
--> 8   	        if (arr[i] < n) {
-   9   	            lo = i;
-   10  	        } else if (arr[i] > n) {
-   11  	            hi = i;
+   3   	    int hi = len;
+   4   	    while (lo < hi) {
+   5   	        int i = (lo + hi)/2;
+-> 6   	        if (arr[i] < n) {
+   7   	            lo = i;
+   8   	        } else if (arr[i] > n) {
+   9   	            hi = i;
 Target 0: (a.out) stopped.
 > p lo
 (int) $0 = 0
