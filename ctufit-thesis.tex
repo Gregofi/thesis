@@ -44,45 +44,50 @@
 \ctufityear{2023} % replace with the year of your defence
 \ctufitdeclarationplace{Prague} % replace with the place where you sign the declaration
 \ctufitdeclarationdate{\today} % replace with the date of signature of the declaration
-\ctufitabstractCZE{V mnoha univerzitních kurzech se vyučuje návrh překladače.
-Jeden takový předmět se vyučuje na FIT ČVUT. Studenti mají za úkol vytvořit
-kompilátor z jazyka TinyC podobnému jazyku C do architektury Tiny x86. Tato
-architektura nemá žádný procesor, který by ji implementoval. Místo toho používá
-virtuální stroj.
+\ctufitabstractCZE{
+Programátoři často potřebují kontrolovat stav svých programů za běhu. Právě pro
+tento účel byly vytvořeny speciální ladící nástroje. Přestože jsou tyto
+nástroje velmi rozšířené, málokdo ví, jak přesně fungují. Částečně je to proto,
+že musí být podporovány na více úrovních, jako je procesor, operační systém a
+překladač. Většina kurzů, které o nich vyučují, se laděním nezabývá.
 
-Aby byl programovací jazyk použitelný, potřebuje vhodné nástroje, například
-ladicí programy. Aby ladící program fungoval, musí překladač emitovat ladicí
-informace popisující vazby mezi generovaným kódem a zdrojovým kódem. Virtuální
-stroj pro Tiny x86 nenabízí téměř žádnou podporu pro ladění. Studenti tedy
-nemají žádný důvod generovat ladicí informace.
+Tato práce zkoumá, jakou podporu musí poskytovat procesor a operační systém,
+aby bylo možné provádět ladění na nativní úrovni. Malá implementace ladicího
+programu je demonstrována na architektuře x86-64 a operačním systému Linux.
+Pozornost je poté přesunuta na podporu překladače pro ladění na úrovni
+zdrojového kódu.
 
-Tato práce popisuje, jak je podpora ladění poskytována na různých úrovních,
-jako je procesor, operační systém a překladač. Popisuje také, jak vytvořit
-velmi jednoduchý ladicí program za použití rozhraní systému Linux a Windows.
-Dále je popsána podpora ladění virtuálního stroje Tiny x86, která byla v rámci
-práce přídána. Ladící podpora byla inspirována rozhraním které nabízí systém
-Linux. Nakonec je vytvořen ladící program pracující na úrovni assembleru a
-zdrojového kódu. Návrh programu je inspirovaný ladícími programy z reálného
-světa.}
+Na základě těchto poznatků je v práci představen plně funkční ladící program
+pro architekturu T86 a jazyk TinyC, které jsou využívány v kurzu překladačů
+NI-GEN na FIT ČVUT. Tento ladící program je plně funkční a usnadňuje studentům
+práci s architekturou T86. Kromě toho práce představuje návrh a implementaci
+nového formátu ladicích informací, který zachovává zajímavé koncepty z reálných
+ladících nástrojů a zároveň je jeho použití extrémně jednoduché na strojové i
+lidské úrovni, což je ideální pro jeho zamýšlené použití ve výuce.
+}
 
-\ctufitabstractENG{Many university courses teach compiler design. One such
-course is taught at FIT CTU. The students are tasked to create a compiler from
-a C-like language called TinyC into the Tiny x86 architecture. This
-architecture does not have any processor that implements it. Instead, it uses a
-virtual machine.
+\ctufitabstractENG{
+Programmers often need to inspect the state of their programs at runtime. A
+special tool called a debugger exists precisely for this purpose. Despite its
+widespread use, very few know how exactly this tool works. This is partly
+because it must be supported at multiple layers, like the CPU, the operating
+system, and the compiler. Most of the courses that teach about these do not
+delve into debugging.
 
-To make a programming language usable, it needs proper tooling, like debuggers.
-For debuggers to work, the compiler must emit debugging information describing
-the connections between generated machine code and the source code. The Tiny
-x86 virtual machine has almost no debugging support. Hence the students do not
-have any reason to generate debugging information.
+This thesis explores what support must be provided by the CPU and operating
+system to enable native-level debugging. A small debugger implementation is
+demonstrated on the x86-64 architecture and the Linux operating system. Focus
+is then shifted onto compiler support for source-level debugging.
 
-This thesis describes how debugging support is provided at various levels, like
-the central processing unit and the operating system. It also describes how to
-create a very simple debugger on Linux and Windows. We then add debugging
-support to the Tiny x86 virtual machine itself, which is partially inspired by
-the debugging interface provided by Linux. Finally, we create an assembly and
-source-level debugger inspired by real-world debuggers' design.}
+Using this knowledge, the thesis presents a fully working debugger for the T86
+architecture and the TinyC language, both of which are used by the NI-GEN
+compilers course at FIT, CTU. This debugger is fully functional, making it
+easier for students to work with the T86. Additionally, the thesis presents a
+design and implementation of a novel format of embedding debug information in
+executables that keeps the interesting concepts from real-world debuggers while
+making its use extremely simple on both machine and human level, which is
+ideally suited for its intended classroom use.
+}
 
 \ctufitkeywordsCZE{Ladění, Ladící program, Překladač, Implementace ladícího programu, LLVM,
 Linux, Windows, Tiny x86, Podpora pro ladění, Chyby v programech}
